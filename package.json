@@ -1,0 +1,21 @@
+{
+  "name": "pkm-skills",
+  "version": "0.1.0",
+  "description": "Skills for personal knowledge management — Obsidian vault clips and conflict resolution, Karakeep bookmark filing",
+  "type": "module",
+  "main": ".opencode/plugins/pkm.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dEitY719/pkm-skills.git"
+  },
+  "keywords": [
+    "skills",
+    "plugin",
+    "marketplace",
+    "pkm",
+    "obsidian",
+    "karakeep",
+    "bookmarks"
+  ]
+}

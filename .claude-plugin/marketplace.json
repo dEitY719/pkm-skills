@@ -1,0 +1,20 @@
+{
+  "name": "pkm-skills",
+  "description": "Personal knowledge management skills — clip AI sessions into an Obsidian vault, resolve vault sync conflicts, file and classify Karakeep bookmarks",
+  "owner": {
+    "name": "dEitY719",
+    "url": "https://github.com/dEitY719"
+  },
+  "plugins": [
+    {
+      "name": "pkm",
+      "description": "Personal knowledge management across two services: clip a finished AI session into a PARA Obsidian vault, resolve that vault's git pull conflicts, and add or classify URLs in Karakeep",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "dEitY719",
+        "url": "https://github.com/dEitY719"
+      }
+    }
+  ]
+}

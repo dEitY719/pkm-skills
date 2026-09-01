@@ -1,0 +1,21 @@
+{
+  "name": "pkm",
+  "description": "Personal knowledge management across two services: clip a finished AI session into a PARA Obsidian vault, resolve that vault's git pull conflicts, and add or classify URLs in Karakeep",
+  "version": "0.1.0",
+  "author": {
+    "name": "dEitY719",
+    "url": "https://github.com/dEitY719"
+  },
+  "homepage": "https://github.com/dEitY719/pkm-skills",
+  "repository": "https://github.com/dEitY719/pkm-skills",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "plugin",
+    "marketplace",
+    "pkm",
+    "obsidian",
+    "karakeep",
+    "bookmarks"
+  ]
+}

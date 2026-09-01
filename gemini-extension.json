@@ -1,0 +1,6 @@
+{
+  "name": "pkm",
+  "description": "Clip AI sessions to an Obsidian vault, resolve vault conflicts, and file URLs into Karakeep",
+  "version": "0.1.0",
+  "contextFileName": "GEMINI.md"
+}

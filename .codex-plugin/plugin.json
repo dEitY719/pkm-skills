@@ -1,0 +1,42 @@
+{
+  "name": "pkm",
+  "version": "0.1.0",
+  "description": "Personal knowledge management across two services: clip a finished AI session into a PARA Obsidian vault, resolve that vault git pull conflicts, and add or classify URLs in Karakeep.",
+  "author": {
+    "name": "dEitY719",
+    "url": "https://github.com/dEitY719"
+  },
+  "homepage": "https://github.com/dEitY719/pkm-skills",
+  "repository": "https://github.com/dEitY719/pkm-skills",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "plugin",
+    "marketplace",
+    "pkm",
+    "obsidian",
+    "karakeep",
+    "bookmarks"
+  ],
+  "skills": "./skills/",
+  "hooks": {},
+  "interface": {
+    "displayName": "PKM",
+    "shortDescription": "Obsidian vault clips and Karakeep bookmark filing",
+    "longDescription": "PKM bundles the four skills that keep a personal knowledge base current. obsidian-session-clip writes one markdown note per finished AI session into the vault Inbox and commits just that file. obsidian-resolve-conflict diagnoses, classifies, resolves, commits, and pushes a vault git pull conflict without ever auto-merging a note body. karakeep-classify reads the live Karakeep List tree and proposes where a URL belongs, dry-run by default. karakeep-add performs the REST write, creating any missing List parents and deduplicating by URL. Both Karakeep skills need a reachable instance plus its API token; both Obsidian skills need a local git-backed vault.",
+    "developerName": "dEitY719",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Clip this session to my vault.",
+      "Where should this bookmark go in Karakeep?"
+    ],
+    "websiteURL": "https://github.com/dEitY719/pkm-skills",
+    "brandColor": "#7C3AED",
+    "screenshots": []
+  }
+}
