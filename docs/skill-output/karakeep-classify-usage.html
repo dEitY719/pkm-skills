@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>karakeep-classify 사용 결과</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { interpolate-size: allow-keywords; }
+html.theme-dark {
+  --bg:#0A0A0A; --surface:#141414; --surface-hover:#1C1C1C;
+  --border:rgba(255,255,255,0.07);
+  --text:#EDEDED; --text-secondary:#8A8A8A;
+  --accent:#3b82f6; --accent-secondary:#8b5cf6;
+  --positive:#10b981; --negative:#f43f5e; --warning:#f59e0b;
+  --code-bg:#0F1115;
+}
+html.theme-light {
+  --bg:#FAFAF9; --surface:#FFFFFF; --surface-hover:#F5F5F4;
+  --border:rgba(0,0,0,0.08);
+  --text:#0f172a; --text-secondary:#64748b;
+  --accent:#2563eb; --accent-secondary:#7c3aed;
+  --positive:#059669; --negative:#e11d48; --warning:#d97706;
+  --code-bg:#F4F4F5;
+}
+body {
+  font-family:'Inter','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.7;
+  -webkit-font-smoothing:antialiased; letter-spacing:-0.01em;
+  transition:background .3s,color .3s; scrollbar-gutter:stable;
+}
+h1,h2,h3,h4 { color:var(--text); letter-spacing:-0.03em; line-height:1.15; text-wrap:balance; }
+code, pre, .mono { font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace; }
+.wrap { max-width:900px; margin:0 auto; padding:0 24px 96px; }
+
+/* HERO */
+.hero { padding:88px 0 40px; border-bottom:1px solid var(--border); margin-bottom:48px; }
+.eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--accent);
+  border:1px solid var(--border); background:var(--surface); padding:6px 12px; border-radius:999px; }
+.hero h1 { font-size:clamp(34px,6vw,52px); font-weight:800; margin:20px 0 16px; }
+.hero h1 .mono { font-size:.92em; }
+.lede { font-size:18px; color:var(--text-secondary); max-width:66ch; }
+
+/* PIPELINE */
+.pipe { display:flex; align-items:stretch; gap:12px; flex-wrap:wrap; margin:32px 0 8px; }
+.pipe-node { flex:1 1 190px; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:16px 18px; }
+.pipe-node .k { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); font-weight:600; }
+.pipe-node .v { font-size:15px; font-weight:600; margin-top:6px; }
+.pipe-node.is-skill { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.pipe-arrow { display:flex; align-items:center; color:var(--text-secondary); font-size:20px; }
+@media (max-width:640px){ .pipe-arrow{ transform:rotate(90deg); justify-content:center; width:100%; } }
+
+section { margin:56px 0; }
+section > h2 { font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text-secondary); padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+h3 { font-size:20px; font-weight:700; margin:28px 0 12px; }
+p { margin:12px 0; }
+p, li { max-width:74ch; }
+ul { padding-left:20px; margin:12px 0; }
+li { margin:7px 0; }
+a { color:var(--accent); }
+
+table { width:100%; border-collapse:collapse; margin:18px 0; font-size:15px; }
+th, td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); font-weight:700; }
+td.c, th.c { text-align:center; width:88px; }
+tbody tr:hover { background:var(--surface-hover); }
+.yes { color:var(--positive); font-weight:700; }
+.no  { color:var(--negative); font-weight:700; }
+
+pre { background:var(--code-bg); border:1px solid var(--border); border-radius:10px;
+  padding:18px 20px; overflow-x:auto; font-size:13.5px; line-height:1.65; margin:16px 0; }
+code:not(pre code){ background:var(--code-bg); border:1px solid var(--border);
+  border-radius:5px; padding:1px 6px; font-size:.9em; }
+
+/* STEPS */
+ol.steps { list-style:none; padding:0; counter-reset:s; margin:20px 0; }
+ol.steps > li { counter-increment:s; position:relative; padding:0 0 22px 52px; }
+ol.steps > li::before {
+  content:counter(s); position:absolute; left:0; top:0; width:32px; height:32px;
+  border-radius:9px; background:var(--surface); border:1px solid var(--border);
+  color:var(--accent); font-weight:700; font-size:14px;
+  display:flex; align-items:center; justify-content:center; }
+ol.steps > li::after {
+  content:''; position:absolute; left:16px; top:36px; bottom:2px; width:1px; background:var(--border); }
+ol.steps > li:last-child::after { display:none; }
+ol.steps > li:last-child { padding-bottom:0; }
+ol.steps h4 { font-size:16px; font-weight:700; margin-bottom:4px; }
+ol.steps p { margin:4px 0; color:var(--text-secondary); font-size:15px; }
+
+/* CALLOUTS */
+.note { border:1px solid var(--border); border-left:3px solid var(--accent);
+  background:var(--surface); border-radius:0 10px 10px 0; padding:16px 20px; margin:20px 0; }
+.note.warn { border-left-color:var(--warning); }
+.note .t { font-weight:700; font-size:14px; margin-bottom:4px; }
+
+.rules { list-style:none; padding:0; }
+.rules li { position:relative; padding:10px 0 10px 30px; border-bottom:1px solid var(--border); max-width:none; }
+.rules li:last-child { border-bottom:none; }
+.rules li::before { content:'—'; position:absolute; left:4px; color:var(--negative); font-weight:700; }
+
+.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:22px 24px; }
+.priority { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+.priority .chip { background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  padding:8px 14px; font-size:13.5px; font-family:'JetBrains Mono',monospace; }
+.priority .gt { color:var(--text-secondary); font-weight:700; }
+
+footer { margin-top:72px; padding-top:24px; border-top:1px solid var(--border);
+  color:var(--text-secondary); font-size:14px; display:flex; gap:16px; flex-wrap:wrap; justify-content:space-between; }
+
+.reveal { opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation:none!important; transition:none!important; } .reveal{ opacity:1; transform:none; } }
+@media print { body{ background:#fff!important; color:#000!important; } .viz-menu{ display:none; }
+  .reveal{ opacity:1!important; transform:none!important; } pre,table,.card,.note{ break-inside:avoid; } * { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
+@page { margin:1in; }
+
+.viz-menu { position:fixed; top:16px; right:16px; z-index:9999; }
+.viz-menu-toggle { width:44px; height:44px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--border); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.viz-menu-toggle:hover { background:var(--surface-hover); }
+.viz-menu-dropdown { position:absolute; top:52px; right:0; min-width:200px; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px; padding:8px; opacity:0; visibility:hidden;
+  transform:translateY(-8px); transition:all .2s; }
+.viz-menu-dropdown.open { opacity:1; visibility:visible; transform:translateY(0); }
+.viz-menu-dropdown button { width:100%; padding:10px 14px; border:none; border-radius:8px; background:transparent;
+  color:var(--text); font-size:14px; font-family:inherit; cursor:pointer; text-align:left;
+  display:flex; align-items:center; gap:10px; transition:background .15s; }
+.viz-menu-dropdown button:hover { background:var(--surface-hover); }
+</style>
+</head>
+<body>
+<div class="viz-menu">
+  <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg>
+  </button>
+  <div class="viz-menu-dropdown" id="vizMenuDropdown">
+    <button onclick="cycleTheme()"><span id="themeIcon">D</span><span id="themeLabel">Dark</span></button>
+    <button onclick="downloadImage()"><span>PNG</span><span>Download PNG</span></button>
+    <button onclick="window.print()"><span>PDF</span><span>Print / PDF</span></button>
+  </div>
+</div>
+
+<main id="main-content">
+<div class="wrap">
+
+
+  <header class="hero">
+    <span class="eyebrow">pkm plugin · usage example</span>
+    <h1><span class="mono">karakeep-classify</span> 사용 결과</h1>
+    <p class="lede">URL 하나를 받아 살아 있는 List 트리와 대조한 List 경로 제안을 생성합니다.</p>
+    <div class="pipe">
+      <div class="pipe-node"><div class="k">입력</div><div class="v">URL</div></div>
+      <div class="pipe-arrow">&#9656;</div>
+      <div class="pipe-node is-skill"><div class="k">스킬</div><div class="v mono">/pkm:karakeep-classify</div></div>
+      <div class="pipe-arrow">&#9656;</div>
+      <div class="pipe-node"><div class="k">산출물</div><div class="v">추천 List 경로 + 후속 명령 (쓰기 없음)</div></div>
+    </div>
+  </header>
+
+  <section data-reveal>
+    <h2>1. 실행한 명령</h2>
+<pre><code>/pkm:karakeep-classify &lt;url&gt; [--apply]</code></pre>
+    <p>이번 예시:</p>
+<pre><code>/pkm:karakeep-classify https://modelcontextprotocol.io/</code></pre>
+    <p>작업 디렉터리는 <code>.env</code> 가 있는 <code>~/para/project/karakeep</code>.</p>
+  </section>
+
+  <section data-reveal>
+    <h2>2. 입력</h2>
+    <table>
+      <thead><tr><th style="width:200px">항목</th><th>값</th></tr></thead>
+      <tbody>
+        <tr><td>URL</td><td><code>https://modelcontextprotocol.io/</code></td></tr>
+        <tr><td>라이브 트리</td><td><code>GET https://karakeep.tail7f8427.ts.net/api/v1/lists</code> -&gt; HTTP 200, List 36개</td></tr>
+        <tr><td>페이지 title</td><td><code>What is the Model Context Protocol (MCP)? - Model Context Protocol</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section data-reveal>
+    <h2>3. 결과</h2>
+<pre>추천 경로   AI/Agent Tooling   (id eisz99uyprtexueievao2fmr — 이미 존재, 생성 불필요)
+근거        MCP 는 에이전트 툴링 계층의 인터페이스 규격. 같은 List 에 이미
+            herdr.dev/plugins (에이전트 플러그인 마켓) 가 들어 있어 성격이 일치
+경쟁 후보   AI (상위, 너무 넓음) / 개발·SW엔지니어링 (에이전트 특화 아님)
+신뢰도      high
+Company     N/A — 공개 URL 이라 Company/* 는 제안 대상에서 제외
+
+[DRY-RUN] 아무것도 쓰지 않음
+Next: pkm:karakeep-add https://modelcontextprotocol.io/ --list AI/Agent Tooling</pre>
+    <p>무변경 확인: List 수 36 -&gt; 36, 신규 북마크 0건.</p>
+  </section>
+
+  <footer>
+    <span>pkm-skills &middot; usage example</span>
+    <span class="mono">docs/skill-output/karakeep-classify-usage.md</span>
+  </footer>
+</div>
+</main>
+
+<script>
+function toggleMenu(){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.toggle('open'); }
+document.addEventListener('click',function(e){ if(!e.target.closest('.viz-menu')){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.remove('open'); }});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.remove('open'); }});
+var savedTheme = localStorage.getItem('viz-theme');
+var currentTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+function applyTheme(t){ document.documentElement.className='theme-'+t;
+  document.getElementById('themeIcon').textContent = t==='dark'?'D':'L';
+  document.getElementById('themeLabel').textContent = t==='dark'?'Dark':'Light';
+  localStorage.setItem('viz-theme',t); currentTheme=t; }
+function cycleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
+applyTheme(currentTheme);
+document.querySelectorAll('[data-reveal]').forEach(function(el){ el.classList.add('reveal'); });
+var revealObserver = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); revealObserver.unobserve(e.target); }});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(function(el){ revealObserver.observe(el); });
+async function downloadImage(){
+  var menu=document.querySelector('.viz-menu'); menu.style.display='none';
+  try { var url=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2,
+    filter:function(n){ return !n.classList || !n.classList.contains('viz-menu'); }});
+    var a=document.createElement('a'); a.href=url;
+    a.download=document.title.replace(/\s+/g,'-').toLowerCase()+'.png'; a.click();
+  } catch(e){ console.error('Download failed:',e); }
+  menu.style.display='';
+}
+</script>
+</body>
+</html>

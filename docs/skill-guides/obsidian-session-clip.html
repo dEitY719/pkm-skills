@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>obsidian-session-clip — 스킬 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { interpolate-size: allow-keywords; }
+html.theme-dark {
+  --bg:#0A0A0A; --surface:#141414; --surface-hover:#1C1C1C;
+  --border:rgba(255,255,255,0.07);
+  --text:#EDEDED; --text-secondary:#8A8A8A;
+  --accent:#3b82f6; --accent-secondary:#8b5cf6;
+  --positive:#10b981; --negative:#f43f5e; --warning:#f59e0b;
+  --code-bg:#0F1115;
+}
+html.theme-light {
+  --bg:#FAFAF9; --surface:#FFFFFF; --surface-hover:#F5F5F4;
+  --border:rgba(0,0,0,0.08);
+  --text:#0f172a; --text-secondary:#64748b;
+  --accent:#2563eb; --accent-secondary:#7c3aed;
+  --positive:#059669; --negative:#e11d48; --warning:#d97706;
+  --code-bg:#F4F4F5;
+}
+body {
+  font-family:'Inter','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.7;
+  -webkit-font-smoothing:antialiased; letter-spacing:-0.01em;
+  transition:background .3s,color .3s; scrollbar-gutter:stable;
+}
+h1,h2,h3,h4 { color:var(--text); letter-spacing:-0.03em; line-height:1.15; text-wrap:balance; }
+code, pre, .mono { font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace; }
+.wrap { max-width:900px; margin:0 auto; padding:0 24px 96px; }
+
+/* HERO */
+.hero { padding:88px 0 40px; border-bottom:1px solid var(--border); margin-bottom:48px; }
+.eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--accent);
+  border:1px solid var(--border); background:var(--surface); padding:6px 12px; border-radius:999px; }
+.hero h1 { font-size:clamp(34px,6vw,52px); font-weight:800; margin:20px 0 16px; }
+.hero h1 .mono { font-size:.92em; }
+.lede { font-size:18px; color:var(--text-secondary); max-width:66ch; }
+
+/* PIPELINE */
+.pipe { display:flex; align-items:stretch; gap:12px; flex-wrap:wrap; margin:32px 0 8px; }
+.pipe-node { flex:1 1 190px; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:16px 18px; }
+.pipe-node .k { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); font-weight:600; }
+.pipe-node .v { font-size:15px; font-weight:600; margin-top:6px; }
+.pipe-node.is-skill { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.pipe-arrow { display:flex; align-items:center; color:var(--text-secondary); font-size:20px; }
+@media (max-width:640px){ .pipe-arrow{ transform:rotate(90deg); justify-content:center; width:100%; } }
+
+section { margin:56px 0; }
+section > h2 { font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text-secondary); padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+h3 { font-size:20px; font-weight:700; margin:28px 0 12px; }
+p { margin:12px 0; }
+p, li { max-width:74ch; }
+ul { padding-left:20px; margin:12px 0; }
+li { margin:7px 0; }
+a { color:var(--accent); }
+
+table { width:100%; border-collapse:collapse; margin:18px 0; font-size:15px; }
+th, td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); font-weight:700; }
+td.c, th.c { text-align:center; width:88px; }
+tbody tr:hover { background:var(--surface-hover); }
+.yes { color:var(--positive); font-weight:700; }
+.no  { color:var(--negative); font-weight:700; }
+
+pre { background:var(--code-bg); border:1px solid var(--border); border-radius:10px;
+  padding:18px 20px; overflow-x:auto; font-size:13.5px; line-height:1.65; margin:16px 0; }
+code:not(pre code){ background:var(--code-bg); border:1px solid var(--border);
+  border-radius:5px; padding:1px 6px; font-size:.9em; }
+
+/* STEPS */
+ol.steps { list-style:none; padding:0; counter-reset:s; margin:20px 0; }
+ol.steps > li { counter-increment:s; position:relative; padding:0 0 22px 52px; }
+ol.steps > li::before {
+  content:counter(s); position:absolute; left:0; top:0; width:32px; height:32px;
+  border-radius:9px; background:var(--surface); border:1px solid var(--border);
+  color:var(--accent); font-weight:700; font-size:14px;
+  display:flex; align-items:center; justify-content:center; }
+ol.steps > li::after {
+  content:''; position:absolute; left:16px; top:36px; bottom:2px; width:1px; background:var(--border); }
+ol.steps > li:last-child::after { display:none; }
+ol.steps > li:last-child { padding-bottom:0; }
+ol.steps h4 { font-size:16px; font-weight:700; margin-bottom:4px; }
+ol.steps p { margin:4px 0; color:var(--text-secondary); font-size:15px; }
+
+/* CALLOUTS */
+.note { border:1px solid var(--border); border-left:3px solid var(--accent);
+  background:var(--surface); border-radius:0 10px 10px 0; padding:16px 20px; margin:20px 0; }
+.note.warn { border-left-color:var(--warning); }
+.note .t { font-weight:700; font-size:14px; margin-bottom:4px; }
+
+.rules { list-style:none; padding:0; }
+.rules li { position:relative; padding:10px 0 10px 30px; border-bottom:1px solid var(--border); max-width:none; }
+.rules li:last-child { border-bottom:none; }
+.rules li::before { content:'—'; position:absolute; left:4px; color:var(--negative); font-weight:700; }
+
+.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:22px 24px; }
+.priority { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+.priority .chip { background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  padding:8px 14px; font-size:13.5px; font-family:'JetBrains Mono',monospace; }
+.priority .gt { color:var(--text-secondary); font-weight:700; }
+
+footer { margin-top:72px; padding-top:24px; border-top:1px solid var(--border);
+  color:var(--text-secondary); font-size:14px; display:flex; gap:16px; flex-wrap:wrap; justify-content:space-between; }
+
+.reveal { opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation:none!important; transition:none!important; } .reveal{ opacity:1; transform:none; } }
+@media print { body{ background:#fff!important; color:#000!important; } .viz-menu{ display:none; }
+  .reveal{ opacity:1!important; transform:none!important; } pre,table,.card,.note{ break-inside:avoid; } * { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
+@page { margin:1in; }
+
+.viz-menu { position:fixed; top:16px; right:16px; z-index:9999; }
+.viz-menu-toggle { width:44px; height:44px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--border); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.viz-menu-toggle:hover { background:var(--surface-hover); }
+.viz-menu-dropdown { position:absolute; top:52px; right:0; min-width:200px; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px; padding:8px; opacity:0; visibility:hidden;
+  transform:translateY(-8px); transition:all .2s; }
+.viz-menu-dropdown.open { opacity:1; visibility:visible; transform:translateY(0); }
+.viz-menu-dropdown button { width:100%; padding:10px 14px; border:none; border-radius:8px; background:transparent;
+  color:var(--text); font-size:14px; font-family:inherit; cursor:pointer; text-align:left;
+  display:flex; align-items:center; gap:10px; transition:background .15s; }
+.viz-menu-dropdown button:hover { background:var(--surface-hover); }
+</style>
+</head>
+<body>
+<div class="viz-menu">
+  <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg>
+  </button>
+  <div class="viz-menu-dropdown" id="vizMenuDropdown">
+    <button onclick="cycleTheme()"><span id="themeIcon">D</span><span id="themeLabel">Dark</span></button>
+    <button onclick="downloadImage()"><span>PNG</span><span>Download PNG</span></button>
+    <button onclick="window.print()"><span>PDF</span><span>Print / PDF</span></button>
+  </div>
+</div>
+
+<main id="main-content">
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">pkm plugin · skill guide</span>
+    <h1><span class="mono">obsidian-session-clip</span></h1>
+    <p class="lede">끝난 AI 세션 하나를 PARA vault 의 <code>99-Inbox/ai-session/</code> 아래
+    markdown 노트 <strong>1개</strong>로 남기고, 그 파일 하나만 커밋한다. 산출물은 항상 파일 1개다.</p>
+    <div class="pipe">
+      <div class="pipe-node"><div class="k">입력</div><div class="v">끝난 AI 세션</div></div>
+      <div class="pipe-arrow">&#9656;</div>
+      <div class="pipe-node is-skill"><div class="k">스킬</div><div class="v mono">/pkm:obsidian-session-clip</div></div>
+      <div class="pipe-arrow">&#9656;</div>
+      <div class="pipe-node"><div class="k">산출물</div><div class="v mono">99-Inbox/ai-session/&lt;stem&gt;.md</div></div>
+    </div>
+  </header>
+
+  <section data-reveal>
+    <h2>언제 쓰고, 언제 안 쓰나</h2>
+    <table>
+      <thead><tr><th>상황</th><th class="c">이 스킬</th><th>대신 쓸 것</th></tr></thead>
+      <tbody>
+        <tr><td>완료된 세션을 vault 에 보관</td><td class="c yes">예</td><td class="text-secondary">&mdash;</td></tr>
+        <tr><td>일자별 daily log 에 누적 기록</td><td class="c no">아니오</td><td><code>write:task-history</code></td></tr>
+        <tr><td>미완 작업을 다음 세션에 인계</td><td class="c no">아니오</td><td><code>devx:session-handoff</code></td></tr>
+        <tr><td>vault 를 원격과 동기화</td><td class="c no">아니오</td><td><code>pkm:obsidian-resolve-conflict</code></td></tr>
+      </tbody>
+    </table>
+    <p>이웃 스킬 <code>pkm:obsidian-resolve-conflict</code> 와 vault 는 공유하지만 remote 는 공유하지 않는다.
+    이 스킬은 원격을 <strong>절대</strong> 건드리지 않는다 &mdash; vault 동기화는 obsidian-git 소관이다.</p>
+    <div class="note warn">
+      <div class="t">명시 호출 전용</div>
+      <p style="margin:0;color:var(--text-secondary)">"세션이 끝난 것 같다"는 호출 근거가 아니다. 자동 트리거는 금지되어 있다.</p>
+    </div>
+  </section>
+
+  <section data-reveal>
+    <h2>호출 형식</h2>
+<pre><code>/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault &lt;path&gt;]
+/pkm:obsidian-session-clip -h</code></pre>
+    <table>
+      <thead><tr><th style="width:200px">인자</th><th>뜻</th></tr></thead>
+      <tbody>
+        <tr><td><code>description</code></td><td>플래그가 아닌 토큰들이 합쳐져 파일명 slug 와 제목의 재료가 된다</td></tr>
+        <tr><td><code>--no-commit</code></td><td>노트는 쓰되 커밋은 건너뛴다</td></tr>
+        <tr><td><code>--dry-run</code></td><td>경로와 본문만 출력하고 아무것도 쓰지 않는다 (<code>--no-commit</code> 보다 우선)</td></tr>
+        <tr><td><code>--vault &lt;path&gt;</code></td><td>vault 경로 직접 지정</td></tr>
+      </tbody>
+    </table>
+    <h3>vault 해석 우선순위</h3>
+    <div class="priority">
+      <span class="chip">--vault</span><span class="gt">&gt;</span>
+      <span class="chip">$OBSIDIAN_VAULT_DIR</span><span class="gt">&gt;</span>
+      <span class="chip">~/.dotfiles-setup-mode 기반 기본값</span>
+    </div>
+    <p class="text-secondary" style="font-size:15px">모드가 <code>internal</code> 이면 <code>obsidian-para-company</code>,
+    그 외에는 <code>obsidian-para</code>.</p>
+  </section>
+
+  <section data-reveal>
+    <h2>동작 단계</h2>
+    <ol class="steps">
+      <li><h4>인자 + vault 해석</h4><p><code>lib/resolve-vault.sh</code>. vault 가 없으면 해석된 경로를 찍고 정지한다.</p></li>
+      <li><h4>git 컨텍스트 + 분류</h4><p>vault 가 아니라 <strong>현재 작업 repo</strong> 에서 repo/branch/커밋을 읽는다.
+        커밋 1개 이상 또는 PR 생성이 있었으면 <code>session_type: code</code>, 아니면 <code>research</code>.</p></li>
+      <li><h4>본문 작성</h4><p>frontmatter 9개 키 고정 순서, 본문은 code/research 템플릿의 섹션 제목과 순서를 그대로 따른다.
+        <code>## 메모</code> 3개 하위 섹션을 모두 채운다.</p></li>
+      <li><h4>파일명 확정</h4><p><code>safe-name.sh sanitize</code> 로 Windows 안전 이름을 만들고,
+        <code>safe-name.sh resolve</code> 가 빈 파일을 만들어 이름을 <strong>원자적으로 예약</strong>한다 (병렬 세션 경합 차단).</p></li>
+      <li><h4>쓰기</h4><p>이 단계가 목표다. 이후는 전부 best-effort.</p></li>
+      <li><h4>커밋</h4><p><code>commit-note.sh</code> 가 <strong>pathspec 으로 그 파일 하나만</strong> stage/commit 한다.</p></li>
+      <li><h4>검증 + 보고</h4><p><code>verify-clip.sh</code> 의 <code>[OK]</code>/<code>[FAIL]</code> 줄을 그대로 출력하고,
+        마지막 줄은 <code>/ingest &lt;NOTE&gt;</code>.</p></li>
+    </ol>
+  </section>
+
+  <section data-reveal>
+    <h2>주의사항</h2>
+    <div class="card">
+      <ul class="rules">
+        <li>커밋은 pathspec 전용이다. <code>-a</code>, <code>-A</code>, <code>git add .</code> 는 금지 &mdash; 병렬 세션의 노트를 삼킨다.</li>
+        <li>원격에 절대 접속하지 않는다.</li>
+        <li>vault 경로가 없으면 만들지 않고 정지한다. 오타난 경로에 vault 를 생성하지 않는다.</li>
+        <li>transcript 를 덤프하지 않고, 여러 세션을 노트 하나로 합치지 않는다.</li>
+        <li><code>/ingest</code> 는 사람이 실행한다. 이 스킬이 대신 돌리지 않는다 &mdash; vault 의 사람 게이트가 요점이다.</li>
+        <li><code>memo: ai-generated</code> 는 "승인 대상이 아니라 교정 대상"이라는 뜻이다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span>pkm-skills &middot; skill guide</span>
+    <span class="mono">skills/obsidian-session-clip/SKILL.md</span>
+  </footer>
+</div>
+</main>
+
+<script>
+function toggleMenu(){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.toggle('open'); }
+document.addEventListener('click',function(e){ if(!e.target.closest('.viz-menu')){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.remove('open'); }});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.remove('open'); }});
+var savedTheme = localStorage.getItem('viz-theme');
+var currentTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+function applyTheme(t){ document.documentElement.className='theme-'+t;
+  document.getElementById('themeIcon').textContent = t==='dark'?'D':'L';
+  document.getElementById('themeLabel').textContent = t==='dark'?'Dark':'Light';
+  localStorage.setItem('viz-theme',t); currentTheme=t; }
+function cycleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
+applyTheme(currentTheme);
+document.querySelectorAll('[data-reveal]').forEach(function(el){ el.classList.add('reveal'); });
+var revealObserver = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); revealObserver.unobserve(e.target); }});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(function(el){ revealObserver.observe(el); });
+async function downloadImage(){
+  var menu=document.querySelector('.viz-menu'); menu.style.display='none';
+  try { var url=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2,
+    filter:function(n){ return !n.classList || !n.classList.contains('viz-menu'); }});
+    var a=document.createElement('a'); a.href=url;
+    a.download=document.title.replace(/\s+/g,'-').toLowerCase()+'.png'; a.click();
+  } catch(e){ console.error('Download failed:',e); }
+  menu.style.display='';
+}
+</script>
+</body>
+</html>

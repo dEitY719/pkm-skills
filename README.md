@@ -26,6 +26,16 @@ to `karakeep-classify` rather than guessing.
 The two Obsidian skills share a vault but not a remote: `obsidian-session-clip`
 never contacts one, `obsidian-resolve-conflict` exists to synchronise with one.
 
+### Visual guides and worked examples (GitHub Pages)
+
+- `obsidian-session-clip` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/obsidian-session-clip.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/obsidian-session-clip-usage.html) (AI session to vault note)
+- `obsidian-resolve-conflict` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/obsidian-resolve-conflict.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/obsidian-resolve-conflict-usage.html) (vault conflict to merge commit)
+- `karakeep-classify` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-classify.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-classify-usage.html) (URL to List suggestion)
+- `karakeep-add` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-add.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-add-usage.html) (URL to filed bookmark)
+
+Each page is generated from a Markdown source under
+[`docs/skill-guides/`](docs/skill-guides) and [`docs/skill-output/`](docs/skill-output).
+
 ## Requirements
 
 | Skill | Needs |

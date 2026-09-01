@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>karakeep-classify — 스킬 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { interpolate-size: allow-keywords; }
+html.theme-dark {
+  --bg:#0A0A0A; --surface:#141414; --surface-hover:#1C1C1C;
+  --border:rgba(255,255,255,0.07);
+  --text:#EDEDED; --text-secondary:#8A8A8A;
+  --accent:#3b82f6; --accent-secondary:#8b5cf6;
+  --positive:#10b981; --negative:#f43f5e; --warning:#f59e0b;
+  --code-bg:#0F1115;
+}
+html.theme-light {
+  --bg:#FAFAF9; --surface:#FFFFFF; --surface-hover:#F5F5F4;
+  --border:rgba(0,0,0,0.08);
+  --text:#0f172a; --text-secondary:#64748b;
+  --accent:#2563eb; --accent-secondary:#7c3aed;
+  --positive:#059669; --negative:#e11d48; --warning:#d97706;
+  --code-bg:#F4F4F5;
+}
+body {
+  font-family:'Inter','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.7;
+  -webkit-font-smoothing:antialiased; letter-spacing:-0.01em;
+  transition:background .3s,color .3s; scrollbar-gutter:stable;
+}
+h1,h2,h3,h4 { color:var(--text); letter-spacing:-0.03em; line-height:1.15; text-wrap:balance; }
+code, pre, .mono { font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace; }
+.wrap { max-width:900px; margin:0 auto; padding:0 24px 96px; }
+
+/* HERO */
+.hero { padding:88px 0 40px; border-bottom:1px solid var(--border); margin-bottom:48px; }
+.eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--accent);
+  border:1px solid var(--border); background:var(--surface); padding:6px 12px; border-radius:999px; }
+.hero h1 { font-size:clamp(34px,6vw,52px); font-weight:800; margin:20px 0 16px; }
+.hero h1 .mono { font-size:.92em; }
+.lede { font-size:18px; color:var(--text-secondary); max-width:66ch; }
+
+/* PIPELINE */
+.pipe { display:flex; align-items:stretch; gap:12px; flex-wrap:wrap; margin:32px 0 8px; }
+.pipe-node { flex:1 1 190px; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:16px 18px; }
+.pipe-node .k { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); font-weight:600; }
+.pipe-node .v { font-size:15px; font-weight:600; margin-top:6px; }
+.pipe-node.is-skill { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.pipe-arrow { display:flex; align-items:center; color:var(--text-secondary); font-size:20px; }
+@media (max-width:640px){ .pipe-arrow{ transform:rotate(90deg); justify-content:center; width:100%; } }
+
+section { margin:56px 0; }
+section > h2 { font-size:13px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text-secondary); padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+h3 { font-size:20px; font-weight:700; margin:28px 0 12px; }
+p { margin:12px 0; }
+p, li { max-width:74ch; }
+ul { padding-left:20px; margin:12px 0; }
+li { margin:7px 0; }
+a { color:var(--accent); }
+
+table { width:100%; border-collapse:collapse; margin:18px 0; font-size:15px; }
+th, td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); font-weight:700; }
+td.c, th.c { text-align:center; width:88px; }
+tbody tr:hover { background:var(--surface-hover); }
+.yes { color:var(--positive); font-weight:700; }
+.no  { color:var(--negative); font-weight:700; }
+
+pre { background:var(--code-bg); border:1px solid var(--border); border-radius:10px;
+  padding:18px 20px; overflow-x:auto; font-size:13.5px; line-height:1.65; margin:16px 0; }
+code:not(pre code){ background:var(--code-bg); border:1px solid var(--border);
+  border-radius:5px; padding:1px 6px; font-size:.9em; }
+
+/* STEPS */
+ol.steps { list-style:none; padding:0; counter-reset:s; margin:20px 0; }
+ol.steps > li { counter-increment:s; position:relative; padding:0 0 22px 52px; }
+ol.steps > li::before {
+  content:counter(s); position:absolute; left:0; top:0; width:32px; height:32px;
+  border-radius:9px; background:var(--surface); border:1px solid var(--border);
+  color:var(--accent); font-weight:700; font-size:14px;
+  display:flex; align-items:center; justify-content:center; }
+ol.steps > li::after {
+  content:''; position:absolute; left:16px; top:36px; bottom:2px; width:1px; background:var(--border); }
+ol.steps > li:last-child::after { display:none; }
+ol.steps > li:last-child { padding-bottom:0; }
+ol.steps h4 { font-size:16px; font-weight:700; margin-bottom:4px; }
+ol.steps p { margin:4px 0; color:var(--text-secondary); font-size:15px; }
+
+/* CALLOUTS */
+.note { border:1px solid var(--border); border-left:3px solid var(--accent);
+  background:var(--surface); border-radius:0 10px 10px 0; padding:16px 20px; margin:20px 0; }
+.note.warn { border-left-color:var(--warning); }
+.note .t { font-weight:700; font-size:14px; margin-bottom:4px; }
+
+.rules { list-style:none; padding:0; }
+.rules li { position:relative; padding:10px 0 10px 30px; border-bottom:1px solid var(--border); max-width:none; }
+.rules li:last-child { border-bottom:none; }
+.rules li::before { content:'—'; position:absolute; left:4px; color:var(--negative); font-weight:700; }
+
+.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:22px 24px; }
+.priority { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+.priority .chip { background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  padding:8px 14px; font-size:13.5px; font-family:'JetBrains Mono',monospace; }
+.priority .gt { color:var(--text-secondary); font-weight:700; }
+
+footer { margin-top:72px; padding-top:24px; border-top:1px solid var(--border);
+  color:var(--text-secondary); font-size:14px; display:flex; gap:16px; flex-wrap:wrap; justify-content:space-between; }
+
+.reveal { opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation:none!important; transition:none!important; } .reveal{ opacity:1; transform:none; } }
+@media print { body{ background:#fff!important; color:#000!important; } .viz-menu{ display:none; }
+  .reveal{ opacity:1!important; transform:none!important; } pre,table,.card,.note{ break-inside:avoid; } * { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
+@page { margin:1in; }
+
+.viz-menu { position:fixed; top:16px; right:16px; z-index:9999; }
+.viz-menu-toggle { width:44px; height:44px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--border); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.viz-menu-toggle:hover { background:var(--surface-hover); }
+.viz-menu-dropdown { position:absolute; top:52px; right:0; min-width:200px; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px; padding:8px; opacity:0; visibility:hidden;
+  transform:translateY(-8px); transition:all .2s; }
+.viz-menu-dropdown.open { opacity:1; visibility:visible; transform:translateY(0); }
+.viz-menu-dropdown button { width:100%; padding:10px 14px; border:none; border-radius:8px; background:transparent;
+  color:var(--text); font-size:14px; font-family:inherit; cursor:pointer; text-align:left;
+  display:flex; align-items:center; gap:10px; transition:background .15s; }
+.viz-menu-dropdown button:hover { background:var(--surface-hover); }
+</style>
+</head>
+<body>
+<div class="viz-menu">
+  <button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg>
+  </button>
+  <div class="viz-menu-dropdown" id="vizMenuDropdown">
+    <button onclick="cycleTheme()"><span id="themeIcon">D</span><span id="themeLabel">Dark</span></button>
+    <button onclick="downloadImage()"><span>PNG</span><span>Download PNG</span></button>
+    <button onclick="window.print()"><span>PDF</span><span>Print / PDF</span></button>
+  </div>
+</div>
+
+<main id="main-content">
+<div class="wrap">
+
+
+  <header class="hero">
+    <span class="eyebrow">pkm plugin · skill guide</span>
+    <h1><span class="mono">karakeep-classify</span></h1>
+    <p class="lede">URL 하나를 살아 있는 Karakeep List 트리에 맞춰 보고 <strong>가장 잘 맞는 List 경로 제안</strong>과
+    근거, 그리고 바로 붙여 쓸 수 있는 후속 명령을 출력한다. 기본값은 dry-run &mdash; 아무것도 쓰지 않는다.</p>
+    <div class="pipe">
+      <div class="pipe-node"><div class="k">입력</div><div class="v">URL</div></div>
+      <div class="pipe-arrow">&#9656;</div>
+      <div class="pipe-node is-skill"><div class="k">스킬</div><div class="v mono">/pkm:karakeep-classify</div></div>
+      <div class="pipe-arrow">&#9656;</div>
+      <div class="pipe-node"><div class="k">산출물</div><div class="v">추천 List 경로 (쓰기 없음)</div></div>
+    </div>
+  </header>
+
+  <section data-reveal>
+    <h2>언제 쓰고, 언제 안 쓰나</h2>
+    <table>
+      <thead><tr><th>상황</th><th class="c">이 스킬</th><th>대신 쓸 것</th></tr></thead>
+      <tbody>
+        <tr><td>이 URL 을 어디에 넣을지 모르겠다</td><td class="c yes">예</td><td class="text-secondary">&mdash;</td></tr>
+        <tr><td>넣을 곳을 이미 안다</td><td class="c no">아니오</td><td><code>pkm:karakeep-add &lt;url&gt; --list &lt;path&gt;</code></td></tr>
+        <tr><td>실제로 쓰기</td><td class="c no">아니오</td><td><code>pkm:karakeep-add</code></td></tr>
+      </tbody>
+    </table>
+    <p><code>karakeep-classify</code> 와 <code>karakeep-add</code> 는 propose-then-confirm 한 쌍이다.
+    이쪽은 <strong>판단만</strong> 하고, 쓰기 경로는 전부 <code>karakeep-add</code> 가 소유한다.
+    <code>--apply</code> 도 두 번째 쓰기 경로를 만들지 않고 <code>karakeep-add</code> 에 위임한다.</p>
+    <div class="note">
+      <div class="t">기본값은 dry-run</div>
+      <p style="margin:0;color:var(--text-secondary)">이 스킬은 읽기 전용이다. 아무것도 쓰지 않는 것이 기본 동작이고,
+      실제 쓰기는 전적으로 <code>pkm:karakeep-add</code> 소관이다.</p>
+    </div>
+  </section>
+
+  <section data-reveal>
+    <h2>호출 형식</h2>
+<pre><code>/pkm:karakeep-classify &lt;url&gt; [--apply]
+/pkm:karakeep-classify -h</code></pre>
+    <table>
+      <thead><tr><th style="width:200px">인자</th><th>뜻</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;url&gt;</code></td><td>필수. 없으면 usage 포인터를 찍고 정지</td></tr>
+        <tr><td><code>--apply</code></td><td>dry-run 대신 <code>pkm:karakeep-add</code> 로 넘겨 실제로 쓴다</td></tr>
+      </tbody>
+    </table>
+    <p>환경 변수는 <strong>작업 디렉터리의 <code>.env</code></strong> 에서 읽는다:
+    <code>NEXTAUTH_URL</code>, <code>KARAKEEP_API_KEY</code>.
+    둘 중 하나라도 없으면 명확히 실패한다 &mdash; base URL 을 추측하지 않는다.</p>
+  </section>
+
+  <section data-reveal>
+    <h2>동작 단계</h2>
+    <ol class="steps">
+      <li><h4>인자 + env 로드</h4><p><code>.env</code> 에서 두 변수를 읽는다. <code>BASE="${NEXTAUTH_URL%/}"</code>.</p></li>
+      <li><h4>살아 있는 List 트리 읽기</h4><p><code>GET /api/v1/lists</code> 후 <code>parentId</code> 를 따라
+        <code>부모/자식</code> 전체 경로를 복원한다.</p></li>
+      <li><h4>URL 분석</h4><p>가장 싼 신호부터: host, path 세그먼트. 애매할 때만 페이지의
+        <code>&lt;title&gt;</code> 과 meta description 을 가볍게 가져온다. 본문 전체는 기본적으로 안 읽는다.</p></li>
+      <li><h4>매칭 또는 제안</h4><p>기존 경로 중 최적을 고른다. 크게 안 맞으면 새 경로를 제안하되,
+        새 루트보다 기존 부모를 확장하는 쪽을 선호한다.</p></li>
+      <li><h4>출력</h4><p>dry-run 이면 주제, 추천 경로, 존재 여부, 신뢰도, 그리고 정확한 후속 명령
+        <code>pkm:karakeep-add &lt;url&gt; --list &lt;path&gt;</code> 를 찍는다. <code>--apply</code> 면
+        <code>karakeep-add</code> 로 넘긴다.</p></li>
+      <li><h4>보고</h4><p><code>[DRY-RUN]</code> 또는 <code>[APPLIED]</code> 판정 줄과 <code>Next:</code> 힌트로 끝난다.</p></li>
+    </ol>
+  </section>
+
+  <section data-reveal>
+    <h2>주의사항</h2>
+    <div class="card">
+      <ul class="rules">
+        <li>기본값이 무변경이다. <code>--apply</code> 만 변경을 일으키고, 그것도 <code>karakeep-add</code> 를 통해서만이다.</li>
+        <li>base URL 은 항상 <code>NEXTAUTH_URL</code> 이다. <code>localhost:3001</code> 은 <code>config.yaml</code> 의
+          내부 값이라 라이브 쓰기에는 틀린 값이다.</li>
+        <li><code>Company</code> 와 그 하위는 기밀 경계다. 주제가 아무리 맞아 보여도 공개/개인 URL 을
+          <code>Company/*</code> 로 제안하지 않는다 &mdash; 경계의 기준은 주제가 아니라 출처다.</li>
+        <li>분석은 가볍게. title/meta 를 본문 전체 fetch 보다 우선한다.</li>
+        <li><code>WebFetch</code> 는 Claude Code 전용이다. 다른 하네스에서는 해당 하네스의 fetch 도구나
+          <code>curl -sL</code> 로 대체하며, 이 fetch 자체가 선택적이다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span>pkm-skills &middot; skill guide</span>
+    <span class="mono">skills/karakeep-classify/SKILL.md</span>
+  </footer>
+</div>
+</main>
+
+<script>
+function toggleMenu(){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.toggle('open'); }
+document.addEventListener('click',function(e){ if(!e.target.closest('.viz-menu')){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.remove('open'); }});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var d=document.getElementById('vizMenuDropdown'); if(d) d.classList.remove('open'); }});
+var savedTheme = localStorage.getItem('viz-theme');
+var currentTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+function applyTheme(t){ document.documentElement.className='theme-'+t;
+  document.getElementById('themeIcon').textContent = t==='dark'?'D':'L';
+  document.getElementById('themeLabel').textContent = t==='dark'?'Dark':'Light';
+  localStorage.setItem('viz-theme',t); currentTheme=t; }
+function cycleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
+applyTheme(currentTheme);
+document.querySelectorAll('[data-reveal]').forEach(function(el){ el.classList.add('reveal'); });
+var revealObserver = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); revealObserver.unobserve(e.target); }});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(function(el){ revealObserver.observe(el); });
+async function downloadImage(){
+  var menu=document.querySelector('.viz-menu'); menu.style.display='none';
+  try { var url=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2,
+    filter:function(n){ return !n.classList || !n.classList.contains('viz-menu'); }});
+    var a=document.createElement('a'); a.href=url;
+    a.download=document.title.replace(/\s+/g,'-').toLowerCase()+'.png'; a.click();
+  } catch(e){ console.error('Download failed:',e); }
+  menu.style.display='';
+}
+</script>
+</body>
+</html>
