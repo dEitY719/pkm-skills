@@ -1,4 +1,5 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "pkm-skills",
   "description": "Personal knowledge management skills — clip AI sessions into an Obsidian vault, resolve vault sync conflicts, file and classify Karakeep bookmarks",
   "owner": {
@@ -14,7 +15,8 @@
       "author": {
         "name": "dEitY719",
         "url": "https://github.com/dEitY719"
-      }
+      },
+      "homepage": "https://github.com/dEitY719/pkm-skills"
     }
   ]
 }
