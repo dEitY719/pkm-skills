@@ -55,12 +55,16 @@ If `<path>` is `Company` or starts with `Company/`, refuse unless the URL is
 explicitly company-internal and the user confirmed. Public/personal URLs
 into the Company subtree are blocked — see `references/rest-mechanics.md`
 → "Company boundary". This is acceptance-criterion-critical, not advisory.
+Only once both hold, set `COMPANY_OK=yes`: the Step 3-5 script fails closed
+on a `Company` path without it, so leaving it unset is the safe default.
 
 ## Steps 3-5: Resolve the path, attach, verify
 
 ```bash
-eval "$(bash "${SKILL_DIR}/lib/karakeep-add.sh" "$URL" --list "$LIST_PATH" \
-  ${TITLE:+--title "$TITLE"} ${COMPANY_OK:+--allow-company})"
+ARGS=("$URL" --list "$LIST_PATH")            # array: a title may contain spaces
+[ -n "${TITLE:-}" ] && ARGS+=(--title "$TITLE")
+[ "${COMPANY_OK:-}" = yes ] && ARGS+=(--allow-company)
+eval "$(bash "${SKILL_DIR}/lib/karakeep-add.sh" "${ARGS[@]}")"
 ```
 
 It walks `<path>` parents-first (reuse or `POST /api/v1/lists`), dedups the

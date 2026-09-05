@@ -102,7 +102,9 @@ apply here on the next run, which is the whole point.
   share them rather than keeping a copy each.
   Call them and surface their `[OK]` / `[FAIL]` lines verbatim. Never
   reimplement their logic in prose, and never swallow a warning to keep an exit
-  code clean. CI shellchecks them at `--severity=warning`.
+  code clean. CI shellchecks them at `--severity=warning`, and
+  `bash tests/karakeep-lib-check.sh` asserts the Karakeep guards offline —
+  run it after touching that `lib/`.
 
 ## Safety contracts
 
