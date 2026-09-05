@@ -2,7 +2,7 @@
 
 노트 최상단에 아래 9개 키를 **이 순서 그대로** 넣는다. 하나라도 빠지면
 `lib/verify-clip.sh` 가 FAIL 한다. Web Clipper 템플릿
-(`docs/webclipper/article.json`) 과 같은 계열이라 `/ingest` 가 추가 가공 없이
+([obsidian-para `docs/webclipper/article.json`](https://github.com/dEitY719/obsidian-para/blob/main/docs/webclipper/article.json)) 과 같은 계열이라 `/ingest` 가 추가 가공 없이
 소비한다.
 
 ```yaml
@@ -42,7 +42,7 @@ tags: [ai-session, dotfiles]
 
 판별 근거는 `git log --oneline <base>..HEAD` 의 줄 수와 세션 중
 `gh pr create` 수행 여부다. 커밋이 문서만 건드렸더라도 커밋이 있으면 `code` 다
-(오탐 여지는 이슈 #1321 Open Questions 에 기록되어 있다).
+(오탐 여지는 이슈 dEitY719/dotfiles#1321 Open Questions 에 기록되어 있다).
 
 ## `memo: ai-generated` 가 뜻하는 것 (F-5 트레이드오프)
 
@@ -63,7 +63,7 @@ tags: [ai-session, dotfiles]
 
 `/ingest` 쪽에서 이 플래그를 실제로 다루려면 vault 저장소
 (`dEitY719/obsidian-para`) 의 `.claude/commands/ingest.md` 개정이 필요하다 —
-이슈 #1321 의 Dependencies 항목이며 **별도 저장소의 별도 이슈**다. 개정 전에도
+이슈 dEitY719/dotfiles#1321 의 Dependencies 항목이며 **별도 저장소의 별도 이슈**다. 개정 전에도
 노트는 정상 소비되며, 플래그가 무시될 뿐이다.
 
 ## `/ingest` 가 기대하는 나머지

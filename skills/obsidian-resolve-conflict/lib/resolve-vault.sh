@@ -5,11 +5,13 @@
 # the NF-7 push guard, emitted as shell-quoted KEY=value lines.
 #
 # Why runtime detection instead of a path table (NF-8):
-#   docs/.ssot/pc-environment.md §1 — every PC pairs a Windows account with a
-#   WSL account and the two usernames differ per PC. `/mnt/c/Users/$USER/...`
-#   is therefore wrong on every machine. The Windows side is found with a
-#   glob over /mnt/c/Users/*/Documents/<vault folder>, the WSL side by testing
-#   which of the two known clone directories actually exists.
+#   dEitY719/dotfiles docs/.ssot/pc-environment.md §1 — every PC pairs a Windows
+#   account with a WSL account and the two usernames differ per PC, so
+#   `/mnt/c/Users/$USER/...` is wrong on every machine. The Windows side is
+#   found with a glob over /mnt/c/Users/*/Documents/<vault folder>, the WSL
+#   side by testing which of the two known clone directories actually exists.
+#   That SSOT is
+#   https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md
 #
 # ~/.dotfiles-setup-mode only *orders* the candidates. The final decision is
 # always made from what exists on disk and from `git remote get-url origin`
@@ -34,7 +36,9 @@ WSL_PERSONAL="obsidian-para"
 # emitted as REMOTE so merge-flow.md can name it instead of hardcoding it.
 REMOTE_NAME="origin"
 # NF-7: the one host `internal` PCs may never push to (SSOT: §3 of
-# docs/.ssot/pc-environment.md — "GitHub (common) = pull only").
+# dEitY719/dotfiles docs/.ssot/pc-environment.md — "GitHub (common) = pull
+# only" —
+# https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md).
 PUBLIC_HOST="github.com"
 
 usage() {
@@ -78,8 +82,8 @@ emit() {
 }
 
 # setup_mode — same normalisation as _dotfiles_setup_mode()
-# (shell-common/tools/integrations/claude.sh). Legacy numeric values written
-# by pre-#571 setup.sh are translated; a missing file yields "".
+# (dEitY719/dotfiles shell-common/tools/integrations/claude.sh). Legacy numeric
+# values written by pre-#571 setup.sh are translated; a missing file yields "".
 setup_mode() {
     mode_file="${DOTFILES_SETUP_MODE_FILE:-${HOME}/.dotfiles-setup-mode}"
     [ -f "$mode_file" ] || {
@@ -331,7 +335,7 @@ main() {
         push_reason="origin 원격이 없다 — push 할 대상이 없다"
     elif [ "$mode" = "internal" ] && [ "$host_lc" = "$PUBLIC_HOST" ]; then
         push_allowed="no"
-        push_reason="internal 모드 PC 에서 ${PUBLIC_HOST} 원격은 pull only 다 (docs/.ssot/pc-environment.md §3). 커밋까지만 하고 external/public PC 에서 push 하라"
+        push_reason="internal 모드 PC 에서 ${PUBLIC_HOST} 원격은 pull only 다 (https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md §3). 커밋까지만 하고 external/public PC 에서 push 하라"
     fi
 
     emit MODE "$mode"

@@ -6,15 +6,17 @@ List-create or attach method, so REST is the correct (and verified) path.
 
 ## Env + base URL
 
-Load from the working directory's `.env` (do not hardcode):
+`lib/karakeep-env.sh` is the single copy of this contract — source it, never
+retype it (`pkm:karakeep-classify` sources the same file):
 
 ```bash
-set -a; [ -f ./.env ] && . ./.env; set +a   # guard: sourcing a missing file aborts a POSIX shell
-: "${NEXTAUTH_URL:?NEXTAUTH_URL not set — refusing to guess base URL}"
-: "${KARAKEEP_API_KEY:?KARAKEEP_API_KEY not set — cannot authenticate}"
-BASE="${NEXTAUTH_URL%/}"
-AUTH="Authorization: Bearer ${KARAKEEP_API_KEY}"
+. "${SKILL_DIR}/lib/karakeep-env.sh"   # exports BASE and AUTH, or exits
+karakeep_env_load
 ```
+
+It loads the working directory's `.env` behind a `[ -f ]` guard (sourcing a
+missing file aborts a POSIX shell), asserts both variables, and sets
+`BASE="${NEXTAUTH_URL%/}"` plus the `Authorization: Bearer` header.
 
 - **Base URL is `NEXTAUTH_URL`** (e.g. `https://karakeep.<your-tailnet>.ts.net`),
   reachable from home/internal over tailscale. It is **not** the
@@ -26,10 +28,14 @@ AUTH="Authorization: Bearer ${KARAKEEP_API_KEY}"
 Lists nest via `parentId`. To resolve a slash path like `github/repository`,
 start at the root and walk one segment at a time, carrying `parentId`.
 
+`lib/karakeep-add.sh` implements this walk against `GET /api/v1/lists`
+(`.lists[]?`, null-safe if the field is missing). To *look at* the tree
+instead — the shape `pkm:karakeep-classify` needs — use the shared helper,
+which prints one `<id>\t<full/path>` line per List:
+
 ```bash
-# List all lists once, then match by name + parentId locally.
-# `.lists[]?` (not `.lists[]`) — null-safe if the field is missing/null.
-curl -fsS -H "$AUTH" "$BASE/api/v1/lists" | jq -c '.lists[]?'
+bash "${SKILL_DIR}/lib/list-tree.sh"                    # REST
+bash "${SKILL_DIR}/lib/list-tree.sh" --db data/db.db    # SQLite copy
 ```
 
 For each segment (bound to shell vars `SEGMENT`, `EMOJI`, `PARENT_ID` — not
@@ -91,17 +97,10 @@ curl -fsS -H "$AUTH" "$BASE/api/v1/lists/$LIST_ID/bookmarks" \
 
 ## Reading the live tree on an external host
 
-When REST is awkward or the host is external, read the SQLite DB directly —
-the `sqlite3` CLI is not installed, so use Python stdlib:
-
-```bash
-python3 - <<'PY'
-import sqlite3
-db = sqlite3.connect("data/db.db")
-for row in db.execute("SELECT id, name, parentId FROM bookmarkLists"):
-    print(row)
-PY
-```
+`bash "${SKILL_DIR}/lib/list-tree.sh" --db <path>`. It reads the Karakeep
+SQLite database with the Python stdlib (the `sqlite3` CLI is not installed)
+and feeds the **same** path reconstruction the REST mode uses, so the two
+cannot drift apart the way the hand-written copies did.
 
 ## Company boundary
 

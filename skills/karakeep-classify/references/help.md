@@ -37,6 +37,12 @@
 - Suggest or apply a public/personal URL into `Company` or its children.
 - Deep-fetch full page bodies unless explicitly asked.
 
+## Output example
+
+A full worked run — command, inputs, and the `[DRY-RUN]` report block Step 6
+prints — is in
+[`docs/skill-output/karakeep-classify-usage.md`](../../../docs/skill-output/karakeep-classify-usage.md).
+
 ## Related
 
 - `pkm:karakeep-add <url> --list <path>` — the write path this skill delegates

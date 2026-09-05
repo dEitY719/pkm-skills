@@ -3,7 +3,7 @@
 ## SSOT
 
 모드별 경로·원격·**push 권한**의 단일 진실 공급원은
-[`docs/.ssot/pc-environment.md`](../../../../docs/.ssot/pc-environment.md) 다.
+[dotfiles `docs/.ssot/pc-environment.md`](https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md) 다.
 
 - §1 공통 전제 — "Windows 사용자명과 WSL 사용자명은 PC마다 다름 → 경로를
   하드코딩하지 말고 런타임에 탐지한다"
@@ -18,7 +18,7 @@
 
 새 설정 파일을 만들지 않는다. 기존 `~/.dotfiles-setup-mode` 를 읽고
 dotfiles 의 `_dotfiles_setup_mode()`
-(`shell-common/tools/integrations/claude.sh`) 와 **동일하게** 정규화한다:
+([`shell-common/tools/integrations/claude.sh`](https://github.com/dEitY719/dotfiles/blob/main/shell-common/tools/integrations/claude.sh)) 와 **동일하게** 정규화한다:
 
 | 파일 내용 | 정규화 결과 |
 |---|---|

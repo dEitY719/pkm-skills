@@ -10,8 +10,8 @@
 | 상황 | 이 스킬 | 대신 쓸 것 |
 |------|:------:|-----------|
 | 완료된 세션을 vault 에 보관 | 예 | |
-| 일자별 daily log 에 누적 기록 | 아니오 | `write:task-history` |
-| 미완 작업을 다음 세션에 인계 | 아니오 | `devx:session-handoff` |
+| 일자별 daily log 에 누적 기록 | 아니오 | `notes:task-history` |
+| 미완 작업을 다음 세션에 인계 | 아니오 | `session:handoff` |
 | vault 를 원격과 동기화 | 아니오 | `pkm:obsidian-resolve-conflict` |
 
 이웃 스킬 `pkm:obsidian-resolve-conflict` 와 vault 는 공유하지만 remote 는 공유하지

@@ -90,7 +90,7 @@ main() {
     # --- 2. Windows-safe filename (NF-1) -----------------------------------
     # Delegates to safe-name.sh's real sanitize function instead of keeping
     # a second copy of the forbidden-character set here — the two had
-    # drifted-config risk otherwise (PR #1322 review). Split stem/ext first:
+    # drifted-config risk otherwise (dEitY719/dotfiles#1322 review). Split stem/ext first:
     # sanitize's own 100-char cap already applied to the stem alone at
     # generation time, so re-sanitizing the bare stem is idempotent for a
     # genuine note and safe against a long-slug false positive.
@@ -129,7 +129,7 @@ main() {
     # The spec ties `created` to the note's own YYYY-MM-DD filename prefix;
     # check 3 above only confirmed the key exists, not that its value is
     # right — a note with a stale/wrong `created` would pass self-check and
-    # still reach /ingest wrong (PR #1322 review).
+    # still reach /ingest wrong (dEitY719/dotfiles#1322 review).
     if [ -n "$fm" ]; then
         fname_date="$(printf '%s' "$base" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}' || true)"
         fm_created="$(printf '%s\n' "$fm" | sed -n 's/^created:[[:space:]]*//p' | head -n1 | tr -d '[:space:]')"

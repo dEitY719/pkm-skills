@@ -46,7 +46,7 @@ eval "$(bash "${SKILL_DIR}/lib/resolve-vault.sh" "$SIDE" ${VAULT_OPT:+--vault "$
 4. 실패 → 후보를 출력하고 정지
 
 glob 이 사용자명 차이를 흡수한다 — Windows 사용자명 ≠ WSL 사용자명이므로
-`/mnt/c/Users/$USER/...` 는 **어느 PC에서도 맞지 않는다** (`docs/.ssot/pc-environment.md` §1).
+`/mnt/c/Users/$USER/...` 는 **어느 PC에서도 맞지 않는다** ([dotfiles `docs/.ssot/pc-environment.md`](https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md) §1).
 
 해석된 경로가 없거나 git 저장소가 아니면 **정지**한다. 디렉터리를 만들지 않는다 (NF-4).
 

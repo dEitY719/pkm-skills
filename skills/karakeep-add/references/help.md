@@ -41,6 +41,12 @@
   materializes the change to Obsidian on its own).
 - Bulk-import — that is `import-chrome`'s job.
 
+## Output example
+
+A full worked run — command, inputs, and the report block Step 6 prints
+(with the created-vs-reused column that proves idempotency) — is in
+[`docs/skill-output/karakeep-add-usage.md`](../../../docs/skill-output/karakeep-add-usage.md).
+
 ## Related
 
 - `pkm:karakeep-classify <url>` — analyze a URL and suggest the best List

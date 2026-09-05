@@ -19,13 +19,13 @@
 
 `--dry-run` 과 `--no-commit` 이 같이 오면 `--dry-run` 이 이긴다 (아무것도 쓰지 않음).
 
-## 환경변수 / vault 해석 순서 (F-1, #1351)
+## 환경변수 / vault 해석 순서 (F-1, dEitY719/dotfiles#1351)
 
 vault 해석은 `lib/resolve-vault.sh [explicit-vault-path]` 가 구현하며, 우선순위는:
 
 1. `--vault <path>` — 명시적 override, 최우선
 2. `$OBSIDIAN_VAULT_DIR` — vault 루트를 지정하는 명시적 env override
-   (`write:task-history` 의 `TASK_HISTORY_DIR` 선례와 같은 이유: PC 마다 vault
+   (`notes:task-history` 의 `TASK_HISTORY_DIR` 선례와 같은 이유: PC 마다 vault
    경로가 다르다)
 3. `~/.dotfiles-setup-mode` 를 읽어 PC 모드별 기본값 (신규):
 
@@ -35,7 +35,7 @@ vault 해석은 `lib/resolve-vault.sh [explicit-vault-path]` 가 구현하며, �
    | `external` / `public` / 빈 값 / 파일 없음 / 미인식 | `$HOME/para/project/obsidian-para` |
 
 `internal` PC 2대는 사내용 vault(`obsidian-para-company`)가 WSL 상의 개인
-`obsidian-para` 클론과 별도로 존재한다 (`shell-common/functions/obsidian_claude.sh`
+`obsidian-para` 클론과 별도로 존재한다 ([dotfiles `shell-common/functions/obsidian_claude.sh`](https://github.com/dEitY719/dotfiles/blob/main/shell-common/functions/obsidian_claude.sh)
 가 쓰는 vault 와도 다르다). 이 3단계는 vault 후보 문자열만 넓힌다.
 
 출력 디렉토리는 항상 `<vault>/99-Inbox/ai-session/` 이다. vault 루트 자체가
