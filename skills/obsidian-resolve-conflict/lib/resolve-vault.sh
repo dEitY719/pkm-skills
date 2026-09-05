@@ -10,8 +10,6 @@
 #   `/mnt/c/Users/$USER/...` is wrong on every machine. The Windows side is
 #   found with a glob over /mnt/c/Users/*/Documents/<vault folder>, the WSL
 #   side by testing which of the two known clone directories actually exists.
-#   That SSOT is
-#   https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md
 #
 # ~/.dotfiles-setup-mode only *orders* the candidates. The final decision is
 # always made from what exists on disk and from `git remote get-url origin`
@@ -37,8 +35,7 @@ WSL_PERSONAL="obsidian-para"
 REMOTE_NAME="origin"
 # NF-7: the one host `internal` PCs may never push to (SSOT: §3 of
 # dEitY719/dotfiles docs/.ssot/pc-environment.md — "GitHub (common) = pull
-# only" —
-# https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md).
+# only").
 PUBLIC_HOST="github.com"
 
 usage() {
@@ -335,7 +332,7 @@ main() {
         push_reason="origin 원격이 없다 — push 할 대상이 없다"
     elif [ "$mode" = "internal" ] && [ "$host_lc" = "$PUBLIC_HOST" ]; then
         push_allowed="no"
-        push_reason="internal 모드 PC 에서 ${PUBLIC_HOST} 원격은 pull only 다 (https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md §3). 커밋까지만 하고 external/public PC 에서 push 하라"
+        push_reason="internal 모드 PC 에서 ${PUBLIC_HOST} 원격은 pull only 다 (dEitY719/dotfiles docs/.ssot/pc-environment.md §3). 커밋까지만 하고 external/public PC 에서 push 하라"
     fi
 
     emit MODE "$mode"
