@@ -115,8 +115,9 @@ path usually decide the List, and a full-body fetch is never wanted.
 sibling skill's `SKILL.md` and follow it inline; the handoff contract (a URL and
 a List path) is unchanged.
 
-The `lib/*.sh` helpers under `obsidian-session-clip` and
-`obsidian-resolve-conflict` are plain POSIX-friendly bash and run identically on
+The `lib/*.sh` helpers under `obsidian-session-clip`,
+`obsidian-resolve-conflict`, and `karakeep-add` (which `karakeep-classify`
+shares rather than copying) are plain POSIX-friendly bash and run identically on
 every harness. Call them; do not reimplement them.
 
 ## Shared assets
@@ -128,12 +129,12 @@ This repo owns none — deliberately.
   (`{codex,kimi,gemini,antigravity,hermes,opencode}-tools.md`). That repo is
   their sole owner; the other fourteen `*-skills` repos link there rather than
   carrying copies, so one tool rename is one edit, not fifteen
-  (dotfiles #1410 F-5 / NF-2). The only condensed mirror here is
+  (dEitY719/dotfiles#1410 F-5 / NF-2). The only condensed mirror here is
   `.kimi-plugin/plugin.json`'s `skillInstructions`, because Kimi CLI cannot read
   a reference file at load time — it points back to the canonical file.
 - **The reusable CI workflow** is
   [`harness-skills/.github/workflows/skill-check.yml`](https://github.com/dEitY719/harness-skills/blob/main/.github/workflows/skill-check.yml)
-  (#1410 D-10). See [CI](#ci).
+  (dEitY719/dotfiles#1410 D-10). See [CI](#ci).
 
 ## Layout
 
@@ -144,7 +145,7 @@ Manifests live at the repo root and all point at one flat `skills/` directory:
 ├── skills/{obsidian-session-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify}/
 │   ├── SKILL.md
 │   ├── references/
-│   └── lib/                                  (obsidian skills only)
+│   └── lib/                                  (not karakeep-classify)
 ├── .claude-plugin/{marketplace,plugin}.json  Claude Code
 ├── .codex-plugin/plugin.json                 Codex
 ├── .kimi-plugin/plugin.json                  Kimi CLI
@@ -200,7 +201,7 @@ as a content snapshot at source commit `e2e231fcc8bbe69eba69e078cbe087ba44d856bb
 Phase 4 of that repo's migration. Behaviour is unchanged from the snapshot; only
 the namespace moved, from `obsidian:` / `karakeep:` to `pkm:`.
 
-This is Phase 1 of the dotfiles #1410 migration. `packaging-skills` was Phase 0,
+This is Phase 1 of the dEitY719/dotfiles#1410 migration. `packaging-skills` was Phase 0,
 and `harness-skills` is the sibling that owns the shared assets this repo links
 to.
 

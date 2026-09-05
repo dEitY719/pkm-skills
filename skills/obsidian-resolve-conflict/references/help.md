@@ -33,7 +33,7 @@ peer 클론 동기화까지 한 번에 처리한다. 대상은 같은 원격을 
 | `OBSIDIAN_VAULT_WSL_ROOT` | WSL 클론 부모 (기본 `$HOME/para/project`) |
 
 경로는 **하드코딩하지 않는다** — Windows 사용자명과 WSL 사용자명이 PC마다 다르다
-(`docs/.ssot/pc-environment.md` §1). 해석 우선순위는 `references/options.md`.
+([dotfiles `docs/.ssot/pc-environment.md`](https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md) §1). 해석 우선순위는 `references/options.md`.
 
 ## 충돌 3분류 (F-4)
 
@@ -55,7 +55,7 @@ peer 클론 동기화까지 한 번에 처리한다. 대상은 같은 원격을 
 - `--dry-run` 은 인덱스와 워킹트리를 바꾸지 않는다 (NF-5).
 - `.git/index.lock` 은 지수 백오프로 재시도만 한다. **강제 삭제 금지** (NF-6).
 - `internal` 모드 PC 에서 `github.com` 원격으로의 push 는 **거부**된다 (NF-7,
-  SSOT `docs/.ssot/pc-environment.md` §3). GHES 원격은 정상 push.
+  SSOT [`docs/.ssot/pc-environment.md`](https://github.com/dEitY719/dotfiles/blob/main/docs/.ssot/pc-environment.md) §3). GHES 원격은 정상 push.
 - 시작할 때 `BACKUP_SHA` 를 출력한다. 되돌리기는 커밋 전이면 `git merge --abort`,
   커밋 후면 `git revert -m 1 <merge-sha>` 다.
 
@@ -82,5 +82,5 @@ peer 클론 동기화까지 한 번에 처리한다. 대상은 같은 원격을 
 - `references/classify.md` — F-4 분류 규칙과 자동 처리 명령
 - `references/merge-flow.md` — 진입 상태 3종 절차, 커밋 메시지, peer 동기화
 - `references/pc-modes.md` — 모드 인지와 런타임 탐지 (SSOT 참조)
-- 형제 스킬 `gh:pr-resolve-conflict` — PR 브랜치 전용, 히스토리 재작성 방식
+- 형제 스킬 `gh-resolve:conflict` — PR 브랜치 전용, 히스토리 재작성 방식
 - 이웃 스킬 `pkm:obsidian-session-clip` — 같은 vault 를 다루지만 원격은 건드리지 않는다

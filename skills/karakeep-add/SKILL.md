@@ -6,6 +6,9 @@ description: >-
   Karakeep <list>에 넣어줘", "add <url> to list <path>". Do NOT use to pick a
   List — use pkm:karakeep-classify.
 allowed-tools: Bash, Read
+license: MIT
+compatibility:
+  network: required
 metadata:
   model_recommendation:
     tier: sonnet
@@ -42,9 +45,9 @@ Positional `<url>`; flag `--list <path>` (slash-delimited nesting).
   user re-runs with an explicit `--list` (propose-then-confirm — never
   auto-apply the guess).
 
-Load `NEXTAUTH_URL` and `KARAKEEP_API_KEY` from the working directory's
-`.env` per `references/rest-mechanics.md` → "Env + base URL". If either is
-unset, **fail clearly** — never guess a base URL or hardcode `localhost`.
+`SKILL_DIR` = this file's directory. `lib/karakeep-env.sh` loads
+`NEXTAUTH_URL` + `KARAKEEP_API_KEY` from the working directory's `.env` and
+fails loudly when either is unset — never guess a base URL or use `localhost`.
 
 ## Step 2: Company Guardrail
 
@@ -53,26 +56,19 @@ explicitly company-internal and the user confirmed. Public/personal URLs
 into the Company subtree are blocked — see `references/rest-mechanics.md`
 → "Company boundary". This is acceptance-criterion-critical, not advisory.
 
-## Step 3: Resolve / Create the List Path
+## Steps 3-5: Resolve the path, attach, verify
 
-Walk `<path>` segment by segment from the root, per
-`references/rest-mechanics.md` → "Resolve or create a List". For each
-segment: look it up under the current parent; reuse its id if present,
-else `POST /api/v1/lists` with an emoji `icon` and the running `parentId`.
-List membership is preserved by full path, so create parents first.
+```bash
+eval "$(bash "${SKILL_DIR}/lib/karakeep-add.sh" "$URL" --list "$LIST_PATH" \
+  ${TITLE:+--title "$TITLE"} ${COMPANY_OK:+--allow-company})"
+```
 
-## Step 4: Resolve / Create the Bookmark
-
-Dedup by `url.rstrip("/")` per `references/rest-mechanics.md` → "Resolve or
-create a bookmark". Found → reuse its id. Not found → `POST
-/api/v1/bookmarks` `{type:"link", url, title}`.
-
-## Step 5: Attach + Verify
-
-`PUT /api/v1/lists/<list_id>/bookmarks/<bookmark_id>` (idempotent, empty
-body on success), then `GET /api/v1/lists/<list_id>/bookmarks` and confirm
-the bookmark id is present. Report the final List path, list id, bookmark
-id, and a verified/not-verified verdict.
+It walks `<path>` parents-first (reuse or `POST /api/v1/lists`), dedups the
+bookmark on `url.rstrip("/")`, `PUT`s the idempotent attach and `GET`s the
+verify, then sets `LIST_ID LIST_CREATED LIST_TRAIL BOOKMARK_ID
+BOOKMARK_CREATED VERIFIED`. A non-zero exit is fatal — surface its `FAIL:`
+line verbatim and stop. Pass `--allow-company` only once Step 2 approved it.
+Mechanics: `references/rest-mechanics.md`.
 
 ## Step 6: Report
 

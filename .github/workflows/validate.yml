@@ -1,7 +1,7 @@
 name: validate
 
 # This repo owns no CI logic of its own. It calls the reusable workflow owned by
-# `dEitY719/harness-skills` (dotfiles #1410 D-10), so a new check lands here the
+# `dEitY719/harness-skills` (dEitY719/dotfiles#1410 D-10), so a new check lands here the
 # moment it lands there — no copy to keep in sync.
 
 on:

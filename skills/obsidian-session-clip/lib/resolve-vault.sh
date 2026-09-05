@@ -4,9 +4,9 @@
 # F-1 vault default resolution for the pkm:obsidian-session-clip skill.
 #
 # The hardcoded single default ($HOME/para/project/obsidian-para) ignores
-# this repo's PC-mode SSOT (docs/.ssot/pc-environment.md): internal PCs keep
-# a separate company vault at obsidian-para-company, so with no --vault and
-# no OBSIDIAN_VAULT_DIR, an internal-mode PC always stopped at vault-missing
+# the PC-mode SSOT (dEitY719/dotfiles docs/.ssot/pc-environment.md): internal
+# PCs keep a separate company vault at obsidian-para-company, so with no
+# --vault and no OBSIDIAN_VAULT_DIR, an internal-mode PC always stopped at vault-missing
 # (dEitY719/dotfiles#1351). This script only widens the *default candidate* —
 # existence checking stays SKILL.md Step 1's job.
 #
@@ -51,8 +51,9 @@ main() {
     if [ -z "$vault" ]; then
         # Same normalisation as setup_mode() in the sibling
         # obsidian-resolve-conflict lib and _dotfiles_setup_mode()
-        # (shell-common/tools/integrations/claude.sh): one `tr`, and the legacy
-        # numeric mode values written by pre-#571 setup.sh treated as aliases
+        # (dEitY719/dotfiles shell-common/tools/integrations/claude.sh): one
+        # `tr`, and the legacy numeric mode values written by pre-#571
+        # setup.sh treated as aliases
         # of their names. The `[ -f ]` guard is load-bearing — on a missing
         # file the *shell* reports the failed redirect before `tr` ever runs,
         # so an inner `2>/dev/null` would not suppress it.

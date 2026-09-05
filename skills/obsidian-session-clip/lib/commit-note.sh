@@ -107,7 +107,7 @@ main() {
         # index.lock is the common cause, but `git add` can also fail on
         # permission errors, a full disk, or a corrupt repo — those look
         # identical from the exit code alone, so surface the real stderr
-        # instead of always blaming the lock (PR #1322 review).
+        # instead of always blaming the lock (dEitY719/dotfiles#1322 review).
         warn "git index 가 ${LOCK_RETRIES}회 재시도 후에도 잠겨 있다 (.git/index.lock) — 노트는 디스크에 남았고 obsidian-git 이 다음 주기에 회수한다"
         [ -n "$last_add_err" ] && warn "마지막 git add 오류: ${last_add_err}"
         return 0

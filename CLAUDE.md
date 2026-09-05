@@ -26,7 +26,7 @@ The skills were extracted from `dEitY719/dotfiles`
 as a content snapshot at source commit
 `e2e231fcc8bbe69eba69e078cbe087ba44d856bb` — no history rewriting. The dotfiles
 copies remain in place; they are removed in Phase 4 of that repo's migration
-plan. This is Phase 1 of dotfiles #1410; `packaging-skills` was Phase 0 and
+plan. This is Phase 1 of dEitY719/dotfiles#1410; `packaging-skills` was Phase 0 and
 `harness-skills` is the sibling that owns the shared assets.
 
 ## Layout: root manifests, one flat `skills/`
@@ -55,7 +55,8 @@ manifests under a `plugins/` directory.**
 
 This repo owns none. Both belong to `dEitY719/harness-skills`:
 
-**1. Per-harness tool mappings** (`references/*-tools.md` there, dotfiles #1410
+**1. Per-harness tool mappings** (`references/*-tools.md` there,
+dEitY719/dotfiles#1410
 F-5). Do not create a `references/` directory at this repo's root. If a doc here
 needs a mapping, link to
 `https://github.com/dEitY719/harness-skills/blob/main/references/<harness>-tools.md`.
@@ -83,8 +84,8 @@ apply here on the next run, which is the whole point.
   a command writes `/pkm:karakeep-add`. The old dash-form aliases
   (`/karakeep-add`, `/obsidian-session-clip`) were dropped in the migration —
   do not reintroduce them.
-- **Cross-repo references keep their own namespace.** `write:task-history`,
-  `devx:session-handoff`, and `gh:pr-resolve-conflict` live in other repos of
+- **Cross-repo references keep their own namespace.** `notes:task-history`,
+  `session:handoff`, and `gh-resolve:conflict` live in other repos of
   this family. Leave them exactly as written; only siblings inside `skills/`
   take the `pkm:` prefix.
 - **Progressive disclosure.** `SKILL.md` stays under 100 lines (CI enforces it)
@@ -95,7 +96,10 @@ apply here on the next run, which is the whole point.
   characters — Codex's context budget. Keep new descriptions tight.
 - **`lib/*.sh` is the contract, not a suggestion.** `resolve-vault.sh`,
   `safe-name.sh`, `commit-note.sh`, `verify-clip.sh`, `classify-conflicts.sh`,
-  and `verify-sync.sh` hold the deterministic half of the two Obsidian skills.
+  and `verify-sync.sh` hold the deterministic half of the two Obsidian skills;
+  `karakeep-env.sh`, `list-tree.sh`, and `karakeep-add.sh` under
+  `skills/karakeep-add/lib/` do the same for the two Karakeep skills, which
+  share them rather than keeping a copy each.
   Call them and surface their `[OK]` / `[FAIL]` lines verbatim. Never
   reimplement their logic in prose, and never swallow a warning to keep an exit
   code clean. CI shellchecks them at `--severity=warning`.
@@ -141,7 +145,7 @@ The version appears in seven manifests: `.claude-plugin/marketplace.json`,
 `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`,
 `.kimi-plugin/plugin.json`, `.hermes-plugin/plugin.yaml`,
 `gemini-extension.json`, and `package.json`. CI checks that they agree — bump
-all of them together. Versioning is independent per repo (#1410 D-9); this repo
+all of them together. Versioning is independent per repo (dEitY719/dotfiles#1410 D-9); this repo
 does not move in lockstep with its siblings.
 
 ## No emojis

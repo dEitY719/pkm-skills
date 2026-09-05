@@ -6,6 +6,9 @@ description: >-
   좋을지", "분류 제안해줘", "where should this bookmark go". Do NOT use to
   write — use pkm:karakeep-add instead.
 allowed-tools: Bash, Read, WebFetch
+license: MIT
+compatibility:
+  network: required
 metadata:
   model_recommendation:
     tier: sonnet
@@ -34,15 +37,19 @@ the "write" is `pkm:karakeep-add`.
 Positional `<url>` (required → else usage pointer `Run /pkm:karakeep-classify -h
 for usage.`). Flag `--apply` switches from dry-run to execution.
 
-Load `NEXTAUTH_URL` + `KARAKEEP_API_KEY` from `./.env` per
-`references/classify-mechanics.md` → "Env + read the tree". Unset → fail
+`SKILL_DIR` = this file's directory. `../karakeep-add/lib/karakeep-env.sh`
+loads `NEXTAUTH_URL` + `KARAKEEP_API_KEY` from `./.env`; unset → fail
 clearly, no localhost fallback.
 
 ## Step 2: Read the Live List Tree
 
-Fetch the current List tree via REST (`GET /api/v1/lists`), reconstructing
-full nested paths from `parentId`. See `references/classify-mechanics.md`
-→ "Env + read the tree".
+```bash
+bash "${SKILL_DIR}/../karakeep-add/lib/list-tree.sh"
+```
+
+One `<id>\t<full/path>` line per List, `parentId` already resolved. Add
+`--db <path>` to read a SQLite copy on an external host. Detail:
+`references/classify-mechanics.md` → "Env + read the tree".
 
 ## Step 3: Analyze the URL
 

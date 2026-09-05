@@ -83,5 +83,5 @@
 - `references/frontmatter.md` — F-3 frontmatter 스펙과 `/ingest` 계약
 - `references/template-code.md` / `references/template-research.md` — 본문 골격
 - `lib/verify-clip.sh <파일>` — 산출물 자체검증
-- 인접 스킬: `write:task-history` (일자별 daily log append),
-  `devx:session-handoff` (미완 작업의 세션 간 인수인계)
+- 인접 스킬: `notes:task-history` (일자별 daily log append),
+  `session:handoff` (미완 작업의 세션 간 인수인계)

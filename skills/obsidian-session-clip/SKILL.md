@@ -4,8 +4,9 @@ description: >-
   AI 세션 작업을 PARA vault Inbox 에 md 노트 1개로 클립한다. 명시 호출에만
   실행: /pkm:obsidian-session-clip, "이번 세션 볼트에
   클립", "세션 옵시디언에 남겨", "clip this session to my vault". 자동 트리거
-  금지. Do NOT use for 일자별 daily log — use write:task-history instead.
+  금지. Do NOT use for 일자별 daily log — use notes:task-history instead.
 allowed-tools: Bash, Read, Write, Grep
+license: MIT
 metadata:
   model_recommendation:
     tier: sonnet
@@ -21,7 +22,7 @@ metadata:
 If arg #1 is `-h`/`--help`/`help`, output `references/help.md` verbatim and
 stop. No API calls, no file writes.
 
-## Step 1: Args + vault (F-1)
+## Step 1: Args + vault
 
 `SKILL_DIR` = this file's directory. Parse per `references/options.md`: non-flag
 tokens join into `[description]`; `--no-commit`, `--dry-run`, `--vault <path>`
@@ -32,7 +33,7 @@ the resolved path plus the `--vault` usage line and **stop** (never create a
 vault at a typo'd path). Otherwise `mkdir -p "$VAULT/99-Inbox/ai-session"`
 (skip on `--dry-run`).
 
-## Step 2: Git context (F-6) + classify (F-4)
+## Step 2: Git context + classify
 
 From the **current working repo**, not the vault: `REPO` =
 `basename $(git rev-parse --show-toplevel)`, `BRANCH` =
@@ -42,7 +43,7 @@ is the default branch; not a git repo → `REPO`/`BRANCH` = `none`, continue.
 `session_type` = `code` if the session produced 1 or more commits or created a
 PR, else `research` (`references/frontmatter.md`).
 
-## Step 3: Compose (F-3, F-5)
+## Step 3: Compose
 
 Frontmatter: all 9 keys per `references/frontmatter.md`, `status: unprocessed`,
 `memo: ai-generated`. Body: `references/template-code.md` or
@@ -50,7 +51,7 @@ Frontmatter: all 9 keys per `references/frontmatter.md`, `status: unprocessed`,
 3 `## 메모` subsections. No commits, no file changes and no substantive
 discussion → print "클립할 내용이 없다" and stop; never write an empty note.
 
-## Step 4: Filename (F-2, NF-1)
+## Step 4: Filename
 
 `RAW_STEM` = `$(date '+%Y-%m-%d-%H%M')-<repo>-<slug>` (slug rules in
 `references/options.md`), then:
@@ -67,9 +68,9 @@ Either failing is fatal — surface stderr, do not invent a fallback name.
 
 `--dry-run` → print `NOTE` + body, `rm -f "$NOTE"` (undo the reservation —
 write nothing), jump to Step 7. Otherwise write the body to `NOTE`. **This
-is the objective**; everything after it is best-effort (NF-4).
+is the objective**; everything after it is best-effort.
 
-## Step 6: Commit (F-7, NF-2)
+## Step 6: Commit
 
 Skip on `--no-commit`. Otherwise run
 `bash "${SKILL_DIR}/lib/commit-note.sh" "$VAULT" "$NOTE" "$SUMMARY" "$REPO"`.
@@ -84,15 +85,14 @@ Run `bash "${SKILL_DIR}/lib/verify-clip.sh" "$NOTE"` (skip on `--dry-run`), show
 
 ## Constraints
 
-- Vault commits are pathspec-only — never `-a` / `-A` / `git add .` (NF-2).
-- Never synchronise the vault to its remote; obsidian-git owns that (NF-3).
+- Vault commits are pathspec-only — never `-a` / `-A` / `git add .`.
+- Never synchronise the vault to its remote; obsidian-git owns that.
 - Never dump the transcript, never merge several sessions into one note.
 - Never modify code, never run `/ingest` — the vault's human gate is the point.
 
 ## Related Skills
 
-- [[write:task-history]] 는 일자별 daily log 에 append 하고,
-  [[devx:session-handoff]] 는 *미완* 작업을 이슈 코멘트로 넘긴다 — 이 스킬은
-  *완료* 기록을 vault 노트 1개로 남긴다 (Web Clipper 가 "웹페이지 → Inbox"
-  라면 이 스킬은 "세션 → Inbox").
+- [[notes:task-history]] 는 일자별 daily log 에 append 하고, [[session:handoff]]
+  는 *미완* 작업을 이슈 코멘트로 넘긴다 — 이 스킬은 *완료* 기록을 vault 노트
+  1개로 남긴다 (Web Clipper 가 "웹페이지 → Inbox" 라면 이 스킬은 "세션 → Inbox").
 - 옵션·env 상세는 `references/help.md` / `references/options.md`.

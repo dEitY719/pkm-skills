@@ -8,12 +8,13 @@ follow it. Do not load all four.
 | Skill | Read | Use when |
 |-------|------|----------|
 | `obsidian-session-clip` | `@./skills/obsidian-session-clip/SKILL.md` | The user explicitly asks to clip this session to their vault. Writes one note to `99-Inbox/ai-session/`. **Never load this on your own initiative** — see the safety rules. |
-| `obsidian-resolve-conflict` | `@./skills/obsidian-resolve-conflict/SKILL.md` | An Obsidian vault clone has a `git pull` conflict to diagnose, resolve, commit, and push. Not for PR branches — that is `gh:pr-resolve-conflict`, in another repo. |
+| `obsidian-resolve-conflict` | `@./skills/obsidian-resolve-conflict/SKILL.md` | An Obsidian vault clone has a `git pull` conflict to diagnose, resolve, commit, and push. Not for PR branches — that is `gh-resolve:conflict`, in another repo. |
 | `karakeep-classify` | `@./skills/karakeep-classify/SKILL.md` | Deciding which Karakeep List a URL belongs in. Dry-run by default; writes nothing. |
 | `karakeep-add` | `@./skills/karakeep-add/SKILL.md` | Adding a URL to a known Karakeep List path. Only with an explicit `--list`; without one, classify first. |
 
 Each skill's `references/` directory holds the detail it loads on demand, and
-the two Obsidian skills keep their deterministic steps in `lib/*.sh`.
+the deterministic steps live in `lib/*.sh` (`karakeep-classify` calls its
+sibling `karakeep-add`'s).
 `SKILL.md` says which file to read and which script to run, and when. Do not
 read `references/` up front, and do not reimplement `lib/` in prose.
 
