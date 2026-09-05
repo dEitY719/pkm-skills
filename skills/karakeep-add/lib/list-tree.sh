@@ -61,17 +61,16 @@ for line in sys.stdin:
     rows[i] = (parent, name)
     order.append(i)
 
-def path(i, seen=None):
-    seen = seen or set()
+def path(i, seen=()):
     if i not in rows or i in seen:   # dangling or cyclic parentId: stop
         return ""
-    seen.add(i)
     parent, name = rows[i]
-    prefix = path(parent, seen) if parent else ""
+    prefix = path(parent, seen + (i,)) if parent else ""
     return prefix + "/" + name if prefix else name
 
-for i in sorted(order, key=lambda k: path(k)):
-    print(i + "\t" + path(i))
+# Build each path once; the id is a tiebreak so the order is deterministic.
+for p, i in sorted((path(i), i) for i in order):
+    print(i + "\t" + p)
 '
 }
 

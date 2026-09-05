@@ -27,7 +27,7 @@ dotfiles 의 `_dotfiles_setup_mode()`
 | `3` / `external` | `external` |
 | 파일 없음 | 빈 문자열 (모드 불명) |
 
-숫자 값은 pre-#571 setup.sh 가 쓰던 레거시 표기이며 그대로 받아준다.
+숫자 값은 pre-dEitY719/dotfiles#571 setup.sh 가 쓰던 레거시 표기이며 그대로 받아준다.
 `lib/resolve-vault.sh` 의 `setup_mode()` 가 이 로직을 담고 있고,
 `--mode <값>` 으로 덮어쓸 수 있다 (테스트·일회성 진단용).
 

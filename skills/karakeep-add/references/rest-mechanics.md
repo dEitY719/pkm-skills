@@ -6,17 +6,12 @@ List-create or attach method, so REST is the correct (and verified) path.
 
 ## Env + base URL
 
-`lib/karakeep-env.sh` is the single copy of this contract — source it, never
-retype it (`pkm:karakeep-classify` sources the same file):
-
-```bash
-. "${SKILL_DIR}/lib/karakeep-env.sh"   # exports BASE and AUTH, or exits
-karakeep_env_load
-```
-
-It loads the working directory's `.env` behind a `[ -f ]` guard (sourcing a
-missing file aborts a POSIX shell), asserts both variables, and sets
-`BASE="${NEXTAUTH_URL%/}"` plus the `Authorization: Bearer` header.
+`lib/karakeep-env.sh` is the single copy of this contract, and every script in
+`lib/` sources it itself — you never source it by hand (`pkm:karakeep-classify`
+reaches the same file). It loads the working directory's `.env` behind a
+`[ -f ]` guard (sourcing a missing file aborts a POSIX shell), asserts both
+variables, and exports `BASE="${NEXTAUTH_URL%/}"` plus the
+`Authorization: Bearer` header.
 
 - **Base URL is `NEXTAUTH_URL`** (e.g. `https://karakeep.<your-tailnet>.ts.net`),
   reachable from home/internal over tailscale. It is **not** the
@@ -25,75 +20,46 @@ missing file aborts a POSIX shell), asserts both variables, and sets
 
 ## Resolve or create a List
 
-Lists nest via `parentId`. To resolve a slash path like `github/repository`,
-start at the root and walk one segment at a time, carrying `parentId`.
+Lists nest via `parentId`. `lib/karakeep-add.sh` owns the walk: it takes one
+`GET /api/v1/lists` snapshot (`.lists[]?`, null-safe if the field is missing),
+then resolves a slash path segment by segment, reusing a List whose `name` and
+`parentId` both match and creating it otherwise. Run the script — `-h` prints
+its flags and the `KEY='value'` lines it emits — rather than retyping the
+calls.
 
-`lib/karakeep-add.sh` implements this walk against `GET /api/v1/lists`
-(`.lists[]?`, null-safe if the field is missing). To *look at* the tree
-instead — the shape `pkm:karakeep-classify` needs — use the shared helper,
-which prints one `<id>\t<full/path>` line per List:
+To *look at* the tree instead — the shape `pkm:karakeep-classify` needs — use
+the shared helper, which prints one `<id>\t<full/path>` line per List:
 
 ```bash
 bash "${SKILL_DIR}/lib/list-tree.sh"                    # REST
 bash "${SKILL_DIR}/lib/list-tree.sh" --db data/db.db    # SQLite copy
 ```
 
-For each segment (bound to shell vars `SEGMENT`, `EMOJI`, `PARENT_ID` — not
-`<...>` placeholders, which a shell would read as redirection):
-- Match an existing list where `name == $SEGMENT` and `parentId` equals the
-  running parent (`null` at the root). Found → reuse `.id`.
-- Not found → create it. Build the JSON with `jq -n` so values are always
-  escaped (a raw `-d '{"name":"'"$SEGMENT"'"...}'` breaks or injects when a
-  value contains `"` or `\`):
+Why the walk is shaped the way it is:
 
-```bash
-payload=$(jq -n --arg name "$SEGMENT" --arg icon "$EMOJI" --arg parentId "$PARENT_ID" \
-  '{name: $name, icon: $icon, parentId: (if $parentId == "" then null else $parentId end)}')
-curl -fsS -X POST -H "$AUTH" -H 'Content-Type: application/json' \
-  "$BASE/api/v1/lists" -d "$payload" | jq -r '.id'
-```
-
-`icon` is **required** by the API and must be a single emoji — set `EMOJI` to
-a sensible one (a folder glyph as default, or a topic-fitting one). Leave
-`PARENT_ID` empty for a root list (the `jq` expression emits `null`).
-Creating parents first preserves full-path membership. Idempotent: a second
-run finds every segment and creates nothing.
+- `icon` is **required** by the API and must be a single emoji. The default is
+  a folder glyph; override it with `KARAKEEP_LIST_ICON`.
+- Payloads are built with `jq -n --arg`, never string-interpolated — a raw
+  `-d '{"name":"'"$SEGMENT"'"...}'` breaks or injects when a value contains a
+  quote or a backslash.
+- Parents are created first, because membership is preserved by full path.
+- Idempotent: a second run finds every segment and creates nothing.
 
 ## Resolve or create a bookmark
 
-Dedup on the trailing-slash-stripped URL:
-
-```bash
-KEY="$(printf '%s' "$URL" | sed 's:/*$::')"   # url.rstrip("/")
-```
-
-Search existing bookmarks for one whose URL (also stripped) equals `KEY`;
-reuse its id. None → create:
-
-```bash
-payload=$(jq -n --arg url "$URL" --arg title "$TITLE" \
-  '{type:"link", url:$url, title:$title}')
-curl -fsS -X POST -H "$AUTH" -H 'Content-Type: application/json' \
-  "$BASE/api/v1/bookmarks" -d "$payload" | jq -r '.id'
-```
-
-`TITLE` may be the URL itself when no better title is known; Karakeep
-backfills metadata asynchronously. As above, `jq -n` keeps the payload valid
-even when the URL or title contains quotes or backslashes.
+The dedup key is `url.rstrip("/")`, applied to both sides of the comparison.
+`lib/karakeep-add.sh` pages `GET /api/v1/bookmarks` looking for it, accepting
+the link URL at either `.content.url` or `.url` (Karakeep has carried both),
+and gives up loudly rather than risk a duplicate if the pages never run out.
+No hit → `POST /api/v1/bookmarks` `{type:"link", url, title}`, `title`
+defaulting to the URL itself when no better one is known; Karakeep backfills
+the metadata asynchronously.
 
 ## Attach + verify
 
-```bash
-# Idempotent; success returns an empty body / 2xx. (LIST_ID / BOOKMARK_ID are
-# shell vars, not `<...>` placeholders.)
-curl -fsS -X PUT -H "$AUTH" \
-  "$BASE/api/v1/lists/$LIST_ID/bookmarks/$BOOKMARK_ID"
-
-# Verify membership. `.bookmarks[]?` is null-safe.
-curl -fsS -H "$AUTH" "$BASE/api/v1/lists/$LIST_ID/bookmarks" \
-  | jq -e --arg id "$BOOKMARK_ID" '.bookmarks[]? | select(.id==$id)' >/dev/null \
-  && echo verified || echo NOT-verified
-```
+The attach is `PUT /api/v1/lists/$LIST_ID/bookmarks/$BOOKMARK_ID` — idempotent,
+empty body on a 2xx — and the following `GET /api/v1/lists/$LIST_ID/bookmarks`
+confirms membership before the script reports `VERIFIED`.
 
 ## Reading the live tree on an external host
 
@@ -104,11 +70,11 @@ cannot drift apart the way the hand-written copies did.
 
 ## Company boundary
 
-`Company` and every descendant list form a confidentiality boundary
-(CLAUDE.md §4.3). Refuse to attach a public or personal URL anywhere under
-`Company/`. Only proceed if the URL is genuinely company-internal **and** the
-user confirmed the target. When refusing, name the rule and suggest a
-non-Company list instead.
+`Company` and every descendant list form a confidentiality boundary (this
+repo's `CLAUDE.md` -> "Safety contracts"). Refuse to attach a public or
+personal URL anywhere under `Company/`. Only proceed if the URL is genuinely
+company-internal **and** the user confirmed the target. When refusing, name
+the rule and suggest a non-Company list instead.
 
 ## Error cases
 

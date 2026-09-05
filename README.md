@@ -42,7 +42,7 @@ Each page is generated from a Markdown source under
 |-------|-------|
 | `obsidian-session-clip` | A local git-backed PARA vault. Resolution order: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived from `~/.dotfiles-setup-mode`. A missing vault is a stop, never a `mkdir`. |
 | `obsidian-resolve-conflict` | Two clones of the same vault remote (`windows` / `wsl`). Overrides: `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT` (default `/mnt/c/Users`), `$OBSIDIAN_VAULT_WIN_NAME` (default `ObsidianVault-PARA`), `$OBSIDIAN_VAULT_WSL_ROOT` (default `$HOME/para/project`). |
-| `karakeep-add`, `karakeep-classify` | A reachable Karakeep instance and its API token, read from the working directory's `.env`: `NEXTAUTH_URL` (the live base URL — never `localhost:3001`) and `KARAKEEP_API_KEY`. Either unset is a hard failure, not a fallback. |
+| `karakeep-add`, `karakeep-classify` | A reachable Karakeep instance and its API token, read from the working directory's `.env`: `NEXTAUTH_URL` (the live base URL — never `localhost:3001`) and `KARAKEEP_API_KEY`. Either unset is a hard failure, not a fallback. Their `lib/*.sh` need `curl`, `jq`, and `python3` on PATH. |
 
 ## Install
 
@@ -117,8 +117,9 @@ a List path) is unchanged.
 
 The `lib/*.sh` helpers under `obsidian-session-clip`,
 `obsidian-resolve-conflict`, and `karakeep-add` (which `karakeep-classify`
-shares rather than copying) are plain POSIX-friendly bash and run identically on
-every harness. Call them; do not reimplement them.
+shares rather than copying) are plain bash and run identically on every
+harness; the Karakeep pair additionally needs `curl`, `jq`, and `python3` on
+PATH. Call them; do not reimplement them.
 
 ## Shared assets
 

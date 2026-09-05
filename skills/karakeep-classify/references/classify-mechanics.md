@@ -6,13 +6,14 @@ This skill is read + judge only. The single write path lives in
 ## Env + read the tree
 
 Both halves live in `pkm:karakeep-add`'s `lib/`, shared rather than copied —
-the copies this file used to carry had already drifted from their originals:
+the copies this file used to carry had already drifted from their originals.
+`list-tree.sh` sources `karakeep-env.sh` itself, so this skill never loads the
+env by hand:
 
 ```bash
 LIB="${SKILL_DIR}/../karakeep-add/lib"
-. "$LIB/karakeep-env.sh" && karakeep_env_load   # exports BASE and AUTH
-bash "$LIB/list-tree.sh"                        # <id>\t<full/path> per List
-bash "$LIB/list-tree.sh" --db data/db.db        # same output from SQLite
+bash "$LIB/list-tree.sh"                     # <id>\t<full/path> per List
+bash "$LIB/list-tree.sh" --db data/db.db     # same output from SQLite
 ```
 
 Base URL is `NEXTAUTH_URL` (tailscale-reachable), **not** the `config.yaml`
@@ -31,8 +32,8 @@ over a brand-new root).
 
 ## Company boundary
 
-`Company` and its descendants are a confidentiality boundary (CLAUDE.md
-§4.3). Never recommend a public or personal URL into `Company/*`, even when
+`Company` and its descendants are a confidentiality boundary (this repo's
+`CLAUDE.md` -> "Safety contracts"). Never recommend a public or personal URL into `Company/*`, even when
 the topic seems to match — the boundary is about provenance, not topic.
 State the rule if the user pushes a public URL toward Company, and offer a
 non-Company alternative.

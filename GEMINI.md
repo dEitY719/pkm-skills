@@ -63,8 +63,9 @@ On Antigravity read `antigravity-tools.md` in that same directory instead —
   sibling `SKILL.md` and follow it inline. The handoff contract is just a URL
   and a List path.
 - Nothing else is Claude-Code-specific. The `lib/*.sh` helpers are plain bash
-  and run unchanged under `run_shell_command`; pass their `[OK]` / `[FAIL]`
-  lines through verbatim rather than summarising them.
+  and run unchanged under `run_shell_command` (the Karakeep pair also needs
+  `curl`, `jq`, and `python3` on PATH); pass their `[OK]` / `[FAIL]` lines
+  through verbatim rather than summarising them.
 - On Antigravity, `ask_user` does not exist — ask in the conversation and wait
   for a real reply before any confirmation step below.
 
