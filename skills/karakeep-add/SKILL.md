@@ -45,9 +45,9 @@ Positional `<url>`; flag `--list <path>` (slash-delimited nesting).
   user re-runs with an explicit `--list` (propose-then-confirm — never
   auto-apply the guess).
 
-`SKILL_DIR` = this file's directory. `lib/karakeep-env.sh` loads
-`NEXTAUTH_URL` + `KARAKEEP_API_KEY` from the working directory's `.env` and
-fails loudly when either is unset — never guess a base URL or use `localhost`.
+`SKILL_DIR` = this file's directory. The `lib/` scripts load `NEXTAUTH_URL` +
+`KARAKEEP_API_KEY` from the working directory's `.env` themselves and fail
+loudly when either is unset — never guess a base URL or use `localhost`.
 
 ## Step 2: Company Guardrail
 

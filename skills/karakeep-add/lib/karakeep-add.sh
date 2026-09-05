@@ -63,10 +63,13 @@ die() {
 }
 
 # Print the id of the List named $1 under parent $2 ("" = root), or nothing.
+# Matches against $LISTS, the single snapshot main() fetches: a segment created
+# mid-walk can have no children yet, so a later lookup correctly finds nothing
+# and the walk creates it. One GET per run instead of one per path segment.
 find_list() {
-    curl -fsS -H "$AUTH" "$BASE/api/v1/lists" \
-        | jq -r --arg name "$1" --arg parent "$2" \
-            '[.lists[]? | select(.name == $name and ((.parentId // "") == $parent))][0].id // empty'
+    jq -r --arg name "$1" --arg parent "$2" \
+        '[.lists[]? | select(.name == $name and ((.parentId // "") == $parent))][0].id // empty' \
+        <<<"$LISTS"
 }
 
 create_list() {
@@ -79,23 +82,21 @@ create_list() {
 
 # Print the id of a bookmark whose url.rstrip("/") equals $1, or nothing.
 find_bookmark() {
-    local key="$1" cursor="" page=0 body hit
+    local key="$1" query="limit=100" page=0 body hit cursor
     while [ "$page" -lt "$MAX_PAGES" ]; do
-        if [ -n "$cursor" ]; then
-            body=$(curl -fsS -H "$AUTH" "$BASE/api/v1/bookmarks?limit=100&cursor=$cursor")
-        else
-            body=$(curl -fsS -H "$AUTH" "$BASE/api/v1/bookmarks?limit=100")
-        fi
+        body=$(curl -fsS -H "$AUTH" "$BASE/api/v1/bookmarks?$query")
         # Karakeep has carried the link URL both at .url and at .content.url;
         # accept either rather than pinning one shape.
-        hit=$(printf '%s' "$body" | jq -r --arg key "$key" \
-            '[.bookmarks[]? | select((((.content.url // .url) // "") | sub("/+$"; "")) == $key)][0].id // empty')
+        hit=$(jq -r --arg key "$key" \
+            '[.bookmarks[]? | select((((.content.url // .url) // "") | sub("/+$"; "")) == $key)][0].id // empty' \
+            <<<"$body")
         if [ -n "$hit" ]; then
             printf '%s\n' "$hit"
             return 0
         fi
-        cursor=$(printf '%s' "$body" | jq -r '.nextCursor // empty')
+        cursor=$(jq -r '.nextCursor // empty' <<<"$body")
         [ -n "$cursor" ] || return 0
+        query="limit=100&cursor=$cursor"
         page=$((page + 1))
     done
     die "scanned $MAX_PAGES bookmark pages without exhausting the list — refusing to risk a duplicate"
@@ -109,8 +110,7 @@ main() {
             ;;
     esac
 
-    local url="" path="" title="" allow_company="no"
-    url="${1:-}"
+    local url="${1:-}" path="" title="" allow_company="no"
     [ -n "$url" ] || die "missing <url> — see karakeep-add.sh -h"
     shift
     while [ $# -gt 0 ]; do
@@ -144,10 +144,13 @@ main() {
 
     karakeep_env_load
     ICON="${KARAKEEP_LIST_ICON:-$DEFAULT_ICON}"
+    # GET /api/v1/lists returns the whole tree, so fetch it once and match
+    # every segment locally rather than re-downloading it per segment.
+    LISTS=$(curl -fsS -H "$AUTH" "$BASE/api/v1/lists")
 
     local parent="" list_created="no" trail="" segment id
     # A path never contains an empty segment; IFS splitting on "/" is enough.
-    local -a segments=()
+    local -a segments
     IFS='/' read -r -a segments <<<"$path"
     for segment in "${segments[@]}"; do
         [ -n "$segment" ] || die "empty segment in --list '$path'"

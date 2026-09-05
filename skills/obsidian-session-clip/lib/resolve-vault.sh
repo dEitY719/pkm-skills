@@ -52,8 +52,8 @@ main() {
         # Same normalisation as setup_mode() in the sibling
         # obsidian-resolve-conflict lib and _dotfiles_setup_mode()
         # (dEitY719/dotfiles shell-common/tools/integrations/claude.sh): one
-        # `tr`, and the legacy numeric mode values written by pre-#571
-        # setup.sh treated as aliases
+        # `tr`, and the legacy numeric mode values written by
+        # pre-dEitY719/dotfiles#571 setup.sh treated as aliases
         # of their names. The `[ -f ]` guard is load-bearing — on a missing
         # file the *shell* reports the failed redirect before `tr` ever runs,
         # so an inner `2>/dev/null` would not suppress it.

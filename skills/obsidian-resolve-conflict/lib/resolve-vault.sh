@@ -83,7 +83,7 @@ emit() {
 
 # setup_mode — same normalisation as _dotfiles_setup_mode()
 # (dEitY719/dotfiles shell-common/tools/integrations/claude.sh). Legacy numeric
-# values written by pre-#571 setup.sh are translated; a missing file yields "".
+# values written by pre-dEitY719/dotfiles#571 setup.sh are translated; a missing file yields "".
 setup_mode() {
     mode_file="${DOTFILES_SETUP_MODE_FILE:-${HOME}/.dotfiles-setup-mode}"
     [ -f "$mode_file" ] || {

@@ -37,9 +37,9 @@ the "write" is `pkm:karakeep-add`.
 Positional `<url>` (required → else usage pointer `Run /pkm:karakeep-classify -h
 for usage.`). Flag `--apply` switches from dry-run to execution.
 
-`SKILL_DIR` = this file's directory. `../karakeep-add/lib/karakeep-env.sh`
-loads `NEXTAUTH_URL` + `KARAKEEP_API_KEY` from `./.env`; unset → fail
-clearly, no localhost fallback.
+`SKILL_DIR` = this file's directory. Step 2's script loads `NEXTAUTH_URL` +
+`KARAKEEP_API_KEY` from `./.env` itself; unset → fail clearly, no localhost
+fallback.
 
 ## Step 2: Read the Live List Tree
 
