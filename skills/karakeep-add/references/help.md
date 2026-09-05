@@ -8,6 +8,12 @@
 | `--list <path>` | — | Target List, slash-nested e.g. `github/repository`. Omit to get a `pkm:karakeep-classify` suggestion (propose-then-confirm; nothing is written). |
 | `-h` / `--help` / `help` | — | Print this help and stop. |
 
+`lib/karakeep-add.sh` takes two more, set by the skill rather than typed by
+the user: `--title <title>` (defaults to the URL; Karakeep backfills real
+metadata asynchronously) and `--allow-company`, which the skill passes only
+after Step 2 has confirmed a `Company/*` target. Without it the script
+refuses that subtree outright.
+
 ## Usage
 
 - `/pkm:karakeep-add https://github.com/dEitY719/dotfiles --list github/repository`

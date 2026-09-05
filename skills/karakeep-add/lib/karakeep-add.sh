@@ -23,8 +23,11 @@ LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # Default List icon. The API requires a single emoji; this repo's CI bans
 # emoji in tracked text, so it is built from its codepoint instead.
 DEFAULT_ICON="$(printf '\U0001F4C1')"
-# Bookmark pages scanned while deduping before giving up (100 per page).
-MAX_PAGES=50
+# Loop guard for the paginated scans (100 rows per page). This is an
+# infinite-loop bound, not a library-size limit: a real end-of-list is a
+# missing nextCursor, and a server that stops advancing the cursor is
+# caught explicitly, so this only has to be higher than any real library.
+MAX_PAGES=1000
 
 usage() {
     cat <<'EOF'
@@ -82,7 +85,7 @@ create_list() {
 
 # Print the id of a bookmark whose url.rstrip("/") equals $1, or nothing.
 find_bookmark() {
-    local key="$1" query="limit=100" page=0 body hit cursor
+    local key="$1" query="limit=100" page=0 body hit cursor prev_cursor=""
     while [ "$page" -lt "$MAX_PAGES" ]; do
         body=$(curl -fsS -H "$AUTH" "$BASE/api/v1/bookmarks?$query")
         # Karakeep has carried the link URL both at .url and at .content.url;
@@ -96,6 +99,9 @@ find_bookmark() {
         fi
         cursor=$(jq -r '.nextCursor // empty' <<<"$body")
         [ -n "$cursor" ] || return 0
+        [ "$cursor" != "$prev_cursor" ] ||
+            die "bookmark pagination cursor stopped advancing at '$cursor' — refusing to risk a duplicate"
+        prev_cursor="$cursor"
         query="limit=100&cursor=$cursor"
         page=$((page + 1))
     done
@@ -157,11 +163,17 @@ main() {
         id=$(find_list "$segment" "$parent")
         if [ -n "$id" ]; then
             trail="${trail:+$trail;}${segment}:${id}:reused"
-        else
-            id=$(create_list "$segment" "$parent")
-            [ -n "$id" ] || die "POST /api/v1/lists returned no id for segment '$segment'"
+        elif id=$(create_list "$segment" "$parent") && [ -n "$id" ]; then
             list_created="yes"
             trail="${trail:+$trail;}${segment}:${id}:created"
+        else
+            # Lookup-then-POST races: a concurrent run may have created this
+            # segment since our snapshot. Re-read once and reuse the winner
+            # rather than reporting a failure or making a duplicate.
+            LISTS=$(curl -fsS -H "$AUTH" "$BASE/api/v1/lists")
+            id=$(find_list "$segment" "$parent")
+            [ -n "$id" ] || die "could not create or find List segment '$segment'"
+            trail="${trail:+$trail;}${segment}:${id}:reused"
         fi
         parent="$id"
     done
@@ -184,11 +196,24 @@ main() {
         "$BASE/api/v1/lists/$parent/bookmarks/$bookmark_id" >/dev/null ||
         die "PUT attach failed for bookmark $bookmark_id -> list $parent"
 
-    local verified="no"
-    if curl -fsS -H "$AUTH" "$BASE/api/v1/lists/$parent/bookmarks" |
-        jq -e --arg id "$bookmark_id" '.bookmarks[]? | select(.id == $id)' >/dev/null; then
-        verified="yes"
-    fi
+    local verified="no" vquery="limit=100" vbody vcursor vprev=""
+    local vpage=0
+    while [ "$vpage" -lt "$MAX_PAGES" ]; do
+        # Assigned, never piped: a curl failure must abort here rather than
+        # reach the report as a false "not attached".
+        vbody=$(curl -fsS -H "$AUTH" "$BASE/api/v1/lists/$parent/bookmarks?$vquery")
+        if jq -e --arg id "$bookmark_id" '.bookmarks[]? | select(.id == $id)' \
+            <<<"$vbody" >/dev/null; then
+            verified="yes"
+            break
+        fi
+        vcursor=$(jq -r '.nextCursor // empty' <<<"$vbody")
+        [ -n "$vcursor" ] || break
+        [ "$vcursor" != "$vprev" ] || break
+        vprev="$vcursor"
+        vquery="limit=100&cursor=$vcursor"
+        vpage=$((vpage + 1))
+    done
 
     emit LIST_ID "$parent"
     emit LIST_CREATED "$list_created"
