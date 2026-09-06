@@ -110,6 +110,12 @@ apply here on the next run, which is the whole point.
 
 These are acceptance criteria carried over from dotfiles, not advice:
 
+The `(F-n)` / `(NF-n)` tags still sprinkled through `references/` and `lib/`
+are those dotfiles-era criterion ids. Nothing in this repo defines them, and
+nothing needs to: in every case the rule is spelled out in the sentence that
+carries the tag. Treat a tag as provenance, not as a pointer to look up — and
+do not add new ones.
+
 - **`obsidian-session-clip` is never auto-triggered.** "The session looks
   finished" is not an invocation. It runs on an explicit request only. It
   commits the one note it created, by pathspec — never `-a`, `-A`, or
