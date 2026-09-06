@@ -85,9 +85,8 @@ Run `bash "${SKILL_DIR}/lib/verify-clip.sh" "$NOTE"` (skip on `--dry-run`), show
 
 ## Constraints
 
-Pathspec-only commits and no remote sync are stated in Step 6 and
-`references/help.md` Safety — not repeated here. In addition:
-
+- Vault commits are pathspec-only — never `-a` / `-A` / `git add .`.
+- Never synchronise the vault to its remote; obsidian-git owns that.
 - Never dump the transcript, never merge several sessions into one note.
 - Never modify code, never run `/ingest` — the vault's human gate is the point.
 
