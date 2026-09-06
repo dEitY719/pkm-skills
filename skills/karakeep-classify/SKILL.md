@@ -52,7 +52,8 @@ One `<id>\t<full/path>` line per List, `parentId` already resolved. Add
 ## Step 3: Analyze the URL
 
 Determine the URL's topic from its host/path and, when useful, a WebFetch of
-the page title + meta description. Host and path alone usually suffice.
+the page title + meta description. Host and path usually suffice, but WebFetch
+whenever they are opaque — a shortlink, a hash-routed SPA, a query-only route.
 
 ## Step 4: Match or Propose
 
@@ -80,10 +81,11 @@ End with exactly one of these three verdict lines:
 [FAIL] <reason>
 ```
 
-`[FAIL]` covers every refusal — unset env (Step 1), an unreachable List tree
-(Step 2), a Company-boundary refusal (Step 4). `[DRY-RUN]` adds a `Next:` line
-with the `pkm:karakeep-add` command; `[APPLIED]` re-runs classify to show the
-no-op.
+Nothing follows it — the `Next:` hint and the rationale go *above* the verdict,
+so a caller reads the terminal status from the last line alone. `[FAIL]` covers
+unset env (Step 1) and an unreachable List tree (Step 2); a Company-boundary
+refusal is `[DRY-RUN]` with the non-Company alternative, since the skill still
+classified the URL — only the requested destination was refused.
 
 ## Constraints
 

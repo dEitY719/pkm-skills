@@ -48,9 +48,10 @@ distinguishable without reading the prose above it:
 [FAIL] <reason>
 ```
 
-`[FAIL]` is used for an unset `NEXTAUTH_URL` / `KARAKEEP_API_KEY`, an
-unreachable List tree, and a refusal to place a public or personal URL under
-`Company`.
+Nothing is printed after the verdict — the `Next:` hint precedes it. `[FAIL]`
+is used for an unset `NEXTAUTH_URL` / `KARAKEEP_API_KEY` and an unreachable
+List tree. A refusal to place a public or personal URL under `Company` is a
+`[DRY-RUN]` carrying the non-Company alternative, not a `[FAIL]`.
 
 A full worked run — command, inputs, and the `[DRY-RUN]` report block Step 6
 prints — is in

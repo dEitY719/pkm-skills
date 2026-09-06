@@ -35,8 +35,11 @@ over a brand-new root).
 `Company` and its descendants are a confidentiality boundary (this repo's
 `CLAUDE.md` -> "Safety contracts"). Never recommend a public or personal URL into `Company/*`, even when
 the topic seems to match — the boundary is about provenance, not topic.
-State the rule if the user pushes a public URL toward Company, offer a
-non-Company alternative, and end the run with `[FAIL]`.
+State the rule if the user pushes a public URL toward Company and offer a
+non-Company alternative. That is a `[DRY-RUN]`, not a `[FAIL]`: the URL was
+classified successfully and only the requested destination was refused, so an
+automated caller must still see the alternative path. `[FAIL]` is for a run
+that produced no usable recommendation at all.
 
 ## Delegating on --apply
 
