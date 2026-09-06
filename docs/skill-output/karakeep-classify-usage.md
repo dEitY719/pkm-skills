@@ -36,8 +36,8 @@ URL  ──▶  /pkm:karakeep-classify  ──▶  추천 List 경로 + 후속 �
 신뢰도      high
 Company     N/A — 공개 URL 이라 Company/* 는 제안 대상에서 제외
 
-[DRY-RUN] 아무것도 쓰지 않음
 Next: pkm:karakeep-add https://modelcontextprotocol.io/ --list AI/Agent Tooling
+[DRY-RUN] https://modelcontextprotocol.io/ -> AI/Agent Tooling (exists) confidence=high
 ```
 
 무변경 확인: List 수 36 -> 36, 신규 북마크 0건.
