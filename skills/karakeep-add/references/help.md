@@ -45,13 +45,24 @@ refuses that subtree outright.
 - Put a public/personal URL into `Company` or its children.
 - Run `karakeep-sync push` or edit the karakeep-sync repo (next push
   materializes the change to Obsidian on its own).
-- Bulk-import — that is `import-chrome`'s job.
 
 ## Output example
 
-A full worked run — command, inputs, and the report block Step 6 prints
-(with the created-vs-reused column that proves idempotency) — is in
-[`docs/skill-output/karakeep-add-usage.md`](../../../docs/skill-output/karakeep-add-usage.md).
+Step 6 prints one `[OK]` / `[FAIL]` header line plus one row per artifact; the
+created-vs-reused column is the idempotency evidence:
+
+```
+[OK] https://herdr.dev/plugins/  ->  AI/Agent Tooling
+
+  list  AI             aow9udmua26h2lool5avu5k2   reused (not created)
+  list  Agent Tooling  eisz99uyprtexueievao2fmr   reused (not created)
+  bookmark             cz99n9c1xufte02h3qtt7ewy   reused (dedup hit)
+  attach PUT           2xx / empty body           idempotent
+  verify GET           verified
+```
+
+The full worked run it came from — command, inputs, counts before and after —
+is in [`docs/skill-output/karakeep-add-usage.md`](../../../docs/skill-output/karakeep-add-usage.md).
 
 ## Related
 

@@ -84,13 +84,10 @@ confirm the no-op. Error templates: `references/rest-mechanics.md`
 
 ## Constraints
 
-- Base URL is always `NEXTAUTH_URL` — never `localhost:3001` (that is the
-  `config.yaml` internal value, wrong for live writes).
-- Idempotent: never create a duplicate List (same name+parent) or bookmark
-  (same `url.rstrip("/")`).
-- Never write a public/personal URL into the `Company` subtree.
-- This skill only touches the live Karakeep instance — it does not edit the
-  karakeep-sync repo or run `karakeep-sync push` (next push materializes).
+The base-URL, idempotency and Company rules are stated where they apply
+(Steps 1, 2 and 3-5). The one rule that lives nowhere else: this skill only
+touches the live Karakeep instance — it does not edit the karakeep-sync repo
+or run `karakeep-sync push` (the next push materializes the change).
 
 ## Related Skills
 
