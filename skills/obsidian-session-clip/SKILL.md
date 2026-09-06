@@ -45,8 +45,8 @@ PR, else `research` (`references/frontmatter.md`).
 
 ## Step 3: Compose
 
-Frontmatter: all 9 keys per `references/frontmatter.md`, `status: unprocessed`,
-`memo: ai-generated`. Body: `references/template-code.md` or
+Frontmatter: all 9 keys per `references/frontmatter.md` (that file fixes
+`status` and `memo`). Body: `references/template-code.md` or
 `references/template-research.md`, section titles and order verbatim. Fill all
 3 `## 메모` subsections. No commits, no file changes and no substantive
 discussion → print "클립할 내용이 없다" and stop; never write an empty note.
@@ -85,8 +85,9 @@ Run `bash "${SKILL_DIR}/lib/verify-clip.sh" "$NOTE"` (skip on `--dry-run`), show
 
 ## Constraints
 
-- Vault commits are pathspec-only — never `-a` / `-A` / `git add .`.
-- Never synchronise the vault to its remote; obsidian-git owns that.
+Pathspec-only commits and no remote sync are stated in Step 6 and
+`references/help.md` Safety — not repeated here. In addition:
+
 - Never dump the transcript, never merge several sessions into one note.
 - Never modify code, never run `/ingest` — the vault's human gate is the point.
 
