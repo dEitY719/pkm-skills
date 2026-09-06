@@ -26,11 +26,10 @@ output its content verbatim, then stop. No API calls.
 
 ## Role
 
-Decide where `<url>` belongs in Karakeep. Compare the URL's topic against
-the live List tree and recommend the best-fit existing List, or — when
-nothing fits — propose a new (possibly nested) List path. **Default is
-dry-run**: print the proposal and write nothing. This skill is the "judge";
-the "write" is `pkm:karakeep-add`.
+Decide where `<url>` belongs in Karakeep. Compare the URL's topic against the
+live List tree and recommend the best-fit existing List, or — when nothing
+fits — propose a new (possibly nested) List path. **Default is dry-run**:
+print the proposal and write nothing; `pkm:karakeep-add` owns the write.
 
 ## Step 1: Parse Args + Load Env
 
@@ -38,8 +37,7 @@ Positional `<url>` (required → else usage pointer `Run /pkm:karakeep-classify 
 for usage.`). Flag `--apply` switches from dry-run to execution.
 
 `SKILL_DIR` = this file's directory. Step 2's script loads `NEXTAUTH_URL` +
-`KARAKEEP_API_KEY` from `./.env` itself; unset → fail clearly, no localhost
-fallback.
+`KARAKEEP_API_KEY` from `./.env` itself; unset → `[FAIL]`, no localhost fallback.
 
 ## Step 2: Read the Live List Tree
 
@@ -54,8 +52,7 @@ One `<id>\t<full/path>` line per List, `parentId` already resolved. Add
 ## Step 3: Analyze the URL
 
 Determine the URL's topic from its host/path and, when useful, a WebFetch of
-the page title + meta description (do not deep-fetch bodies by default). Keep
-it lightweight — title/host/path usually suffice.
+the page title + meta description. Host and path alone usually suffice.
 
 ## Step 4: Match or Propose
 
@@ -67,26 +64,34 @@ guardrail at proposal time: never suggest a public/personal URL into
 ## Step 5: Output (dry-run) or Apply
 
 - **dry-run (default)** — print: the analyzed topic, the recommended path,
-  whether it exists or would be created, a confidence note, and the exact
-  follow-up command `pkm:karakeep-add <url> --list <path>`. Write nothing.
+  whether it exists or would be created, `confidence=<high|medium|low>`, and
+  the exact command `pkm:karakeep-add <url> --list <path>`. Write nothing.
 - **`--apply`** — hand the chosen `<url>` + `<path>` to `pkm:karakeep-add`
   (Skill(pkm:karakeep-add, "<url> --list <path>")); it owns creation, dedup,
   attach, and verification.
 
 ## Step 6: Report
 
-End with a `[DRY-RUN]` or `[APPLIED]` verdict line and the `Next:` hint —
-dry-run → the `pkm:karakeep-add` command to confirm; applied → re-run classify
-to confirm the no-op.
+The last line is always exactly one of these three, so a caller tells success
+from refusal by that line alone:
+
+```
+[DRY-RUN] <url> -> <path> (<exists|would-create>) confidence=<high|medium|low>
+[APPLIED] <url> -> <path>
+[FAIL] <reason>
+```
+
+`[FAIL]` covers every refusal — unset env (Step 1), an unreachable List tree
+(Step 2), a Company-boundary refusal (Step 4). `[DRY-RUN]` adds a `Next:` line
+with the `pkm:karakeep-add` command; `[APPLIED]` re-runs classify to show the
+no-op.
 
 ## Constraints
 
-- Default writes nothing — only `--apply` mutates, and only via
-  `pkm:karakeep-add` (no duplicate REST write logic here).
-- Base URL is always `NEXTAUTH_URL`, never `localhost:3001`.
-- Never propose or apply a public/personal URL under the `Company` subtree.
-- Lightweight analysis — title/meta over full-body fetch unless the user
-  asks for deeper inspection.
+The dry-run default, the `NEXTAUTH_URL` base URL and the Company boundary are
+stated where they apply (Steps 1, 4 and 5). The one rule that lives nowhere
+else: keep analysis lightweight — title/meta, not a full-body fetch, unless
+the user asks for deeper inspection.
 
 ## Related Skills
 

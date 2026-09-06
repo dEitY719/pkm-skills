@@ -39,6 +39,19 @@
 
 ## Output example
 
+Every run ends with exactly one verdict line, so success and refusal are
+distinguishable without reading the prose above it:
+
+```
+[DRY-RUN] <url> -> <path> (<exists|would-create>) confidence=<high|medium|low>
+[APPLIED] <url> -> <path>
+[FAIL] <reason>
+```
+
+`[FAIL]` is used for an unset `NEXTAUTH_URL` / `KARAKEEP_API_KEY`, an
+unreachable List tree, and a refusal to place a public or personal URL under
+`Company`.
+
 A full worked run — command, inputs, and the `[DRY-RUN]` report block Step 6
 prints — is in
 [`docs/skill-output/karakeep-classify-usage.md`](../../../docs/skill-output/karakeep-classify-usage.md).
