@@ -85,12 +85,10 @@ follow-up command (`/pkm:obsidian-resolve-conflict <side> --vault <vault>/90-per
 
 ## Constraints
 
-- merge only. Never rewrite vault history, never escalate a rejected push.
-- Never reset the worktree/index destructively, never delete a directory tree —
-  the user's notes live here. Never auto-merge a note body; ask.
-- Never create a vault; an unresolved path is a stop, not a `mkdir`. Never delete
-  `.git/index.lock` — back off and retry. Never copy the PC tables out of the
-  dotfiles SSOT linked from `references/pc-modes.md`.
+merge 전용 — vault 히스토리 재작성도, 파괴적 reset 도, 디렉터리 트리 삭제도 없다.
+사용자의 노트가 여기 산다. PC 표는 `references/pc-modes.md` 가 링크한 dotfiles SSOT
+에서만 읽고, 이 파일로 복사하지 않는다. (index.lock · 노트 본문 자동 병합 · push
+에스컬레이션 · vault 생성 금지는 각각 Step 2-3 / 4 / 5-6 / 1 에 인라인으로 있다.)
 
 ## Related Skills
 
