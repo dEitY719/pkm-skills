@@ -85,10 +85,11 @@ follow-up command (`/pkm:obsidian-resolve-conflict <side> --vault <vault>/90-per
 
 ## Constraints
 
-merge 전용 — vault 히스토리 재작성도, 파괴적 reset 도, 디렉터리 트리 삭제도 없다.
-사용자의 노트가 여기 산다. PC 표는 `references/pc-modes.md` 가 링크한 dotfiles SSOT
-에서만 읽고, 이 파일로 복사하지 않는다. (index.lock · 노트 본문 자동 병합 · push
-에스컬레이션 · vault 생성 금지는 각각 Step 2-3 / 4 / 5-6 / 1 에 인라인으로 있다.)
+merge 전용, 히스토리 재작성/파괴적 reset/디렉터리 삭제 금지 등 안전 규칙의 SSOT 는
+`CLAUDE.md` Safety contracts 의 이 스킬 항목 — 여기서 반복하지 않는다. PC 표는
+`references/pc-modes.md` 가 링크한 dotfiles SSOT 에서만 읽고, 이 파일로 복사하지
+않는다. index.lock: Step 2-3. 노트 본문 자동 병합 금지: Step 4. push 에스컬레이션
+금지: Step 5-6. vault 생성 금지: Step 1.
 
 ## Related Skills
 
