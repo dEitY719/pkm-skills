@@ -72,8 +72,7 @@ guardrail at proposal time: never suggest a public/personal URL into
 
 ## Step 6: Report
 
-The last line is always exactly one of these three, so a caller tells success
-from refusal by that line alone:
+End with exactly one of these three verdict lines:
 
 ```
 [DRY-RUN] <url> -> <path> (<exists|would-create>) confidence=<high|medium|low>
@@ -88,10 +87,9 @@ no-op.
 
 ## Constraints
 
-The dry-run default, the `NEXTAUTH_URL` base URL and the Company boundary are
-stated where they apply (Steps 1, 4 and 5). The one rule that lives nowhere
-else: keep analysis lightweight — title/meta, not a full-body fetch, unless
-the user asks for deeper inspection.
+Keep analysis lightweight — title/meta, not a full-body fetch, unless the user
+asks for deeper inspection. (The dry-run default, the `NEXTAUTH_URL` base URL
+and the Company boundary are stated inline at Steps 1, 4 and 5.)
 
 ## Related Skills
 
