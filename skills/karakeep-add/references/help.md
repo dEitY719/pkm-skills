@@ -45,11 +45,15 @@ refuses that subtree outright.
 - Put a public/personal URL into `Company` or its children.
 - Run `karakeep-sync push` or edit the karakeep-sync repo (next push
   materializes the change to Obsidian on its own).
+- Bulk-import a bookmark file or a whole browser profile — this skill takes
+  exactly one URL per run.
 
 ## Output example
 
-Step 6 prints one `[OK]` / `[FAIL]` header line plus one row per artifact; the
-created-vs-reused column is the idempotency evidence:
+Step 6 prints an `[OK]` header line plus one row per artifact; the
+created-vs-reused column is the idempotency evidence. A failing run never gets
+this far — `lib/karakeep-add.sh` exits non-zero and Step 3-5 surfaces its
+`FAIL:` line verbatim instead:
 
 ```
 [OK] https://herdr.dev/plugins/  ->  AI/Agent Tooling
