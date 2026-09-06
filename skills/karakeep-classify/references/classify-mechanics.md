@@ -36,8 +36,7 @@ over a brand-new root).
 `CLAUDE.md` -> "Safety contracts"). Never recommend a public or personal URL into `Company/*`, even when
 the topic seems to match — the boundary is about provenance, not topic.
 State the rule if the user pushes a public URL toward Company, offer a
-non-Company alternative, and end the run with `[FAIL]` so the refusal is
-machine-visible rather than only readable.
+non-Company alternative, and end the run with `[FAIL]`.
 
 ## Delegating on --apply
 
