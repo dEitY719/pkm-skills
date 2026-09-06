@@ -133,8 +133,9 @@ These are acceptance criteria carried over from dotfiles, not advice:
 The `(F-n)` / `(NF-n)` tags still sprinkled through `references/` and `lib/`
 are those dotfiles-era criterion ids. Nothing in this repo defines them, and
 nothing needs to: in every case the rule is spelled out in the sentence that
-carries the tag. Treat a tag as provenance, not as a pointer to look up — and
-do not add new ones.
+carries the tag. Treat a tag as provenance, not as a pointer to look up. Do not
+add new ones, and drop the ones you meet while editing a file for other reasons
+— that is the whole deprecation plan; a dedicated sweep is not worth a PR.
 
 ## Harness gaps are documented, not worked around silently
 
