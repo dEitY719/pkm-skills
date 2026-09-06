@@ -110,12 +110,6 @@ apply here on the next run, which is the whole point.
 
 These are acceptance criteria carried over from dotfiles, not advice:
 
-The `(F-n)` / `(NF-n)` tags still sprinkled through `references/` and `lib/`
-are those dotfiles-era criterion ids. Nothing in this repo defines them, and
-nothing needs to: in every case the rule is spelled out in the sentence that
-carries the tag. Treat a tag as provenance, not as a pointer to look up — and
-do not add new ones.
-
 - **`obsidian-session-clip` is never auto-triggered.** "The session looks
   finished" is not an invocation. It runs on an explicit request only. It
   commits the one note it created, by pathspec — never `-a`, `-A`, or
@@ -135,6 +129,12 @@ do not add new ones.
   `url.rstrip("/")`), must read its base URL from `NEXTAUTH_URL` rather than
   guessing or falling back to `localhost:3001`, and must refuse a public or
   personal URL under the `Company` subtree.
+
+The `(F-n)` / `(NF-n)` tags still sprinkled through `references/` and `lib/`
+are those dotfiles-era criterion ids. Nothing in this repo defines them, and
+nothing needs to: in every case the rule is spelled out in the sentence that
+carries the tag. Treat a tag as provenance, not as a pointer to look up — and
+do not add new ones.
 
 ## Harness gaps are documented, not worked around silently
 
