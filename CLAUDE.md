@@ -143,10 +143,11 @@ These are acceptance criteria carried over from dotfiles, not advice:
   `url.rstrip("/")`), must read its base URL from `NEXTAUTH_URL` rather than
   guessing or falling back to `localhost:3001`, and must refuse a public or
   personal URL under the `Company` subtree.
-- **The four Obsidian knowledge skills are read/edit only.**
-  `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas`, and `obsidian-cli`
-  edit vault files or drive the local Obsidian app; none commits, pushes, or
-  writes to any remote service.
+- **The four Obsidian knowledge skills stay local.**
+  `obsidian-markdown`, `obsidian-bases`, and `obsidian-canvas` edit vault
+  files; `obsidian-cli` drives the local Obsidian app, and its `eval` runs
+  arbitrary JavaScript there, so it needs explicit approval of the exact code.
+  None commits, pushes, or writes to any remote service.
 
 The `(F-n)` / `(NF-n)` tags still sprinkled through `references/` and `lib/`
 are those dotfiles-era criterion ids. Nothing in this repo defines them, and
