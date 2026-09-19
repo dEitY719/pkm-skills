@@ -42,9 +42,6 @@ to editing vault files by hand.
 | Parameter and flag syntax, file / vault targeting, common note commands | `references/COMMANDS.md` |
 | Plugin / theme develop-test cycle, `eval`, CSS, mobile emulation | `references/PLUGIN_DEV.md` |
 
-`obsidian help` lists every command and is always up to date; full docs at
-https://help.obsidian.md/cli.
-
 ## Step 3: Run the command
 
 Parameters take a value with `=` (quote values with spaces); flags are bare

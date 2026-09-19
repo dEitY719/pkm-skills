@@ -43,8 +43,6 @@ request only.
 - `karakeep-classify` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-classify.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-classify-usage.html) (URL to List suggestion)
 - `karakeep-add` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-add.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-add-usage.html) (URL to filed bookmark)
 
-The four Obsidian knowledge skills have no visual guide yet.
-
 Each page is generated from a Markdown source under
 [`docs/skill-guides/`](docs/skill-guides) and [`docs/skill-output/`](docs/skill-output).
 
@@ -107,10 +105,6 @@ is documented per harness in
 [`harness-skills/references/`](https://github.com/dEitY719/harness-skills/tree/main/references);
 read the one file for the harness you are on.
 
-`obsidian-cli` is the one skill with a host requirement rather than a tool gap:
-it needs a running Obsidian desktop app and the `obsidian` CLI on PATH, so it
-does not work in a headless or remote session on any harness.
-
 | Skill | Claude Code | Codex | Kimi | Gemini / Antigravity | Hermes | OpenCode |
 |-------|:-----------:|:-----:|:----:|:--------------------:|:------:|:--------:|
 | `obsidian-session-clip` | full | full | full | full | full | full |
@@ -133,8 +127,9 @@ Gemini maps this to `web_fetch` and Hermes to `web_extract`; elsewhere use the
 shell tool with `curl -sL`. The fetch is optional in the first place — host and
 path usually decide the List, and a full-body fetch is never wanted.
 
-*needs app* — `obsidian-cli` runs only where the Obsidian desktop app is open
-and `obsidian` is on PATH; it runs through each harness's shell tool unchanged.
+*needs app* — a host requirement, not a tool gap: `obsidian-cli` runs only where
+the Obsidian desktop app is open and `obsidian` is on PATH, so never in a
+headless or remote session; it runs through each harness's shell tool unchanged.
 
 `Skill(pkm:karakeep-add, ...)` has no equivalent outside Claude Code. Read the
 sibling skill's `SKILL.md` and follow it inline; the handoff contract (a URL and

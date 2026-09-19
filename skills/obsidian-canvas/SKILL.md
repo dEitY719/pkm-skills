@@ -21,13 +21,6 @@ A `.canvas` file is JSON following the
 top-level arrays, `nodes` and `edges`. This skill edits one canvas file in the
 user's vault. It never commits, never syncs, and never touches a remote.
 
-```json
-{
-  "nodes": [],
-  "edges": []
-}
-```
-
 ## Help
 
 If arg #1 is `-h`, `--help`, or `help`, read `references/help.md` and output
