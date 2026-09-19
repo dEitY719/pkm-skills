@@ -1,10 +1,11 @@
 # pkm-skills
 
-Four skills for personal knowledge management across two services — clip a
+Eight skills for personal knowledge management across two services — clip a
 finished AI session into an Obsidian vault, resolve that vault's sync conflicts,
-file a URL into Karakeep, and decide where a URL belongs before filing it.
-Packaged as a single plugin named `pkm`, installable on six coding-agent
-harnesses.
+write Obsidian notes, Bases, and Canvas files, drive a running Obsidian app
+through its CLI, file a URL into Karakeep, and decide where a URL belongs before
+filing it. Packaged as a single plugin named `pkm`, installable on six
+coding-agent harnesses.
 
 Unlike its sibling [`harness-skills`](https://github.com/dEitY719/harness-skills),
 this repo owns no shared assets — it links out for the
@@ -18,13 +19,22 @@ this repo owns no shared assets — it links out for the
 | `obsidian-resolve-conflict` | `/pkm:obsidian-resolve-conflict [windows\|wsl] [--no-push] [--no-sync-peer] [--dry-run] [--vault <path>]` | Diagnoses a vault `git pull` conflict, sorts it into local-state / note-body / other, auto-resolves only the local-state class, asks about the rest, commits, pushes, and fast-forwards the peer clone. |
 | `karakeep-classify` | `/pkm:karakeep-classify <url> [--apply]` | Reads the live Karakeep List tree and proposes the best-fit List path for a URL, with a rationale and the exact follow-up command. Dry-run by default; writes nothing. |
 | `karakeep-add` | `/pkm:karakeep-add <url> --list <path>` | Adds the URL to that List over REST, creating every missing parent in a nested `parent/child` path. Idempotent on both the List and the bookmark. |
+| `obsidian-markdown` | `/pkm:obsidian-markdown [path] [request]` | Writes Obsidian Flavored Markdown in a vault note — wikilinks, embeds, callouts, properties, tags, math, Mermaid, footnotes. Vault notes only, never plain `.md` elsewhere. |
+| `obsidian-bases` | `/pkm:obsidian-bases [path] [request]` | Creates and edits Obsidian Bases (`.base`) files — filters, formulas, summaries, and table / cards / list / map views. |
+| `obsidian-canvas` | `/pkm:obsidian-canvas [path] [request]` | Creates and edits JSON Canvas (`.canvas`) files — text, file, link, and group nodes and the edges between them, with ID and edge-reference validation. |
+| `obsidian-cli` | `/pkm:obsidian-cli [request]` | Runs the `obsidian` CLI against a running Obsidian desktop app — read, search, append, properties, tasks, and the plugin / theme reload-and-debug loop. |
 
 The two Karakeep skills are a propose-then-confirm pair: `karakeep-classify`
 judges, `karakeep-add` writes. Running `karakeep-add` without `--list` delegates
 to `karakeep-classify` rather than guessing.
 
-The two Obsidian skills share a vault but not a remote: `obsidian-session-clip`
-never contacts one, `obsidian-resolve-conflict` exists to synchronise with one.
+The two Obsidian workflow skills share a vault but not a remote:
+`obsidian-session-clip` never contacts one, `obsidian-resolve-conflict` exists to
+synchronise with one. The four Obsidian knowledge skills (`obsidian-markdown`,
+`obsidian-bases`, `obsidian-canvas`, `obsidian-cli`) edit vault files or drive
+the local app only — no commit, no remote write. `obsidian-markdown` is the
+syntax skill; clipping a session stays `obsidian-session-clip`, on explicit
+request only.
 
 ### Visual guides and worked examples (GitHub Pages)
 
@@ -32,6 +42,8 @@ never contacts one, `obsidian-resolve-conflict` exists to synchronise with one.
 - `obsidian-resolve-conflict` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/obsidian-resolve-conflict.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/obsidian-resolve-conflict-usage.html) (vault conflict to merge commit)
 - `karakeep-classify` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-classify.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-classify-usage.html) (URL to List suggestion)
 - `karakeep-add` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-add.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-add-usage.html) (URL to filed bookmark)
+
+The four Obsidian knowledge skills have no visual guide yet.
 
 Each page is generated from a Markdown source under
 [`docs/skill-guides/`](docs/skill-guides) and [`docs/skill-output/`](docs/skill-output).
@@ -42,6 +54,8 @@ Each page is generated from a Markdown source under
 |-------|-------|
 | `obsidian-session-clip` | A local git-backed PARA vault. Resolution order: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived from `~/.dotfiles-setup-mode`. A missing vault is a stop, never a `mkdir`. |
 | `obsidian-resolve-conflict` | Two clones of the same vault remote (`windows` / `wsl`). Overrides: `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT` (default `/mnt/c/Users`), `$OBSIDIAN_VAULT_WIN_NAME` (default `ObsidianVault-PARA`), `$OBSIDIAN_VAULT_WSL_ROOT` (default `$HOME/para/project`). |
+| `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas` | An Obsidian vault on disk. Nothing else — no network, no `lib/`. |
+| `obsidian-cli` | The Obsidian desktop app running, and the `obsidian` CLI on PATH (`obsidian help` lists every command). |
 | `karakeep-add`, `karakeep-classify` | A reachable Karakeep instance and its API token, read from the working directory's `.env`: `NEXTAUTH_URL` (the live base URL — never `localhost:3001`) and `KARAKEEP_API_KEY`. Either unset is a hard failure, not a fallback. Their `lib/*.sh` need `curl`, `jq`, and `python3` on PATH. |
 
 ## Install
@@ -93,12 +107,20 @@ is documented per harness in
 [`harness-skills/references/`](https://github.com/dEitY719/harness-skills/tree/main/references);
 read the one file for the harness you are on.
 
+`obsidian-cli` is the one skill with a host requirement rather than a tool gap:
+it needs a running Obsidian desktop app and the `obsidian` CLI on PATH, so it
+does not work in a headless or remote session on any harness.
+
 | Skill | Claude Code | Codex | Kimi | Gemini / Antigravity | Hermes | OpenCode |
 |-------|:-----------:|:-----:|:----:|:--------------------:|:------:|:--------:|
 | `obsidian-session-clip` | full | full | full | full | full | full |
 | `obsidian-resolve-conflict` | full | full, confirm in chat | full | full | full, confirm in chat | full, confirm in chat |
 | `karakeep-classify` | full | needs `curl` | needs `curl` | full | full | needs `curl` |
 | `karakeep-add` | full | full | full | full | full | full |
+| `obsidian-markdown` | full | full | full | full | full | full |
+| `obsidian-bases` | full | full | full | full | full | full |
+| `obsidian-canvas` | full | full | full | full | full | full |
+| `obsidian-cli` | needs app | needs app | needs app | needs app | needs app | needs app |
 
 *confirm in chat* — the skill must stop and ask before resolving a note-body
 conflict. Kimi (`AskUserQuestion`) and Gemini (`ask_user`) have a structured
@@ -110,6 +132,9 @@ the user's answer.
 Gemini maps this to `web_fetch` and Hermes to `web_extract`; elsewhere use the
 shell tool with `curl -sL`. The fetch is optional in the first place — host and
 path usually decide the List, and a full-body fetch is never wanted.
+
+*needs app* — `obsidian-cli` runs only where the Obsidian desktop app is open
+and `obsidian` is on PATH; it runs through each harness's shell tool unchanged.
 
 `Skill(pkm:karakeep-add, ...)` has no equivalent outside Claude Code. Read the
 sibling skill's `SKILL.md` and follow it inline; the handoff contract (a URL and
@@ -147,6 +172,9 @@ Manifests live at the repo root and all point at one flat `skills/` directory:
 │   ├── SKILL.md
 │   ├── references/
 │   └── lib/                                  (not karakeep-classify)
+├── skills/{obsidian-markdown,obsidian-bases,obsidian-canvas,obsidian-cli}/
+│   ├── SKILL.md
+│   └── references/                           (no lib/)
 ├── .claude-plugin/{marketplace,plugin}.json  Claude Code
 ├── .codex-plugin/plugin.json                 Codex
 ├── .kimi-plugin/plugin.json                  Kimi CLI
@@ -200,12 +228,23 @@ These skills were extracted from
 as a content snapshot at source commit `e2e231fcc8bbe69eba69e078cbe087ba44d856bb`
 — no history rewriting. The dotfiles copies remain in place; they are removed in
 Phase 4 of that repo's migration. Behaviour is unchanged from the snapshot; only
-the namespace moved, from `obsidian:` / `karakeep:` to `pkm:`.
+the namespace moved to `pkm:`.
 
 This is Phase 1 of the dEitY719/dotfiles#1410 migration. `packaging-skills` was Phase 0,
 and `harness-skills` is the sibling that owns the shared assets this repo links
 to.
 
+The four Obsidian knowledge skills (`obsidian-markdown`, `obsidian-bases`,
+`obsidian-canvas`, `obsidian-cli`) are a content snapshot of
+`skills/{obsidian-markdown,obsidian-bases,json-canvas,obsidian-cli}` from
+[`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) (via the
+fork `dEitY719/obsidian-skills`) at commit
+`a1dc48e68138490d522c04cbf5822214c6eb1202`. `json-canvas` was renamed
+`obsidian-canvas`, each `SKILL.md` was split into `references/` to fit the
+100-line limit, and descriptions were rewritten for the `pkm:` namespace. They
+are detached from upstream: no upstream remote, no sync.
+
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE), which also carries the upstream MIT notice for the
+four skills adapted from `kepano/obsidian-skills`.

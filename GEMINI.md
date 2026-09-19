@@ -1,9 +1,9 @@
 # pkm — skill index
 
-Four personal-knowledge-management skills across two services. Each lives in
+Eight personal-knowledge-management skills across two services. Each lives in
 this extension's `skills/` directory. They are explicitly invoked, never
 ambient: load the one that matches the request by reading its `SKILL.md`, then
-follow it. Do not load all four.
+follow it. Do not load them all.
 
 | Skill | Read | Use when |
 |-------|------|----------|
@@ -11,10 +11,14 @@ follow it. Do not load all four.
 | `obsidian-resolve-conflict` | `@./skills/obsidian-resolve-conflict/SKILL.md` | An Obsidian vault clone has a `git pull` conflict to diagnose, resolve, commit, and push. Not for PR branches — that is `gh-resolve:conflict`, in another repo. |
 | `karakeep-classify` | `@./skills/karakeep-classify/SKILL.md` | Deciding which Karakeep List a URL belongs in. Dry-run by default; writes nothing. |
 | `karakeep-add` | `@./skills/karakeep-add/SKILL.md` | Adding a URL to a known Karakeep List path. Only with an explicit `--list`; without one, classify first. |
+| `obsidian-markdown` | `@./skills/obsidian-markdown/SKILL.md` | Writing or fixing Obsidian syntax in a vault note: wikilinks, embeds, callouts, properties. Not for plain `.md` outside a vault, and not for clipping a session. |
+| `obsidian-bases` | `@./skills/obsidian-bases/SKILL.md` | Creating or editing a `.base` file: filters, formulas, views. |
+| `obsidian-canvas` | `@./skills/obsidian-canvas/SKILL.md` | Creating or editing a JSON Canvas `.canvas` file: nodes, edges, groups. |
+| `obsidian-cli` | `@./skills/obsidian-cli/SKILL.md` | Running the `obsidian` CLI against a running Obsidian desktop app, including plugin debugging. |
 
 Each skill's `references/` directory holds the detail it loads on demand, and
 the deterministic steps live in `lib/*.sh` (`karakeep-classify` calls its
-sibling `karakeep-add`'s).
+sibling `karakeep-add`'s; the four Obsidian knowledge skills have no `lib/`).
 `SKILL.md` says which file to read and which script to run, and when. Do not
 read `references/` up front, and do not reimplement `lib/` in prose.
 
@@ -25,7 +29,10 @@ read `references/` up front, and do not reimplement `lib/` in prose.
   from `~/.dotfiles-setup-mode`. `obsidian-resolve-conflict` additionally reads
   `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT`,
   `$OBSIDIAN_VAULT_WIN_NAME`, and `$OBSIDIAN_VAULT_WSL_ROOT`. A path that does
-  not resolve is a stop, never a `mkdir`.
+  not resolve is a stop, never a `mkdir`. `obsidian-markdown`,
+  `obsidian-bases`, and `obsidian-canvas` only need the vault's files;
+  `obsidian-cli` needs the Obsidian desktop app running and the `obsidian` CLI
+  on PATH, run through `run_shell_command`.
 - **Karakeep skills** — a reachable Karakeep instance and its API token, read
   from the working directory's `.env`: `NEXTAUTH_URL` and `KARAKEEP_API_KEY`.
   Either unset is a hard failure. Never guess a base URL, never fall back to
@@ -85,3 +92,6 @@ On Antigravity read `antigravity-tools.md` in that same directory instead —
 - `karakeep-add` writes to the live instance. Keep it idempotent — no duplicate
   List, no duplicate bookmark — and never place a public or personal URL under
   the `Company` subtree.
+- `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas`, and `obsidian-cli`
+  edit vault files or drive the local Obsidian app only. None commits, pushes,
+  or writes to a remote.

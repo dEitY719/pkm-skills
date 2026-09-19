@@ -1,6 +1,6 @@
 """Hermes Agent registration for the `pkm` skills plugin.
 
-Registers the four personal-knowledge-management skills with Hermes' native
+Registers the eight personal-knowledge-management skills with Hermes' native
 skill loader so `skill_view("pkm:<name>")` can load them on demand.
 
 Unlike superpowers, this plugin injects no session bootstrap context: the pkm
