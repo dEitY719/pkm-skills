@@ -56,7 +56,8 @@ obsidian vault="My Vault" daily:append content="- [ ] New task"
 
 Use `silent` to keep files from opening. A writing command (`create`,
 `append`, `property:set`, `eval`) changes the user's vault: confirm the target
-file and vault first.
+file and vault first. `eval` runs arbitrary JavaScript inside the app with
+full vault and plugin access: show the exact code and get explicit approval.
 
 ## Step 4: Check the result
 
