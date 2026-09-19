@@ -49,12 +49,10 @@ vault is a stop: say so and use standard Markdown instead.
 1. **Add frontmatter** with properties (title, tags, aliases) at the top.
 2. **Write content** in standard Markdown plus Obsidian-specific syntax.
 3. **Link related notes** using wikilinks (`[[Note]]`) for internal vault
-   connections, or standard Markdown links for external URLs.
+   connections (Obsidian tracks renames), and `[text](url)` for external URLs
+   only.
 4. **Embed content** from other notes, images, or PDFs using `![[embed]]`.
 5. **Add callouts** for highlighted information using `> [!type]`.
-
-> Use `[[wikilinks]]` for notes within the vault (Obsidian tracks renames
-> automatically) and `[text](url)` for external URLs only.
 
 Minimal example:
 
