@@ -6,7 +6,7 @@ text. Edit `CLAUDE.md`; never replace the symlink with a second copy.
 
 ## What this repo is
 
-A single-plugin skill marketplace. The plugin is named `pkm` and it bundles four
+A single-plugin skill marketplace. The plugin is named `pkm` and it bundles eight
 personal-knowledge-management skills spanning two external services:
 
 | Skill | Service | Role |
@@ -15,19 +15,32 @@ personal-knowledge-management skills spanning two external services:
 | `obsidian-resolve-conflict` | Obsidian vault | Resolves a vault `git pull` conflict: classify, resolve, commit, push, fast-forward the peer clone. |
 | `karakeep-classify` | Karakeep | Reads the live List tree and proposes where a URL belongs. Dry-run by default. |
 | `karakeep-add` | Karakeep | Writes the URL into that List over REST, creating missing parents. Idempotent. |
+| `obsidian-markdown` | Obsidian vault | Writes Obsidian Flavored Markdown in a vault note: wikilinks, embeds, callouts, properties. |
+| `obsidian-bases` | Obsidian vault | Creates and edits `.base` files: filters, formulas, summaries, views. |
+| `obsidian-canvas` | Obsidian vault | Creates and edits JSON Canvas `.canvas` files: nodes, edges, groups. |
+| `obsidian-cli` | Obsidian app | Drives a running Obsidian desktop app through the `obsidian` CLI, including plugin debugging. |
 
 They write to the user's real personal data — a vault of notes they wrote by
 hand, and a bookmark database. That is the reason this domain is its own repo,
 and the reason every safety contract below is a hard rule rather than a
 preference.
 
-The skills were extracted from `dEitY719/dotfiles`
+The first four skills were extracted from `dEitY719/dotfiles`
 (`claude/skills/{obsidian-session-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify}`)
 as a content snapshot at source commit
 `e2e231fcc8bbe69eba69e078cbe087ba44d856bb` — no history rewriting. The dotfiles
 copies remain in place; they are removed in Phase 4 of that repo's migration
 plan. This is Phase 1 of dEitY719/dotfiles#1410; `packaging-skills` was Phase 0 and
 `harness-skills` is the sibling that owns the shared assets.
+
+The four Obsidian knowledge skills (`obsidian-markdown`, `obsidian-bases`,
+`obsidian-canvas`, `obsidian-cli`) came from a different source: a content
+snapshot of `skills/{obsidian-markdown,obsidian-bases,json-canvas,obsidian-cli}`
+in `kepano/obsidian-skills` (via the fork `dEitY719/obsidian-skills`) at commit
+`a1dc48e68138490d522c04cbf5822214c6eb1202`, with `json-canvas` renamed to
+`obsidian-canvas`. They are detached from upstream: no upstream remote, no sync
+script, and upstream changes are not followed. Their MIT notice is appended to
+`LICENSE`; keep it there.
 
 ## Layout: root manifests, one flat `skills/`
 
@@ -91,12 +104,13 @@ apply here on the next run, which is the whole point.
 - **Progressive disclosure.** `SKILL.md` stays under 100 lines (CI enforces it)
   and names which `references/` file to read and when. Detail lives in
   `references/`; executable steps live in `lib/`. Do not inline either back into
-  `SKILL.md` — all four are already within a dozen lines of the limit.
+  `SKILL.md` — most are already within a dozen lines of the limit.
 - **Description budget.** CI sums every skill description and fails past 5,440
   characters — Codex's context budget. Keep new descriptions tight.
 - **`lib/*.sh` is the contract, not a suggestion.** `resolve-vault.sh`,
   `safe-name.sh`, `commit-note.sh`, `verify-clip.sh`, `classify-conflicts.sh`,
-  and `verify-sync.sh` hold the deterministic half of the two Obsidian skills;
+  and `verify-sync.sh` hold the deterministic half of the two Obsidian workflow
+  skills (`obsidian-session-clip`, `obsidian-resolve-conflict`);
   `karakeep-env.sh`, `list-tree.sh`, and `karakeep-add.sh` under
   `skills/karakeep-add/lib/` do the same for the two Karakeep skills, which
   share them rather than keeping a copy each.
@@ -129,6 +143,10 @@ These are acceptance criteria carried over from dotfiles, not advice:
   `url.rstrip("/")`), must read its base URL from `NEXTAUTH_URL` rather than
   guessing or falling back to `localhost:3001`, and must refuse a public or
   personal URL under the `Company` subtree.
+- **The four Obsidian knowledge skills are read/edit only.**
+  `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas`, and `obsidian-cli`
+  edit vault files or drive the local Obsidian app; none commits, pushes, or
+  writes to any remote service.
 
 The `(F-n)` / `(NF-n)` tags still sprinkled through `references/` and `lib/`
 are those dotfiles-era criterion ids. Nothing in this repo defines them, and

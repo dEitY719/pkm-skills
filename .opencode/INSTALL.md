@@ -19,7 +19,7 @@ project-level):
 ```
 
 Restart OpenCode. The plugin installs through OpenCode's plugin manager and
-registers all four skills.
+registers all eight skills.
 
 OpenCode uses its own plugin install. If you also use Claude Code, Codex, or
 another harness, install this plugin separately for each one.
@@ -70,6 +70,10 @@ Two gaps matter here:
   OpenCode has no structured question tool — ask in the conversation and wait
   for a real answer before resolving any note-body conflict. Never auto-merge a
   note body, never rewrite vault history, never force-push.
+- `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas`, and `obsidian-cli`
+  edit vault files or drive the local Obsidian app only; none commits or writes
+  to a remote. `obsidian-cli` needs the Obsidian desktop app running and the
+  `obsidian` CLI on PATH.
 - `obsidian-session-clip` is explicit-invocation only. Never trigger it because
   a session looks finished.
 
