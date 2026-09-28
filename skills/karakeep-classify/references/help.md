@@ -55,7 +55,7 @@ List tree. A refusal to place a public or personal URL under `Company` is a
 
 A full worked run — command, inputs, and the `[DRY-RUN]` report block Step 6
 prints — is in
-[`docs/skill-output/karakeep-classify-usage.md`](../../../docs/skill-output/karakeep-classify-usage.md).
+[`docs/skill-output/karakeep-classify-usage.md`](https://github.com/dEitY719/pkm-skills/blob/main/docs/skill-output/karakeep-classify-usage.md).
 
 ## Related
 
