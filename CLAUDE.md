@@ -112,8 +112,10 @@ apply here on the next run, which is the whole point.
   and `verify-sync.sh` hold the deterministic half of the two Obsidian workflow
   skills (`obsidian-session-clip`, `obsidian-resolve-conflict`);
   `karakeep-env.sh`, `list-tree.sh`, and `karakeep-add.sh` under
-  `skills/karakeep-add/lib/` do the same for the two Karakeep skills, which
-  share them rather than keeping a copy each.
+  `skills/karakeep-add/lib/` do the same for the two Karakeep skills. That
+  directory is the SSOT; `karakeep-classify` runs byte-identical copies of
+  `list-tree.sh` and `karakeep-env.sh` from its own `lib/vendor/` so a
+  single-skill install works. Edit the originals, then re-copy them.
   Call them and surface their `[OK]` / `[FAIL]` lines verbatim. Never
   reimplement their logic in prose, and never swallow a warning to keep an exit
   code clean. CI shellchecks them at `--severity=warning`, and

@@ -5,13 +5,14 @@ This skill is read + judge only. The single write path lives in
 
 ## Env + read the tree
 
-Both halves live in `pkm:karakeep-add`'s `lib/`, shared rather than copied —
-the copies this file used to carry had already drifted from their originals.
-`list-tree.sh` sources `karakeep-env.sh` itself, so this skill never loads the
-env by hand:
+Both halves are owned by `pkm:karakeep-add`'s `lib/` (the SSOT). This skill
+runs byte-identical copies from its own `lib/vendor/`, so a single-skill install
+(no sibling directory) still works; `tests/karakeep-lib-check.sh` fails if a
+copy drifts. Edit the originals, then re-copy both files. `list-tree.sh`
+sources `karakeep-env.sh` itself, so this skill never loads the env by hand:
 
 ```bash
-LIB="${SKILL_DIR}/../karakeep-add/lib"
+LIB="${SKILL_DIR}/lib/vendor"
 bash "$LIB/list-tree.sh"                     # <id>\t<full/path> per List
 bash "$LIB/list-tree.sh" --db data/db.db     # same output from SQLite
 ```
