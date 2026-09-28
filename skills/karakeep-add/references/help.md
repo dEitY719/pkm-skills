@@ -66,7 +66,7 @@ this far — `lib/karakeep-add.sh` exits non-zero and Step 3-5 surfaces its
 ```
 
 The full worked run it came from — command, inputs, counts before and after —
-is in [`docs/skill-output/karakeep-add-usage.md`](../../../docs/skill-output/karakeep-add-usage.md).
+is in [`docs/skill-output/karakeep-add-usage.md`](https://github.com/dEitY719/pkm-skills/blob/main/docs/skill-output/karakeep-add-usage.md).
 
 ## Related
 
