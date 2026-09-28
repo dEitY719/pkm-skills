@@ -137,6 +137,20 @@ check_contains "--db without a path is refused" "FAIL: --db needs a path" "$out"
 out=$(run_lib "$LIB/list-tree.sh")
 check_contains "REST mode requires the env contract" "NEXTAUTH_URL" "$out"
 
+# --- vendored copies: karakeep-classify ships its own, byte-identical -------
+# karakeep-classify runs list-tree.sh (which sources karakeep-env.sh) from its
+# own lib/vendor/ so a single-skill install still works. karakeep-add/lib/ is
+# the SSOT; edit there, then re-copy both files.
+
+for f in list-tree.sh karakeep-env.sh; do
+    if cmp -s "$LIB/$f" "$REPO_ROOT/skills/karakeep-classify/lib/vendor/$f"; then
+        printf '[OK]   vendored %s matches karakeep-add/lib\n' "$f"
+    else
+        printf '[FAIL] skills/karakeep-classify/lib/vendor/%s is missing or drifted from skills/karakeep-add/lib/%s -- re-copy it\n' "$f" "$f"
+        failures=$((failures + 1))
+    fi
+done
+
 # ---------------------------------------------------------------------------
 
 if [ "$failures" -eq 0 ]; then

@@ -42,7 +42,7 @@ for usage.`). Flag `--apply` switches from dry-run to execution.
 ## Step 2: Read the Live List Tree
 
 ```bash
-bash "${SKILL_DIR}/../karakeep-add/lib/list-tree.sh"
+bash "${SKILL_DIR}/lib/vendor/list-tree.sh"
 ```
 
 One `<id>\t<full/path>` line per List, `parentId` already resolved. Add
