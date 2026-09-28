@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# skills/karakeep-add/lib/list-tree.sh
+# list-tree.sh -- SSOT: skills/karakeep-add/lib/list-tree.sh; byte-identical copy in
+# skills/karakeep-classify/lib/vendor/ (edit the SSOT, then re-copy).
 #
 # The live Karakeep List tree, flattened to one "<id>\t<full/path>" line per
 # List. Shared by pkm:karakeep-add (which walks the path it must create) and

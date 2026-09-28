@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# skills/karakeep-add/lib/karakeep-env.sh
+# karakeep-env.sh -- SSOT: skills/karakeep-add/lib/karakeep-env.sh; byte-identical copy in
+# skills/karakeep-classify/lib/vendor/ (edit the SSOT, then re-copy).
 #
 # The env + base URL contract shared by pkm:karakeep-add and
 # pkm:karakeep-classify. Both skills used to carry a byte-identical copy of
