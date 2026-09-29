@@ -202,9 +202,8 @@ class ToMarkdown(HTMLParser):
             self.out.append("" if self.lists else "\n\n")
             self.lists.append(tag)
         elif tag == "li":
-            depth = max(1, len(self.lists))
             bullet = "1. " if self.lists and self.lists[-1] == "ol" else "- "
-            self.out.append("\n" + "  " * (depth - 1) + bullet)
+            self.out.append("\n" + self.indent(self.lists[:-1]) + bullet)
         elif tag == "table":
             self.tables.append([len(self.out), [], None])
         elif tag == "tr" and self.tables:
@@ -284,7 +283,12 @@ class ToMarkdown(HTMLParser):
         if not self.lists:
             self.out.append("\n\n")
         elif not self.at_space():
-            self.out.append("\n\n" + "  " * len(self.lists))
+            self.out.append("\n\n" + self.indent(self.lists))
+
+    @staticmethod
+    def indent(lists):
+        # a child sits at its parents' content column: "- " is 2 wide, "1. " is 3
+        return "".join("   " if t == "ol" else "  " for t in lists)
 
     def close_cell(self):
         t = self.tables[-1]
@@ -434,6 +438,10 @@ def self_test():
     assert body == "| a | b\\| |\n| --- | --- |\n| c | d |\n\nx\n", repr(body)
     _, body = html_to_markdown("<ul><li><p>a</p><p>b</p></li><li>c</ul>")
     assert body == "- a\n\n  b\n- c\n", repr(body)
+    _, body = html_to_markdown("<ol><li>a<ul><li>b</li></ul></li></ol>")  # "1. " content column is 3
+    assert body == "1. a\n   - b\n", repr(body)
+    _, body = html_to_markdown("<ol><li><p>a</p><p>b</p></li></ol>")
+    assert body == "1. a\n\n   b\n", repr(body)
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
