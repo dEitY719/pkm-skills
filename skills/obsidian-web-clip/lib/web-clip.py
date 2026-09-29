@@ -202,7 +202,7 @@ class ToMarkdown(HTMLParser):
             self.out.append("" if self.lists else "\n\n")
             self.lists.append(tag)
         elif tag == "li":
-            bullet = "1. " if self.lists and self.lists[-1] == "ol" else "- "
+            bullet = self.BULLET[self.lists[-1] if self.lists else "ul"]
             self.out.append("\n" + self.indent(self.lists[:-1]) + bullet)
         elif tag == "table":
             self.tables.append([len(self.out), [], None])
@@ -285,10 +285,12 @@ class ToMarkdown(HTMLParser):
         elif not self.at_space():
             self.out.append("\n\n" + self.indent(self.lists))
 
-    @staticmethod
-    def indent(lists):
-        # a child sits at its parents' content column: "- " is 2 wide, "1. " is 3
-        return "".join("   " if t == "ol" else "  " for t in lists)
+    BULLET = {"ul": "- ", "ol": "1. "}
+
+    @classmethod
+    def indent(cls, lists):
+        # a child sits at its parents' content column, i.e. past each marker
+        return "".join(" " * len(cls.BULLET[t]) for t in lists)
 
     def close_cell(self):
         t = self.tables[-1]
