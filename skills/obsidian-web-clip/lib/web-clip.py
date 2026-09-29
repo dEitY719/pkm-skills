@@ -45,9 +45,10 @@ def fetch(url):
         )
     except FileNotFoundError as e:
         raise FetchError("curl 이 없다") from e
-    code = r.stderr.decode(errors="replace").strip()[-3:]
+    err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
-        raise FetchError(f"network error {url}: {r.stderr.decode(errors='replace').strip()}")
+        raise FetchError(f"network error {url}: {err}")
+    code = err[-3:]
     if not code.startswith("2"):
         raise FetchError(f"HTTP {code} {url}")
     return r.stdout.decode("utf-8", "replace")
@@ -130,6 +131,7 @@ def clip_discourse(url, origin, tid, topic):
 
 SKIP = {"title", "script", "style", "noscript", "nav", "header", "footer", "aside", "form", "svg", "template"}
 BLOCK = {"p", "div", "section", "article", "main", "ul", "ol", "table", "tr", "figure"}
+INLINE = {"strong": "**", "b": "**", "em": "*", "i": "*"}
 
 
 class ToMarkdown(HTMLParser):
@@ -168,10 +170,8 @@ class ToMarkdown(HTMLParser):
             self.out.append("\n\n```\n")
         elif tag == "code" and not self.pre:
             self.out.append("`")
-        elif tag in ("strong", "b"):
-            self.out.append("**")
-        elif tag in ("em", "i"):
-            self.out.append("*")
+        elif tag in INLINE:
+            self.out.append(INLINE[tag])
         elif tag == "a":
             self.href.append(a.get("href"))
             self.out.append("[" if a.get("href") else "")
@@ -193,10 +193,8 @@ class ToMarkdown(HTMLParser):
             self.out.append("\n```\n\n")
         elif tag == "code" and not self.pre:
             self.out.append("`")
-        elif tag in ("strong", "b"):
-            self.out.append("**")
-        elif tag in ("em", "i"):
-            self.out.append("*")
+        elif tag in INLINE:
+            self.out.append(INLINE[tag])
         elif tag == "a" and self.href:
             href = self.href.pop()
             if href:
@@ -220,8 +218,10 @@ def html_to_markdown(page):
     head = ToMarkdown()
     head.feed(page)
     m = re.search(r"<(article|main)\b.*?</\1>", page, re.S | re.I)
-    body = ToMarkdown()
-    body.feed(m.group(0) if m else page)
+    body = head
+    if m:  # re-parse only the scoped fragment; the full-page parse already has the rest
+        body = ToMarkdown()
+        body.feed(m.group(0))
     md = head.meta
     meta = {
         "title": (md.get("og:title") or head.title).strip(),
@@ -291,9 +291,9 @@ def clip(url, vault):
     os.makedirs(os.path.join(inbox, "Web"), exist_ok=True)
     path = os.path.join(inbox, "Web", f"{today} {safe_filename(title)}.md")
     try:
+        if not body.endswith("\n"):
+            body += "\n"
         with open(path, "x", encoding="utf-8") as fh:  # "x": never overwrite
-            if not body.endswith("\n"):
-                body += "\n"
             fh.write(frontmatter(title, url, meta["author"], meta["published"], today) + body)
     except FileExistsError:
         print(f"[FAIL] 같은 이름의 다른 노트가 이미 있다 -- 중단: {path}")
