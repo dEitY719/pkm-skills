@@ -40,7 +40,8 @@ def fetch(url):
     # chains curl accepts.
     try:
         r = subprocess.run(
-            ["curl", "-sSL", "--max-time", "30", "-A", UA, "-w", "%{stderr}%{http_code}", "--", url],
+            ["curl", "-sSL", "--proto", "=http,https", "--proto-redir", "=http,https",
+             "--max-time", "30", "-A", UA, "-w", "%{stderr}%{http_code}", "--", url],
             capture_output=True, check=False,
         )
     except FileNotFoundError as e:
@@ -240,8 +241,9 @@ def existing_clip(inbox, url):
             if f.endswith(".md"):
                 p = os.path.join(root, f)
                 try:
-                    with open(p, encoding="utf-8") as fh:
-                        if needle in fh.read(4096):
+                    # whole file: a long frontmatter can push `source:` past any fixed prefix
+                    with open(p, encoding="utf-8", errors="replace") as fh:
+                        if needle in fh.read():
                             return p
                 except OSError:
                     pass
@@ -269,7 +271,7 @@ def clip(url, vault):
         if tid:
             try:
                 topic = json.loads(fetch(f"{origin}/t/{tid}.json"))
-                if not isinstance(topic, dict) or "post_stream" not in topic:
+                if not isinstance(topic, dict) or not topic.get("post_stream", {}).get("posts"):
                     topic = None
             except (FetchError, ValueError):
                 topic = None
