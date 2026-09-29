@@ -178,8 +178,7 @@ class ToMarkdown(HTMLParser):
         if re.fullmatch(r"h[1-6]", tag):
             self.out.append("\n\n" + "#" * int(tag[1]) + " ")
         elif tag in BLOCK:
-            # a <p>/<div> inside <li> must not break the list apart
-            self.out.append(("" if self.at_space() else " ") if self.lists else "\n\n")
+            self.block_break()
         elif tag in ("ul", "ol"):
             self.out.append("" if self.lists else "\n\n")
             self.lists.append(tag)
@@ -219,7 +218,7 @@ class ToMarkdown(HTMLParser):
         if self.skip:
             return
         if re.fullmatch(r"h[1-6]", tag) or tag in BLOCK:
-            self.out.append(("" if self.at_space() else " ") if self.lists else "\n\n")
+            self.block_break()
         elif tag in ("ul", "ol") and self.lists:
             self.lists.pop()
             self.out.append("" if self.lists else "\n\n")
@@ -262,6 +261,10 @@ class ToMarkdown(HTMLParser):
         else:
             data = re.sub(r"\s+", " ", data)
             self.out.append(data.lstrip() if self.at_space() else data)
+
+    def block_break(self):
+        # a <p>/<div> inside <li> must not break the list apart
+        self.out.append(("" if self.at_space() else " ") if self.lists else "\n\n")
 
     def at_space(self):
         return bool(self.out) and self.out[-1][-1:] in (" ", "\n")
