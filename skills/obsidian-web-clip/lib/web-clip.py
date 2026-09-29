@@ -34,14 +34,16 @@ class FetchError(Exception):
     pass
 
 
-def fetch(url):
+def fetch_ex(url):
+    """Return (body, effective URL after redirects)."""
     # curl, not urllib: it uses the system trust store, which a corporate TLS
     # proxy's CA lives in, and python 3.13's strict X509 checks reject some
     # chains curl accepts.
     try:
         r = subprocess.run(
             ["curl", "-sSL", "--proto", "=http,https", "--proto-redir", "=http,https",
-             "--max-time", "30", "-A", UA, "-w", "%{stderr}%{http_code}", "--", url],
+             "--max-time", "30", "-A", UA, "-w", "%{stderr}\n%{url_effective} %{http_code}",
+             "--", url],
             capture_output=True, check=False,
         )
     except FileNotFoundError as e:
@@ -49,10 +51,27 @@ def fetch(url):
     err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
         raise FetchError(f"network error {url}: {err}")
-    code = err[-3:]
+    effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
         raise FetchError(f"HTTP {code} {url}")
-    return r.stdout.decode("utf-8", "replace")
+    return r.stdout.decode("utf-8", "replace"), effective
+
+
+def fetch(url):
+    return fetch_ex(url)[0]
+
+
+LOGIN_PATH = re.compile(r"/(login|session/sso)/?$")
+DISCOURSE_MARK = re.compile(r'data-discourse-setup|name="generator" content="Discourse', re.I)
+LOGIN_MARK = re.compile(r"login-required|login_required|id=\"login-form\"|/session/sso", re.I)
+
+
+def login_wall(effective, page):
+    # ponytail: marker heuristic -- an SSO redirect that lands on a third-party
+    # IdP page slips through to the generic path; add IdP hosts if that bites.
+    if LOGIN_PATH.search(urllib.parse.urlsplit(effective).path):
+        return True
+    return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
 
 def safe_filename(title, max_len=100):
@@ -270,10 +289,16 @@ def clip(url, vault):
     try:
         if tid:
             try:
-                topic = json.loads(fetch(f"{origin}/t/{tid}.json"))
+                page, effective = fetch_ex(f"{origin}/t/{tid}.json")
+                topic = json.loads(page)
                 if not isinstance(topic, dict) or not topic.get("post_stream", {}).get("posts"):
                     topic = None
-            except (FetchError, ValueError):
+            except FetchError:
+                topic = None
+            except ValueError:
+                if login_wall(effective, page):
+                    print(f"[FAIL] 로그인 필요 ({effective}) -- 브라우저의 Obsidian Web Clipper 를 쓰라. 파일을 만들지 않았다")
+                    return 1
                 topic = None
             if topic:
                 try:
@@ -327,6 +352,12 @@ def self_test():
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
+    assert login_wall("https://d.kr/login", "<html></html>")
+    assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
+    assert login_wall("https://d.kr/t/1.json",
+                      '<meta name="generator" content="Discourse 3.2"><body class="login-required">')
+    assert not login_wall("https://d.kr/t/1.json", '<meta name="generator" content="Discourse 3.2">')
+    assert not login_wall("https://blog.kr/t/1.json", "<html><a href='/login'>login</a></html>")
     print("[OK] self-test")
     return 0
 
