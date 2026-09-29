@@ -6,12 +6,13 @@ text. Edit `CLAUDE.md`; never replace the symlink with a second copy.
 
 ## What this repo is
 
-A single-plugin skill marketplace. The plugin is named `pkm` and it bundles eight
+A single-plugin skill marketplace. The plugin is named `pkm` and it bundles nine
 personal-knowledge-management skills spanning two external services:
 
 | Skill | Service | Role |
 |-------|---------|------|
 | `obsidian-session-clip` | Obsidian vault | Writes one markdown note per finished AI session into `99-Inbox/ai-session/` and commits just that file. |
+| `obsidian-web-clip` | Obsidian vault | Saves one URL into `99-Inbox/Web/` in Obsidian Web Clipper format. Never commits. |
 | `obsidian-resolve-conflict` | Obsidian vault | Resolves a vault `git pull` conflict: classify, resolve, commit, push, fast-forward the peer clone. |
 | `karakeep-classify` | Karakeep | Reads the live List tree and proposes where a URL belongs. Dry-run by default. |
 | `karakeep-add` | Karakeep | Writes the URL into that List over REST, creating missing parents. Idempotent. |
@@ -115,12 +116,15 @@ apply here on the next run, which is the whole point.
   `skills/karakeep-add/lib/` do the same for the two Karakeep skills. That
   directory is the SSOT; `karakeep-classify` runs byte-identical copies of
   `list-tree.sh` and `karakeep-env.sh` from its own `lib/vendor/` so a
-  single-skill install works. Edit the originals, then re-copy them.
+  single-skill install works. `obsidian-web-clip` likewise runs a byte-identical
+  copy of `obsidian-session-clip/lib/resolve-vault.sh` from its `lib/vendor/`,
+  plus its own `lib/web-clip.py`. Edit the originals, then re-copy them.
   Call them and surface their `[OK]` / `[FAIL]` lines verbatim. Never
   reimplement their logic in prose, and never swallow a warning to keep an exit
   code clean. CI shellchecks them at `--severity=warning`, and
   `bash tests/karakeep-lib-check.sh` asserts the Karakeep guards offline —
-  run it after touching that `lib/`.
+  run it after touching that `lib/`; `bash tests/obsidian-web-clip-check.sh`
+  does the same for `obsidian-web-clip` and its vendored copy.
 
 ## Safety contracts
 
@@ -131,6 +135,9 @@ These are acceptance criteria carried over from dotfiles, not advice:
   commits the one note it created, by pathspec — never `-a`, `-A`, or
   `git add .`, which would swallow a parallel session's note — and never
   contacts a remote; obsidian-git owns vault sync.
+- **`obsidian-web-clip` never commits.** It writes one new file under
+  `99-Inbox/Web/` and stops; obsidian-git owns commits and sync. It never
+  overwrites a note — an already-clipped `source` URL is a stop.
 - **`obsidian-resolve-conflict` is destructive and merge-only.** Never rewrite
   vault history, never force-push, never reset the worktree destructively, never
   delete a directory tree, never delete `.git/index.lock` (back off and retry),

@@ -23,7 +23,7 @@
   "interface": {
     "displayName": "PKM",
     "shortDescription": "Obsidian vault clips and notes, Karakeep bookmark filing",
-    "longDescription": "PKM bundles the eight personal-knowledge-management skills: obsidian-session-clip, obsidian-resolve-conflict, obsidian-markdown, obsidian-bases, obsidian-canvas, obsidian-cli, karakeep-add, and karakeep-classify.",
+    "longDescription": "PKM bundles the nine personal-knowledge-management skills: obsidian-session-clip, obsidian-web-clip, obsidian-resolve-conflict, obsidian-markdown, obsidian-bases, obsidian-canvas, obsidian-cli, karakeep-add, and karakeep-classify.",
     "developerName": "dEitY719",
     "capabilities": [
       "Interactive",

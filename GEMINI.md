@@ -1,6 +1,6 @@
 # pkm — skill index
 
-Eight personal-knowledge-management skills across two services. Each lives in
+Nine personal-knowledge-management skills across two services. Each lives in
 this extension's `skills/` directory. They are explicitly invoked, never
 ambient: load the one that matches the request by reading its `SKILL.md`, then
 follow it. Do not load them all.
@@ -8,6 +8,7 @@ follow it. Do not load them all.
 | Skill | Read | Use when |
 |-------|------|----------|
 | `obsidian-session-clip` | `@./skills/obsidian-session-clip/SKILL.md` | The user explicitly asks to clip this session to their vault. Writes one note to `99-Inbox/ai-session/`. **Never load this on your own initiative** — see the safety rules. |
+| `obsidian-web-clip` | `@./skills/obsidian-web-clip/SKILL.md` | Saving one URL into the vault's `99-Inbox/Web/` in Obsidian Web Clipper format. Writes the file only, never commits. |
 | `obsidian-resolve-conflict` | `@./skills/obsidian-resolve-conflict/SKILL.md` | An Obsidian vault clone has a `git pull` conflict to diagnose, resolve, commit, and push. Not for PR branches — that is `gh-resolve:conflict`, in another repo. |
 | `karakeep-classify` | `@./skills/karakeep-classify/SKILL.md` | Deciding which Karakeep List a URL belongs in. Dry-run by default; writes nothing. |
 | `karakeep-add` | `@./skills/karakeep-add/SKILL.md` | Adding a URL to a known Karakeep List path. Only with an explicit `--list`; without one, classify first. |
@@ -25,7 +26,7 @@ read `references/` up front, and do not reimplement `lib/` in prose.
 ## What each skill needs
 
 - **Obsidian skills** — a local git-backed vault. Resolution order for
-  `obsidian-session-clip`: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived
+  `obsidian-session-clip` and `obsidian-web-clip`: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived
   from `~/.dotfiles-setup-mode`. `obsidian-resolve-conflict` additionally reads
   `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT`,
   `$OBSIDIAN_VAULT_WIN_NAME`, and `$OBSIDIAN_VAULT_WSL_ROOT`. A path that does
