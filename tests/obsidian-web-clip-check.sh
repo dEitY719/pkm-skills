@@ -3,7 +3,8 @@
 #
 # Offline check for pkm:obsidian-web-clip: the pure helpers in lib/web-clip.py
 # (filename sanitising, upload:// mapping, |WxH stripping, Discourse topic-id
-# parsing, HTML -> markdown, frontmatter), the refuse-to-overwrite guard, and
+# parsing, HTML -> markdown, frontmatter), the refuse-to-overwrite guard, the
+# login-wall stop (fake curl), and
 # the vendored resolve-vault.sh staying byte-identical to its SSOT. The
 # network paths are out of scope -- they need a live Discourse.
 #
@@ -53,6 +54,22 @@ missing_vault_refused() {
         [ ! -e "$TMP/no-such-vault" ]
 }
 check "missing vault refused, never created" missing_vault_refused
+
+# A login-walled Discourse redirects /t/<id>.json to its HTML login page; a
+# fake curl stands in for it. The clip must stop with the auth message.
+mkdir -p "$TMP/bin" "$TMP/vault2"
+cat >"$TMP/bin/curl" <<'SH'
+#!/bin/sh
+printf '<html><meta name="generator" content="Discourse 3.2"><body class="login-required">Log in</body></html>'
+printf '\nhttps://example.invalid/login 200' >&2
+SH
+chmod +x "$TMP/bin/curl"
+login_wall_refused() {
+    { PATH="$TMP/bin:$PATH" python3 "$SKILL/lib/web-clip.py" https://example.invalid/t/x/1 "$TMP/vault2" || :; } |
+        grep -q '로그인 필요' &&
+        [ -z "$(find "$TMP/vault2" -type f)" ]
+}
+check "Discourse login wall refused, nothing written" login_wall_refused
 
 check "vendored resolve-vault.sh matches obsidian-session-clip/lib" \
     cmp "$REPO_ROOT/skills/obsidian-session-clip/lib/resolve-vault.sh" \
