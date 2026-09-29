@@ -200,8 +200,8 @@ class ToMarkdown(HTMLParser):
             self.block_break()
         elif tag in ("ul", "ol"):
             self.out.append("" if self.lists else "\n\n")
-            start = (a.get("start") or "").strip()
-            self.lists.append(f"{start}. " if tag == "ol" and start.isdigit() else self.BULLET[tag])
+            start = (a.get("start") or "").strip().removeprefix("+")  # HTML integer grammar allows "+"
+            self.lists.append(f"{start}. " if tag == "ol" and start.isascii() and start.isdigit() else self.BULLET[tag])
         elif tag == "li":
             self.out.append("\n" + self.indent(self.lists[:-1]) + (self.lists[-1] if self.lists else "- "))
         elif tag == "table":
@@ -446,6 +446,8 @@ def self_test():
     assert body == "1. a\n\n   b\n", repr(body)
     _, body = html_to_markdown('<ol start="10"><li>a<ul><li>b</li></ul></li></ol>')  # "10. " is 4 wide
     assert body == "10. a\n    - b\n", repr(body)
+    _, body = html_to_markdown('<ol START=" +5"><li>a</li></ol><ol start="-2"><li>b</li></ol>')
+    assert body == "5. a\n\n1. b\n", repr(body)
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
