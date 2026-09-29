@@ -64,12 +64,13 @@ printf '<html><meta name="generator" content="Discourse 3.2"><body class="login-
 printf '\nhttps://example.invalid/login 200' >&2
 SH
 chmod +x "$TMP/bin/curl"
-login_wall_refused() {
-    { PATH="$TMP/bin:$PATH" python3 "$SKILL/lib/web-clip.py" https://example.invalid/t/x/1 "$TMP/vault2" || :; } |
+login_wall_refused() { # <url>
+    { PATH="$TMP/bin:$PATH" python3 "$SKILL/lib/web-clip.py" "$1" "$TMP/vault2" || :; } |
         grep -q '로그인 필요' &&
         [ -z "$(find "$TMP/vault2" -type f)" ]
 }
-check "Discourse login wall refused, nothing written" login_wall_refused
+check "Discourse login wall refused, nothing written" login_wall_refused https://example.invalid/t/x/1
+check "login wall on a non-topic URL refused too" login_wall_refused https://example.invalid/private
 
 check "vendored resolve-vault.sh matches obsidian-session-clip/lib" \
     cmp "$REPO_ROOT/skills/obsidian-session-clip/lib/resolve-vault.sh" \

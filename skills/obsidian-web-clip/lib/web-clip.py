@@ -289,16 +289,10 @@ def clip(url, vault):
     try:
         if tid:
             try:
-                page, effective = fetch_ex(f"{origin}/t/{tid}.json")
-                topic = json.loads(page)
+                topic = json.loads(fetch(f"{origin}/t/{tid}.json"))
                 if not isinstance(topic, dict) or not topic.get("post_stream", {}).get("posts"):
                     topic = None
-            except FetchError:
-                topic = None
-            except ValueError:
-                if login_wall(effective, page):
-                    print(f"[FAIL] 로그인 필요 ({effective}) -- 브라우저의 Obsidian Web Clipper 를 쓰라. 파일을 만들지 않았다")
-                    return 1
+            except (FetchError, ValueError):
                 topic = None
             if topic:
                 try:
@@ -307,7 +301,12 @@ def clip(url, vault):
                 except FetchError as e:
                     print(f"[WARN] Discourse /raw 실패 ({e}) -- 범용 경로로 폴백")
         if body is None:
-            meta, body = html_to_markdown(fetch(url))
+            page, effective = fetch_ex(url)
+            # Every non-Discourse-JSON outcome lands here, so one check covers a
+            # login-walled .json and a login-walled page alike.
+            if login_wall(effective, page):
+                raise FetchError(f"로그인 필요 ({effective}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
+            meta, body = html_to_markdown(page)
             print("[WARN] 범용 경로 (HTML -> markdown, 정확도 낮음 -- 원문과 대조 권장)")
     except FetchError as e:
         print(f"[FAIL] {e} -- 파일을 만들지 않았다")
