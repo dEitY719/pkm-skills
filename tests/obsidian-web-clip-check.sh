@@ -35,10 +35,15 @@ check "web-clip.py --self-test" python3 "$SKILL/lib/web-clip.py" --self-test
 
 # An already-clipped source must stop before any fetch (no network needed).
 mkdir -p "$TMP/vault/99-Inbox/Web"
-printf -- '---\ntitle: "x"\nsource: "https://example.invalid/t/x/1"\n---\n' \
-    >"$TMP/vault/99-Inbox/Web/old.md"
+# The padding pushes `source:` past 4 KB -- a prefix-only scan would miss it.
+{
+    printf -- '---\ntitle: "x"\ndescription: "%s"\n' "$(printf '%5000s' '' | tr ' ' a)"
+    printf 'source: "https://example.invalid/t/x/1"\n---\n'
+} >"$TMP/vault/99-Inbox/Web/old.md"
 dup_refused() {
-    ! python3 "$SKILL/lib/web-clip.py" https://example.invalid/t/x/1 "$TMP/vault" &&
+    # Match the refusal itself: a network failure also exits non-zero.
+    { python3 "$SKILL/lib/web-clip.py" https://example.invalid/t/x/1 "$TMP/vault" || :; } |
+        grep -q '이미 클립됨' &&
         [ "$(find "$TMP/vault" -name '*.md' | wc -l)" -eq 1 ]
 }
 check "duplicate source refused, nothing written" dup_refused
