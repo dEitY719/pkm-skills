@@ -35,41 +35,48 @@ class FetchError(Exception):
 
 
 def fetch_ex(url):
-    """Return (body, effective URL after redirects)."""
+    """Return (body, [every redirect hop URL..., effective URL])."""
     # curl, not urllib: it uses the system trust store, which a corporate TLS
     # proxy's CA lives in, and python 3.13's strict X509 checks reject some
     # chains curl accepts.
     try:
         r = subprocess.run(
             ["curl", "-sSL", "--proto", "=http,https", "--proto-redir", "=http,https",
-             "--max-time", "30", "-A", UA, "-w", "%{stderr}\n%{url_effective} %{http_code}",
+             "--max-time", "30", "-A", UA, "-D", "/dev/stderr", "-w", "%{stderr}\n%{url_effective} %{http_code}",
              "--", url],
             capture_output=True, check=False,
         )
     except FileNotFoundError as e:
         raise FetchError("curl 이 없다") from e
-    err = r.stderr.decode(errors="replace").strip()
+    # -D puts every hop's headers on stderr; the Location: lines are the chain.
+    lines = r.stderr.decode(errors="replace").strip().splitlines()
     if r.returncode != 0:
-        raise FetchError(f"network error {url}: {err}")
-    effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
+        raise FetchError(f"network error {url}: " + " ".join(l for l in lines if l.startswith("curl:")))
+    effective, _, code = lines[-1].rpartition(" ") if lines else ("", "", "")
     if not code.startswith("2"):
         raise FetchError(f"HTTP {code} {url}")
-    return r.stdout.decode("utf-8", "replace"), effective
+    hops, base = [], url
+    for line in lines:
+        name, _, value = line.partition(":")
+        if name.strip().lower() == "location" and value.strip():
+            base = urllib.parse.urljoin(base, value.strip())
+            hops.append(base)
+    return r.stdout.decode("utf-8", "replace"), hops + [effective]
 
 
 def fetch(url):
     return fetch_ex(url)[0]
 
 
-LOGIN_PATH = re.compile(r"/(login|session/sso)/?$")
+LOGIN_PATH = re.compile(r"/(login|session/sso|auth)(/|$)")
 DISCOURSE_MARK = re.compile(r'data-discourse-setup|name="generator" content="Discourse', re.I)
 LOGIN_MARK = re.compile(r"login-required|login_required|id=\"login-form\"|/session/sso", re.I)
 
 
-def login_wall(effective, page):
-    # ponytail: marker heuristic -- an SSO redirect that lands on a third-party
-    # IdP page slips through to the generic path; add IdP hosts if that bites.
-    if LOGIN_PATH.search(urllib.parse.urlsplit(effective).path):
+def login_wall(chain, page):
+    # Any hop through a login/SSO path counts: an SSO redirect ends on a
+    # third-party IdP page that carries no Discourse marker at all.
+    if any(LOGIN_PATH.search(urllib.parse.urlsplit(u).path) for u in chain):
         return True
     return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
@@ -355,11 +362,11 @@ def clip(url, vault):
                 except FetchError as e:
                     print(f"[WARN] Discourse /raw 실패 ({e}) -- 범용 경로로 폴백")
         if body is None:
-            page, effective = fetch_ex(url)
+            page, chain = fetch_ex(url)
             # Every non-Discourse-JSON outcome lands here, so one check covers a
             # login-walled .json and a login-walled page alike.
-            if login_wall(effective, page):
-                raise FetchError(f"로그인 필요 ({effective}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
+            if login_wall(chain, page):
+                raise FetchError(f"로그인 필요 ({chain[-1]}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
             meta, body = html_to_markdown(page)
             print("[WARN] 범용 경로 (HTML -> markdown, 정확도 낮음 -- 원문과 대조 권장)")
     except FetchError as e:
@@ -418,12 +425,14 @@ def self_test():
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
-    assert login_wall("https://d.kr/login", "<html></html>")
-    assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
-    assert login_wall("https://d.kr/t/1.json",
+    assert login_wall(["https://d.kr/login"], "<html></html>")
+    assert login_wall(["https://d.kr/session/sso?return_path=/t/1"], "")
+    assert login_wall(["https://d.kr/session/sso?x=1", "https://idp.example/oauth2/v1/authorize?s=2"], "<html></html>")
+    assert not login_wall(["https://d.kr/t/1", "https://d.kr/t/slug/1"], "<html></html>")
+    assert login_wall(["https://d.kr/t/1.json"],
                       '<meta name="generator" content="Discourse 3.2"><body class="login-required">')
-    assert not login_wall("https://d.kr/t/1.json", '<meta name="generator" content="Discourse 3.2">')
-    assert not login_wall("https://blog.kr/t/1.json", "<html><a href='/login'>login</a></html>")
+    assert not login_wall(["https://d.kr/t/1.json"], '<meta name="generator" content="Discourse 3.2">')
+    assert not login_wall(["https://blog.kr/t/1.json"], "<html><a href='/login'>login</a></html>")
     print("[OK] self-test")
     return 0
 
