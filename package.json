@@ -1,6 +1,6 @@
 {
   "name": "pkm-skills",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Skills for personal knowledge management — Obsidian vault clips, conflict resolution, and note / Bases / Canvas authoring, Karakeep bookmark filing",
   "type": "module",
   "main": ".opencode/plugins/pkm.js",

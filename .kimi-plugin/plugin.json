@@ -1,6 +1,6 @@
 {
   "name": "pkm",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Clip AI sessions to an Obsidian vault, resolve vault sync conflicts, author Obsidian notes, Bases, and Canvas files, and file or classify Karakeep bookmarks.",
   "author": {
     "name": "dEitY719",
