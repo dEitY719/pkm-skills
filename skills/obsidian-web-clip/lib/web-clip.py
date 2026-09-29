@@ -150,16 +150,16 @@ def clip_discourse(url, origin, tid, topic):
 # --- generic HTML -> markdown ------------------------------------------------
 
 SKIP = {"title", "script", "style", "noscript", "nav", "header", "footer", "aside", "form", "svg", "template"}
-BLOCK = {"p", "div", "section", "article", "main", "ul", "ol", "table", "tr", "figure"}
+BLOCK = {"p", "div", "section", "article", "main", "figure"}
 INLINE = {"strong": "**", "b": "**", "em": "*", "i": "*"}
 
 
 class ToMarkdown(HTMLParser):
-    # ponytail: no tables/nested-list indent; swap in a real converter if the
-    # generic path becomes the common one.
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.out, self.skip, self.pre, self.href = [], 0, 0, []
+        self.lists = []  # "ul"/"ol" per open list; depth = len
+        self.tables, self.cells = [], []  # (out index, rows) / out index per open cell
         self.meta, self.title, self.in_title = {}, "", False
 
     def handle_starttag(self, tag, attrs):
@@ -178,11 +178,23 @@ class ToMarkdown(HTMLParser):
         if re.fullmatch(r"h[1-6]", tag):
             self.out.append("\n\n" + "#" * int(tag[1]) + " ")
         elif tag in BLOCK:
-            self.out.append("\n\n")
+            # a <p>/<div> inside <li> must not break the list apart
+            self.out.append(("" if self.at_space() else " ") if self.lists else "\n\n")
+        elif tag in ("ul", "ol"):
+            self.out.append("" if self.lists else "\n\n")
+            self.lists.append(tag)
+        elif tag == "li":
+            depth = max(1, len(self.lists))
+            bullet = "1. " if self.lists and self.lists[-1] == "ol" else "- "
+            self.out.append("\n" + "  " * (depth - 1) + bullet)
+        elif tag == "table":
+            self.tables.append((len(self.out), []))
+        elif tag == "tr" and self.tables:
+            self.tables[-1][1].append([])
+        elif tag in ("td", "th") and self.tables:
+            self.cells.append(len(self.out))
         elif tag == "br":
             self.out.append("\n")
-        elif tag == "li":
-            self.out.append("\n- ")
         elif tag == "blockquote":
             self.out.append("\n\n> ")
         elif tag == "pre":
@@ -207,7 +219,27 @@ class ToMarkdown(HTMLParser):
         if self.skip:
             return
         if re.fullmatch(r"h[1-6]", tag) or tag in BLOCK:
-            self.out.append("\n\n")
+            self.out.append(("" if self.at_space() else " ") if self.lists else "\n\n")
+        elif tag in ("ul", "ol") and self.lists:
+            self.lists.pop()
+            self.out.append("" if self.lists else "\n\n")
+        elif tag in ("td", "th") and self.cells and self.tables:
+            i = self.cells.pop()
+            cell = re.sub(r"\s+", " ", "".join(self.out[i:])).strip().replace("|", "\\|")
+            del self.out[i:]
+            rows = self.tables[-1][1]
+            if not rows:  # <td> without <tr>
+                rows.append([])
+            rows[-1].append(cell)
+        elif tag == "table" and self.tables:
+            i, rows = self.tables.pop()
+            del self.out[i:]  # drop inter-cell whitespace
+            rows = [r for r in rows if r]
+            if rows:
+                n = max(map(len, rows))
+                lines = ["| " + " | ".join(r + [""] * (n - len(r))) + " |" for r in rows]
+                lines.insert(1, "|" + " --- |" * n)
+                self.out.append("\n\n" + "\n".join(lines) + "\n\n")
         elif tag == "pre":
             self.pre = max(0, self.pre - 1)
             self.out.append("\n```\n\n")
@@ -225,7 +257,14 @@ class ToMarkdown(HTMLParser):
             self.title += data
         if self.skip:
             return
-        self.out.append(data if self.pre else re.sub(r"\s+", " ", data))
+        if self.pre:
+            self.out.append(data)
+        else:
+            data = re.sub(r"\s+", " ", data)
+            self.out.append(data.lstrip() if self.at_space() else data)
+
+    def at_space(self):
+        return bool(self.out) and self.out[-1][-1:] in (" ", "\n")
 
     def markdown(self):
         text = "".join(self.out)
@@ -348,6 +387,15 @@ def self_test():
     )
     assert meta == {"title": "T", "author": ["A"], "published": "2026-01-02"}, meta
     assert body == "# H\n\n## Hi\n\na [link](/u) **b**\n", repr(body)
+    _, body = html_to_markdown(
+        "<table><tr><th>K</th><th>V</th></tr>\n<tr><td>a|b</td><td>1<br>2</td></tr>"
+        "<tr><td>x</td></tr></table><p>after</p>"
+    )
+    assert body == "| K | V |\n| --- | --- |\n| a\\|b | 1 2 |\n| x |  |\n\nafter\n", repr(body)
+    _, body = html_to_markdown(
+        "<ul><li><p>a</p><ul>\n<li>b<ol><li>c</li><li>d</li></ol></li></ul></li><li>e</li></ul><p>z</p>"
+    )
+    assert body == "- a\n  - b\n    1. c\n    1. d\n- e\n\nz\n", repr(body)
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
