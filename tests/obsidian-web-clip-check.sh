@@ -73,13 +73,16 @@ check "Discourse login wall refused, nothing written" login_wall_refused https:/
 check "login wall on a non-topic URL refused too" login_wall_refused https://example.invalid/private
 
 # SSO: the chain hops through /session/sso and ends on a third-party IdP page
-# with no Discourse marker -- only the Location: headers (-D) reveal it.
+# with no Discourse marker -- only the -D header dump's Location:s reveal it.
 cat >"$TMP/bin/curl" <<'SH'
 #!/bin/sh
+while [ $# -gt 0 ]; do [ "$1" = -D ] && hdr=$2; shift; done
 printf '<html><title>Sign in</title><form>password</form></html>'
-printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?return_path=%%2Fprivate\r\n\r\n' >&2
-printf 'HTTP/1.1 302 Found\r\nLocation: https://idp.invalid/oauth2/v1/authorize?c=1\r\n\r\n' >&2
-printf 'HTTP/1.1 200 OK\r\n\r\n' >&2
+{
+    printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?return_path=%%2Fprivate\r\n\r\n'
+    printf 'HTTP/1.1 302 Found\r\nLocation: https://idp.invalid/oauth2/v1/authorize?c=1\r\n\r\n'
+    printf 'HTTP/1.1 200 OK\r\n\r\n'
+} >"$hdr"
 printf '\nhttps://idp.invalid/oauth2/v1/authorize?c=1 200' >&2
 SH
 check "SSO hop to a third-party IdP refused, nothing written" login_wall_refused https://example.invalid/private
