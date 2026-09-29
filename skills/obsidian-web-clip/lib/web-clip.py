@@ -177,7 +177,7 @@ class ToMarkdown(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.out, self.skip, self.pre, self.href = [], 0, 0, []
-        self.lists = []  # "ul"/"ol" per open list; depth = len
+        self.lists = []  # marker each open list writes ("- ", "1. ", "10. "); depth = len
         self.tables = []  # per open <table>: [out index, rows, open-cell out index or None]
         self.meta, self.title, self.in_title = {}, "", False
 
@@ -200,10 +200,10 @@ class ToMarkdown(HTMLParser):
             self.block_break()
         elif tag in ("ul", "ol"):
             self.out.append("" if self.lists else "\n\n")
-            self.lists.append(tag)
+            start = (a.get("start") or "").strip()
+            self.lists.append(f"{start}. " if tag == "ol" and start.isdigit() else self.BULLET[tag])
         elif tag == "li":
-            bullet = self.BULLET[self.lists[-1] if self.lists else "ul"]
-            self.out.append("\n" + self.indent(self.lists[:-1]) + bullet)
+            self.out.append("\n" + self.indent(self.lists[:-1]) + (self.lists[-1] if self.lists else "- "))
         elif tag == "table":
             self.tables.append([len(self.out), [], None])
         elif tag == "tr" and self.tables:
@@ -287,10 +287,10 @@ class ToMarkdown(HTMLParser):
 
     BULLET = {"ul": "- ", "ol": "1. "}
 
-    @classmethod
-    def indent(cls, lists):
+    @staticmethod
+    def indent(markers):
         # a child sits at its parents' content column, i.e. past each marker
-        return "".join(" " * len(cls.BULLET[t]) for t in lists)
+        return " " * sum(map(len, markers))
 
     def close_cell(self):
         t = self.tables[-1]
@@ -444,6 +444,8 @@ def self_test():
     assert body == "1. a\n   - b\n", repr(body)
     _, body = html_to_markdown("<ol><li><p>a</p><p>b</p></li></ol>")
     assert body == "1. a\n\n   b\n", repr(body)
+    _, body = html_to_markdown('<ol start="10"><li>a<ul><li>b</li></ul></li></ol>')  # "10. " is 4 wide
+    assert body == "10. a\n    - b\n", repr(body)
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
