@@ -1,7 +1,7 @@
 # pkm-skills
 
-Eight skills for personal knowledge management across two services — clip a
-finished AI session into an Obsidian vault, resolve that vault's sync conflicts,
+Nine skills for personal knowledge management across two services — clip a
+finished AI session or a web page into an Obsidian vault, resolve that vault's sync conflicts,
 write Obsidian notes, Bases, and Canvas files, drive a running Obsidian app
 through its CLI, file a URL into Karakeep, and decide where a URL belongs before
 filing it. Packaged as a single plugin named `pkm`, installable on six
@@ -16,6 +16,7 @@ this repo owns no shared assets — it links out for the
 | Skill | Invoke | What it does |
 |-------|--------|--------------|
 | `obsidian-session-clip` | `/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault <path>]` | Writes the current AI session to the vault as one markdown note under `99-Inbox/ai-session/`, classified `code` or `research`, then commits that single file. **Explicit invocation only** — never auto-triggered. |
+| `obsidian-web-clip` | `/pkm:obsidian-web-clip <url> [--vault <path>]` | Saves one URL into `99-Inbox/Web/` as an Obsidian Web Clipper note (same frontmatter, empty `## 메모` skeleton). Discourse topics keep their original markdown via `/raw`; other pages take a lossy HTML-to-markdown fallback. Writes the file only — never commits. |
 | `obsidian-resolve-conflict` | `/pkm:obsidian-resolve-conflict [windows\|wsl] [--no-push] [--no-sync-peer] [--dry-run] [--vault <path>]` | Diagnoses a vault `git pull` conflict, sorts it into local-state / note-body / other, auto-resolves only the local-state class, asks about the rest, commits, pushes, and fast-forwards the peer clone. |
 | `karakeep-classify` | `/pkm:karakeep-classify <url> [--apply]` | Reads the live Karakeep List tree and proposes the best-fit List path for a URL, with a rationale and the exact follow-up command. Dry-run by default; writes nothing. |
 | `karakeep-add` | `/pkm:karakeep-add <url> --list <path>` | Adds the URL to that List over REST, creating every missing parent in a nested `parent/child` path. Idempotent on both the List and the bookmark. |
@@ -29,7 +30,7 @@ judges, `karakeep-add` writes. Running `karakeep-add` without `--list` delegates
 to `karakeep-classify` rather than guessing.
 
 The two Obsidian workflow skills share a vault but not a remote:
-`obsidian-session-clip` never contacts one, `obsidian-resolve-conflict` exists to
+`obsidian-session-clip` and `obsidian-web-clip` never contact one, `obsidian-resolve-conflict` exists to
 synchronise with one. The four Obsidian knowledge skills (`obsidian-markdown`,
 `obsidian-bases`, `obsidian-canvas`, `obsidian-cli`) edit vault files or drive
 the local app only — no commit, no remote write. `obsidian-markdown` is the
@@ -51,6 +52,7 @@ Each page is generated from a Markdown source under
 | Skill | Needs |
 |-------|-------|
 | `obsidian-session-clip` | A local git-backed PARA vault. Resolution order: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived from `~/.dotfiles-setup-mode`. A missing vault is a stop, never a `mkdir`. |
+| `obsidian-web-clip` | The same vault resolution as `obsidian-session-clip`, plus `curl` and `python3` on PATH and network access to the page. |
 | `obsidian-resolve-conflict` | Two clones of the same vault remote (`windows` / `wsl`). Overrides: `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT` (default `/mnt/c/Users`), `$OBSIDIAN_VAULT_WIN_NAME` (default `ObsidianVault-PARA`), `$OBSIDIAN_VAULT_WSL_ROOT` (default `$HOME/para/project`). |
 | `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas` | An Obsidian vault on disk. Nothing else — no network, no `lib/`. |
 | `obsidian-cli` | The Obsidian desktop app running, and the `obsidian` CLI on PATH (`obsidian help` lists every command). |
@@ -108,6 +110,7 @@ read the one file for the harness you are on.
 | Skill | Claude Code | Codex | Kimi | Gemini / Antigravity | Hermes | OpenCode |
 |-------|:-----------:|:-----:|:----:|:--------------------:|:------:|:--------:|
 | `obsidian-session-clip` | full | full | full | full | full | full |
+| `obsidian-web-clip` | full | full | full | full | full | full |
 | `obsidian-resolve-conflict` | full | full, confirm in chat | full | full | full, confirm in chat | full, confirm in chat |
 | `karakeep-classify` | full | needs `curl` | needs `curl` | full | full | needs `curl` |
 | `karakeep-add` | full | full | full | full | full | full |
@@ -163,7 +166,7 @@ Manifests live at the repo root and all point at one flat `skills/` directory:
 
 ```
 .
-├── skills/{obsidian-session-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify}/
+├── skills/{obsidian-session-clip,obsidian-web-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify}/
 │   ├── SKILL.md
 │   ├── references/
 │   └── lib/                                  (not karakeep-classify)
