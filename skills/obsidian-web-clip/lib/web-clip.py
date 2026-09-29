@@ -159,7 +159,7 @@ class ToMarkdown(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.out, self.skip, self.pre, self.href = [], 0, 0, []
         self.lists = []  # "ul"/"ol" per open list; depth = len
-        self.tables, self.cells = [], []  # (out index, rows) / out index per open cell
+        self.tables = []  # per open <table>: [out index, rows, open-cell out index or None]
         self.meta, self.title, self.in_title = {}, "", False
 
     def handle_starttag(self, tag, attrs):
@@ -187,11 +187,13 @@ class ToMarkdown(HTMLParser):
             bullet = "1. " if self.lists and self.lists[-1] == "ol" else "- "
             self.out.append("\n" + "  " * (depth - 1) + bullet)
         elif tag == "table":
-            self.tables.append((len(self.out), []))
+            self.tables.append([len(self.out), [], None])
         elif tag == "tr" and self.tables:
+            self.close_cell()  # </td> and </tr> are optional in HTML
             self.tables[-1][1].append([])
         elif tag in ("td", "th") and self.tables:
-            self.cells.append(len(self.out))
+            self.close_cell()
+            self.tables[-1][2] = len(self.out)
         elif tag == "br":
             self.out.append("\n")
         elif tag == "blockquote":
@@ -218,20 +220,16 @@ class ToMarkdown(HTMLParser):
         if self.skip:
             return
         if re.fullmatch(r"h[1-6]", tag) or tag in BLOCK:
-            self.block_break()
+            if not self.lists:  # inside <li> the next block or item decides the break
+                self.out.append("\n\n")
         elif tag in ("ul", "ol") and self.lists:
             self.lists.pop()
             self.out.append("" if self.lists else "\n\n")
-        elif tag in ("td", "th") and self.cells and self.tables:
-            i = self.cells.pop()
-            cell = re.sub(r"\s+", " ", "".join(self.out[i:])).strip().replace("|", "\\|")
-            del self.out[i:]
-            rows = self.tables[-1][1]
-            if not rows:  # <td> without <tr>
-                rows.append([])
-            rows[-1].append(cell)
+        elif tag in ("td", "th", "tr") and self.tables:
+            self.close_cell()
         elif tag == "table" and self.tables:
-            i, rows = self.tables.pop()
+            self.close_cell()
+            i, rows, _ = self.tables.pop()
             del self.out[i:]  # drop inter-cell whitespace
             rows = [r for r in rows if r]
             if rows:
@@ -263,8 +261,22 @@ class ToMarkdown(HTMLParser):
             self.out.append(data.lstrip() if self.at_space() else data)
 
     def block_break(self):
-        # a <p>/<div> inside <li> must not break the list apart
-        self.out.append(("" if self.at_space() else " ") if self.lists else "\n\n")
+        # inside <li>: a second <p>/<div> continues the item, indented under it
+        if not self.lists:
+            self.out.append("\n\n")
+        elif not self.at_space():
+            self.out.append("\n\n" + "  " * len(self.lists))
+
+    def close_cell(self):
+        t = self.tables[-1]
+        if t[2] is None:
+            return
+        i, t[2] = t[2], None
+        cell = re.sub(r"\s+", " ", "".join(self.out[i:])).strip().replace("|", "\\|")
+        del self.out[i:]
+        if not t[1]:  # <td> without <tr>
+            t[1].append([])
+        t[1][-1].append(cell)
 
     def at_space(self):
         return bool(self.out) and self.out[-1][-1:] in (" ", "\n")
@@ -399,6 +411,10 @@ def self_test():
         "<ul><li><p>a</p><ul>\n<li>b<ol><li>c</li><li>d</li></ol></li></ul></li><li>e</li></ul><p>z</p>"
     )
     assert body == "- a\n  - b\n    1. c\n    1. d\n- e\n\nz\n", repr(body)
+    _, body = html_to_markdown("<table><tr><td>a<td>b|<tr><td>c<td>d</table><p>x</p>")  # optional </td></tr>
+    assert body == "| a | b\\| |\n| --- | --- |\n| c | d |\n\nx\n", repr(body)
+    _, body = html_to_markdown("<ul><li><p>a</p><p>b</p></li><li>c</ul>")
+    assert body == "- a\n\n  b\n- c\n", repr(body)
     fm = frontmatter('a "q"', "u", ["x"], "2026-01-01", "2026-01-02")
     assert 'title: "a \\"q\\""\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02")
