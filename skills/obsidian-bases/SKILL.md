@@ -5,7 +5,7 @@ description: >-
   /pkm:obsidian-bases, "옵시디언 베이스로 할 일 테이블 만들어줘", "add a
   formula to this .base". Do NOT use for .md note syntax — use
   pkm:obsidian-markdown.
-allowed-tools: Read, Write, Edit
+allowed-tools: Read, Write, Edit, Bash
 license: MIT
 metadata:
   model_recommendation:
@@ -71,19 +71,24 @@ views:
 
 ## Step 4: Validate
 
-Verify the file is valid YAML with no syntax errors, and that every referenced
-property and formula exists. Common issues: unquoted strings containing
-special YAML characters, mismatched quotes in formula expressions, referencing
-`formula.X` without defining `X` in `formulas`, and calling `.round()` on a
-Duration instead of on `.days`. On any failure, fix it and re-validate
-(`references/TROUBLESHOOTING.md`); do not report success until it passes.
-Then have the user open it in Obsidian; a YAML error there means the quoting rules.
+```bash
+_s=""
+if [ -n "${HERMES_SKILL_DIR}" ]; then _s="${HERMES_SKILL_DIR}/lib/validate-base.py"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then _s="$CLAUDE_PLUGIN_ROOT/skills/obsidian-bases/lib/validate-base.py"
+fi
+[ -n "$_s" ] && [ -f "$_s" ] || { printf '[FAIL] plugin root unresolved (tried: %s). Export HERMES_SKILL_DIR=<this skill dir> or CLAUDE_PLUGIN_ROOT=<plugin dir> first.\n' "${_s:-nothing}" >&2; return 1 2>/dev/null || exit 1; }
+python3 "$_s" <file.base>
+```
+
+Relay its lines verbatim; fix each `[FAIL] <line>` and re-run until exit 0.
+Without PyYAML (`[WARN]` line) opening the file in Obsidian is the syntax
+check. Expression bugs (`.round()` on a Duration) are `references/TROUBLESHOOTING.md`.
 
 ## Step 5: Report
 
 ```
 [OK] <path>.base  views=<n> formulas=<n>
-[FAIL] <path>.base  <YAML or reference error>
+[FAIL] <path>.base  <line>: <YAML or reference error>
 Next: open <path>.base in Obsidian, or embed it with ![[<name>.base]]
 ```
 

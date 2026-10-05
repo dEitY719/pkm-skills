@@ -5,7 +5,7 @@ description: >-
   /pkm:obsidian-markdown, "옵시디언 노트에 콜아웃 넣어줘", "fix this
   wikilink". Not for plain .md outside a vault. Do NOT use to clip a session —
   use pkm:obsidian-session-clip.
-allowed-tools: Read, Write, Edit
+allowed-tools: Read, Write, Edit, Bash
 license: MIT
 metadata:
   model_recommendation:
@@ -69,16 +69,25 @@ See [[Algorithm Notes#Sorting|sorting]] for details.
 
 ## Step 4: Validate
 
-Frontmatter parses as YAML and sits at the very top; every `[[link]]` and
-`![[embed]]` target exists (or is an intended new note); callout types come
-from `references/CALLOUTS.md`. On a problem, fix it and re-check before
-reporting. Then have the user verify the note in Obsidian's reading view.
+```bash
+_s=""
+if [ -n "${HERMES_SKILL_DIR}" ]; then _s="${HERMES_SKILL_DIR}/lib/check-note.py"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then _s="$CLAUDE_PLUGIN_ROOT/skills/obsidian-markdown/lib/check-note.py"
+fi
+[ -n "$_s" ] && [ -f "$_s" ] || { printf '[FAIL] plugin root unresolved (tried: %s). Export HERMES_SKILL_DIR=<this skill dir> or CLAUDE_PLUGIN_ROOT=<plugin dir> first.\n' "${_s:-nothing}" >&2; return 1 2>/dev/null || exit 1; }
+python3 "$_s" --vault <vault> <note.md>
+```
+
+`<vault>` = the root holding `.obsidian/`. Relay its lines verbatim; each
+`UNRESOLVED` is a typo to fix or an intended new note (say which). Anchors and
+callout types (`references/CALLOUTS.md`) are left to Obsidian's reading view.
 
 ## Step 5: Report
 
 ```
 [OK] <note path>  links=<n> embeds=<n> callouts=<n>
-[FAIL] <note path>  <what is broken>
+[FAIL] <note path>  links=<n> embeds=<n> callouts=<n>
+UNRESOLVED <target>
 Next: open the note in reading view; unresolved links are listed above
 ```
 

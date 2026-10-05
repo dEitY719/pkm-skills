@@ -4,7 +4,7 @@ description: >-
   Create and edit Obsidian JSON Canvas (.canvas) nodes, edges, and groups. Use
   for /pkm:obsidian-canvas, "캔버스로 마인드맵 그려줘", "add a node to this
   .canvas". Do NOT use for .base views — use pkm:obsidian-bases.
-allowed-tools: Read, Write, Edit
+allowed-tools: Read, Write, Edit, Bash
 license: MIT
 metadata:
   model_recommendation:
@@ -51,27 +51,26 @@ read and parse the existing file first.
 
 ## Step 4: Validate
 
-After creating or editing a canvas file, verify:
+Run the validator after every create or edit:
 
-1. All `id` values are unique across both nodes and edges
-2. Every `fromNode` and `toNode` references an existing node ID
-3. Required fields are present for each node type (`text` for text nodes,
-   `file` for file nodes, `url` for link nodes)
-4. `type` is one of: `text`, `file`, `link`, `group`
-5. `fromSide`/`toSide` values are one of: `top`, `right`, `bottom`, `left`
-6. `fromEnd`/`toEnd` values are one of: `none`, `arrow`
-7. Color presets are `"1"` through `"6"` or valid hex (e.g., `"#FF0000"`)
-8. JSON is valid and parseable
+```bash
+_s=""
+if [ -n "${HERMES_SKILL_DIR}" ]; then _s="${HERMES_SKILL_DIR}/lib/validate-canvas.py"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then _s="$CLAUDE_PLUGIN_ROOT/skills/obsidian-canvas/lib/validate-canvas.py"
+fi
+[ -n "$_s" ] && [ -f "$_s" ] || { printf '[FAIL] plugin root unresolved (tried: %s). Export HERMES_SKILL_DIR=<this skill dir> or CLAUDE_PLUGIN_ROOT=<plugin dir> first.\n' "${_s:-nothing}" >&2; return 1 2>/dev/null || exit 1; }
+python3 "$_s" <file.canvas>
+```
 
-If validation fails, check for duplicate IDs, dangling edge references, or
-malformed JSON strings (especially unescaped newlines in text content). Fix
-and re-validate; do not report success until all eight pass.
+Relay its `[OK]` / `[FAIL] ... check <n>: ...` lines verbatim. On exit 1, fix
+each named check and re-run; report success only on exit 0. Exit 2 is a bad
+path. The eight checks and their fixes: `references/validation.md`.
 
 ## Step 5: Report
 
 ```
 [OK] <path>.canvas  nodes=<n> edges=<n>
-[FAIL] <path>.canvas  <failed check number and detail>
+[FAIL] <path>.canvas  check <n>: <detail>
 Next: open <path>.canvas in Obsidian to check the layout
 ```
 
