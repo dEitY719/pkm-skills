@@ -118,10 +118,10 @@ apply here on the next run, which is the whole point.
   `list-tree.sh` and `karakeep-env.sh` from its own `lib/vendor/` so a
   single-skill install works. `obsidian-web-clip` likewise runs a byte-identical
   copy of `obsidian-session-clip/lib/resolve-vault.sh` from its `lib/vendor/`,
-  plus its own `lib/web-clip.py`. `obsidian-canvas`, `obsidian-bases`, and
-  `obsidian-markdown` validate through `lib/validate-canvas.py`,
-  `lib/validate-base.py`, and `lib/check-note.py` (stdlib only; PyYAML
-  optional). Edit the originals, then re-copy them.
+  plus its own `lib/web-clip.py`. Edit the originals, then re-copy them.
+  `obsidian-canvas`, `obsidian-bases`, and `obsidian-markdown` validate
+  through `lib/validate-canvas.py`, `lib/validate-base.py`, and
+  `lib/check-note.py` (stdlib only; PyYAML optional).
   Call them and surface their `[OK]` / `[FAIL]` lines verbatim. Never
   reimplement their logic in prose, and never swallow a warning to keep an exit
   code clean. CI shellchecks them at `--severity=warning`, and
