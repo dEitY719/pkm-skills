@@ -93,7 +93,7 @@ def main(argv):
         if not target:  # [[#Heading]] points at this note
             continue
         rel = os.path.normpath(os.path.join(note_dir, target)).replace(os.sep, "/")
-        if any(c.lower() in index or c.lower() + ".md" in index for c in (target, rel)):
+        if target.lower() in index or rel.lower() in index:
             continue
         if target not in unresolved:
             unresolved.append(target)
