@@ -6,8 +6,9 @@ text. Edit `CLAUDE.md`; never replace the symlink with a second copy.
 
 ## What this repo is
 
-A single-plugin skill marketplace. The plugin is named `pkm` and it bundles nine
-personal-knowledge-management skills spanning two external services:
+A single-plugin skill marketplace. The plugin is named `pkm` and it bundles ten
+personal-knowledge-management skills spanning two external services plus a
+local document converter:
 
 | Skill | Service | Role |
 |-------|---------|------|
@@ -20,6 +21,7 @@ personal-knowledge-management skills spanning two external services:
 | `obsidian-bases` | Obsidian vault | Creates and edits `.base` files: filters, formulas, summaries, views. |
 | `obsidian-canvas` | Obsidian vault | Creates and edits JSON Canvas `.canvas` files: nodes, edges, groups. |
 | `obsidian-cli` | Obsidian app | Drives a running Obsidian desktop app through the `obsidian` CLI, including plugin debugging. |
+| `md-convert` | local `markitdown` | Converts files and URLs to `.md` beside the input or in `<cwd>/.md-convert/`. Never commits. |
 
 They write to the user's real personal data — a vault of notes they wrote by
 hand, and a bookmark database. That is the reason this domain is its own repo,
@@ -129,6 +131,8 @@ apply here on the next run, which is the whole point.
   run it after touching that `lib/`; `bash tests/obsidian-web-clip-check.sh`
   does the same for `obsidian-web-clip` and its vendored copy, and
   `bash tests/obsidian-validators-check.sh` for those three validators.
+  `md-convert` keeps all logic in `lib/md-convert.py`; run
+  `bash tests/md-convert-check.sh` (its stub-markitdown selfcheck) after touching it.
 
 ## Safety contracts
 
@@ -142,6 +146,10 @@ These are acceptance criteria carried over from dotfiles, not advice:
 - **`obsidian-web-clip` never commits.** It writes one new file under
   `99-Inbox/Web/` and stops; obsidian-git owns commits and sync. It never
   overwrites a note — an already-clipped `source` URL is a stop.
+- **`md-convert` writes files only.** Never commits, never installs
+  `markitdown`, never overwrites an existing `.md` without `--force`, never
+  touches `.gitignore` (only a local `.git/info/exclude` line), and never
+  disables certificate verification.
 - **`obsidian-resolve-conflict` is destructive and merge-only.** Never rewrite
   vault history, never force-push, never reset the worktree destructively, never
   delete a directory tree, never delete `.git/index.lock` (back off and retry),

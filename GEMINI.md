@@ -1,6 +1,7 @@
 # pkm — skill index
 
-Nine personal-knowledge-management skills across two services. Each lives in
+Ten personal-knowledge-management skills across two services, plus a local
+document converter. Each lives in
 this extension's `skills/` directory. They are explicitly invoked, never
 ambient: load the one that matches the request by reading its `SKILL.md`, then
 follow it. Do not load them all.
@@ -16,6 +17,7 @@ follow it. Do not load them all.
 | `obsidian-bases` | `@./skills/obsidian-bases/SKILL.md` | Creating or editing a `.base` file: filters, formulas, views. |
 | `obsidian-canvas` | `@./skills/obsidian-canvas/SKILL.md` | Creating or editing a JSON Canvas `.canvas` file: nodes, edges, groups. |
 | `obsidian-cli` | `@./skills/obsidian-cli/SKILL.md` | Running the `obsidian` CLI against a running Obsidian desktop app, including plugin debugging. |
+| `md-convert` | `@./skills/md-convert/SKILL.md` | Converting PDF / DOCX / PPTX / XLSX files or URLs to `.md` with the `markitdown` CLI. Writes files only, never commits. |
 
 Each skill's `references/` directory holds the detail it loads on demand, and
 the deterministic steps live in `lib/*.sh` (`karakeep-classify` calls its
@@ -34,6 +36,8 @@ read `references/` up front, and do not reimplement `lib/` in prose.
   `obsidian-bases`, and `obsidian-canvas` only need the vault's files;
   `obsidian-cli` needs the Obsidian desktop app running and the `obsidian` CLI
   on PATH, run through `run_shell_command`.
+- **md-convert** — `markitdown` on PATH (never auto-installed); network only
+  for URL inputs.
 - **Karakeep skills** — a reachable Karakeep instance and its API token, read
   from the working directory's `.env`: `NEXTAUTH_URL` and `KARAKEEP_API_KEY`.
   Either unset is a hard failure. Never guess a base URL, never fall back to
