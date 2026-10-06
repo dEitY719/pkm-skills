@@ -1,10 +1,11 @@
 # pkm-skills
 
-Nine skills for personal knowledge management across two services — clip a
+Ten skills for personal knowledge management across two services — clip a
 finished AI session or a web page into an Obsidian vault, resolve that vault's sync conflicts,
 write Obsidian notes, Bases, and Canvas files, drive a running Obsidian app
 through its CLI, file a URL into Karakeep, and decide where a URL belongs before
-filing it. Packaged as a single plugin named `pkm`, installable on six
+filing it — plus a local `markitdown` converter that turns documents and URLs
+into markdown. Packaged as a single plugin named `pkm`, installable on six
 coding-agent harnesses.
 
 Unlike its sibling [`harness-skills`](https://github.com/dEitY719/harness-skills),
@@ -24,6 +25,7 @@ this repo owns no shared assets — it links out for the
 | `obsidian-bases` | `/pkm:obsidian-bases [path] [request]` | Creates and edits Obsidian Bases (`.base`) files — filters, formulas, summaries, and table / cards / list / map views. |
 | `obsidian-canvas` | `/pkm:obsidian-canvas [path] [request]` | Creates and edits JSON Canvas (`.canvas`) files — text, file, link, and group nodes and the edges between them, with ID and edge-reference validation. |
 | `obsidian-cli` | `/pkm:obsidian-cli [request]` | Runs the `obsidian` CLI against a running Obsidian desktop app — read, search, append, properties, tasks, and the plugin / theme reload-and-debug loop. |
+| `md-convert` | `/pkm:md-convert <input>... [--output-path <dir>] [--force]` | Converts PDF / DOCX / PPTX / XLSX files and URLs (YouTube transcripts included) to `.md` through the `markitdown` CLI. Files land beside the input, URLs in `<cwd>/.md-convert/` (git-excluded locally); an existing `.md` is skipped unless `--force`. Writes files only — never commits. |
 
 The two Karakeep skills are a propose-then-confirm pair: `karakeep-classify`
 judges, `karakeep-add` writes. Running `karakeep-add` without `--list` delegates
@@ -56,6 +58,7 @@ Each page is generated from a Markdown source under
 | `obsidian-resolve-conflict` | Two clones of the same vault remote (`windows` / `wsl`). Overrides: `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT` (default `/mnt/c/Users`), `$OBSIDIAN_VAULT_WIN_NAME` (default `ObsidianVault-PARA`), `$OBSIDIAN_VAULT_WSL_ROOT` (default `$HOME/para/project`). |
 | `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas` | An Obsidian vault on disk. Nothing else — no network, no `lib/`. |
 | `obsidian-cli` | The Obsidian desktop app running, and the `obsidian` CLI on PATH (`obsidian help` lists every command). |
+| `md-convert` | `markitdown` on PATH (`uv tool install 'markitdown[all]'`; the skill never installs it) and `python3`. Network access only for URL inputs. |
 | `karakeep-add`, `karakeep-classify` | A reachable Karakeep instance and its API token, read from the working directory's `.env`: `NEXTAUTH_URL` (the live base URL — never `localhost:3001`) and `KARAKEEP_API_KEY`. Either unset is a hard failure, not a fallback. Their `lib/*.sh` need `curl`, `jq`, and `python3` on PATH. |
 
 ## Install
@@ -118,6 +121,7 @@ read the one file for the harness you are on.
 | `obsidian-bases` | full | full | full | full | full | full |
 | `obsidian-canvas` | full | full | full | full | full | full |
 | `obsidian-cli` | needs app | needs app | needs app | needs app | needs app | needs app |
+| `md-convert` | full | full | full | full | full | full |
 
 *confirm in chat* — the skill must stop and ask before resolving a note-body
 conflict. Kimi (`AskUserQuestion`) and Gemini (`ask_user`) have a structured
@@ -166,7 +170,7 @@ Manifests live at the repo root and all point at one flat `skills/` directory:
 
 ```
 .
-├── skills/{obsidian-session-clip,obsidian-web-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify}/
+├── skills/{obsidian-session-clip,obsidian-web-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify,md-convert}/
 │   ├── SKILL.md
 │   ├── references/
 │   └── lib/                                  (not karakeep-classify)
