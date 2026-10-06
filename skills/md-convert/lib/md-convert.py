@@ -120,7 +120,7 @@ def convert(src, out_dir, force):
 
 
 def main(argv):
-    if argv and argv[0] in ("-h", "--help", "help") or "-h" in argv or "--help" in argv:
+    if argv[:1] == ["help"] or "-h" in argv or "--help" in argv:
         with open(HELP, encoding="utf-8") as fh:
             sys.stdout.write(fh.read())
         return 0
