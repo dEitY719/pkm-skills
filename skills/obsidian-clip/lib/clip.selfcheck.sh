@@ -49,6 +49,7 @@ in=\$1; out=\$3
 case "\$in" in
 *empty*) : >"\$out" ;;
 *boom*) echo "SSLError: certificate verify failed" >&2; echo more >&2; exit 1 ;;
+*nodeps*) printf '%s\n' 'Traceback (most recent call last):' '  File "/x/markitdown/__main__.py", line 1, in main' 'markitdown._exceptions.FileConversionException: File conversion failed after 1 attempts:' ' - PdfConverter threw MissingDependencyException with message: install [pdf]' >&2; exit 1 ;;
 *tbfail*) printf '%s\n' 'Traceback (most recent call last):' '  File "/x/markitdown/__main__.py", line 1, in main' "requests.exceptions.ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=9): Max retries exceeded with url: /sso;jsessionid=TOKJ?SAMLRequest=TOKSAML&state=TOKSTATE#frag (Caused by NewConnectionError(...))" >&2; exit 1 ;;
 *tokfail*) echo "HTTPError: 403 Forbidden for url: https://u:TOKPW@idp.example.net/saml;jsessionid=TOKJ?state=TOKSTATE&SAMLRequest=TOKSAML#frag" >&2; exit 1 ;;
 */auth/intro) printf '# Auth Intro\n\nbody\n' >"\$out" ;;
@@ -182,7 +183,14 @@ run "$TMP/docs/scan-empty.pdf" "$TMP/vault"
 check "empty conversion -> [WARN], nothing written" eval 'has "[WARN]" && [ "$(notes)" = "$n" ]'
 run "https://boom.example.com/x" "$TMP/vault"
 check "markitdown failure, no traceback -> exit code + host, TLS and markitdown Next:, nothing written" \
-    eval 'has "[FAIL] https://boom.example.com/x: markitdown exit 1 (boom.example.com) -- " && ! has "SSLError" && ! has "more" && has "REQUESTS_CA_BUNDLE" && has "Next: 원인 상세: markitdown \"https://boom.example.com/x\" 를 직접 실행" && [ "$(notes)" = "$n" ]'
+    eval 'has "[FAIL] https://boom.example.com/x: markitdown exit 1 (boom.example.com) -- " && ! has "SSLError" && ! has "more" && has "REQUESTS_CA_BUNDLE" && has "Next: 원인 상세: markitdown https://boom.example.com/x 를 직접 실행" && [ "$(notes)" = "$n" ]'
+run "https://boom.example.com/x?a=1&b=\$HOME" "$TMP/vault"
+check "markitdown Next: command shell-quotes the input" \
+    has "Next: 원인 상세: markitdown 'https://boom.example.com/x?a=1&b=\$HOME' 를 직접 실행"
+: >"$TMP/docs/nodeps.pdf"
+run "$TMP/docs/nodeps.pdf" "$TMP/vault"
+check "local file missing a markitdown extra -> class + install Next:, nothing written" \
+    eval 'has "[FAIL] $TMP/docs/nodeps.pdf: FileConversionException -- " && has "uv tool install '"'"'markitdown[all]'"'"'" && ! has "PdfConverter" && [ "$(notes)" = "$n" ]'
 run "https://tokfail.example.com/x" "$TMP/vault"
 check "markitdown stderr naming a token-bearing URL -> none of it printed, input host only, nothing written" \
     eval 'has "markitdown exit 1 (tokfail.example.com) -- " && ! has "TOK" && ! has "idp.example.net" && ! has "/saml" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'

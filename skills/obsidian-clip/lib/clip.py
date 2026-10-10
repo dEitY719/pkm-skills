@@ -25,6 +25,7 @@ import html
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -121,10 +122,10 @@ def fetch(url, *curl_args):
     err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
         # curl's own text (and the -w trailer's effective URL) may carry session tokens
-        raise FetchError(f"network error {host(url)}: curl exit {r.returncode}")
+        raise FetchError(f"network error {url_host(url)}: curl exit {r.returncode}")
     effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
-        raise FetchError(f"HTTP {code} {host(url)}")
+        raise FetchError(f"HTTP {code} {url_host(url)}")
     hops, base = [], url
     for line in headers:
         name, _, value = line.partition(":")
@@ -152,7 +153,7 @@ def login_wall(effective, page, hops=()):
     return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
 
-def host(url):
+def url_host(url):
     """Only the host of `url`, or `?`: userinfo, path, query and fragment can carry tokens."""
     try:
         return urllib.parse.urlsplit(url).hostname or "?"
@@ -161,7 +162,7 @@ def host(url):
 
 
 def wall(effective):
-    return FetchError(f"로그인 필요 ({host(effective)}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
+    return FetchError(f"로그인 필요 ({url_host(effective)}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
 
 
 def probe_login_wall(url):
@@ -289,9 +290,11 @@ def markitdown(arg, url):
                 print("Next: 네트워크가 느리거나 막혔으면 HTTP(S)_PROXY 설정을 확인하고 다시 실행")
             return None
         if r.returncode != 0:
-            where = f" ({host(arg)})" if url else ""
+            where = f" ({url_host(arg)})" if url else ""
             print(f"[FAIL] {arg}: {exc_class(r)}{where} -- 파일을 만들지 않았다")
-            print(f'Next: 원인 상세: markitdown "{arg}" 를 직접 실행')
+            print(f"Next: 원인 상세: markitdown {shlex.quote(arg)} 를 직접 실행")
+            if "MissingDependencyException" in r.stderr:  # the class alone hides which extra is missing
+                print("Next: 이 형식의 markitdown extra 미설치: uv tool install 'markitdown[all]'")
             if url or TLS_HINT.search(r.stderr):
                 print("Next: 네트워크/TLS 오류면 REQUESTS_CA_BUNDLE (사내 CA 번들) 과 "
                       "HTTP(S)_PROXY 설정을 확인 -- 인증서 검증은 끄지 않는다")
@@ -507,8 +510,8 @@ def self_test():
     assert 'title: "a \\"q\\""\n' in fm and '  - "youtube"\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02", "article")
     assert yaml_unquote(' "a \\"q\\" \\\\"') == 'a "q" \\'
-    assert host("https://u:PW@Idp.kr:8443/sso;j=J?state=S#f") == "idp.kr"
-    assert host("http://[bad/b?state=S") == "?" and host("/no/scheme") == "?"
+    assert url_host("https://u:PW@Idp.kr:8443/sso;j=J?state=S#f") == "idp.kr"
+    assert url_host("http://[bad/b?state=S") == "?" and url_host("/no/scheme") == "?"
     def run(err, code=1):
         return subprocess.CompletedProcess([], code, "", err)
     assert exc_class(run("SSLError: x https://h/a?state=S\n")) == "markitdown exit 1"
