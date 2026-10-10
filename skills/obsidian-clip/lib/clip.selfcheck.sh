@@ -203,6 +203,12 @@ n="$(notes)"
 run "https://walled.example.com/t/slug/88" "$TMP/vault"
 check "login-walled Discourse -> [FAIL] 로그인 필요 without the query, nothing written" \
     eval 'has "로그인 필요 (https://walled.example.com/login)" && ! has "TOK88" && [ "$(notes)" = "$n" ]'
+check "Discourse's own wall -> no OBSIDIAN_CLIP_NO_PROBE hint (the opt-out cannot bypass it)" \
+    eval '! has "OBSIDIAN_CLIP_NO_PROBE"'
+OBSIDIAN_CLIP_NO_PROBE=1 run "https://walled.example.com/t/slug/88" "$TMP/vault"
+rc=$?
+check "OBSIDIAN_CLIP_NO_PROBE=1 -> Discourse's own wall still stops, nothing written" \
+    eval '[ $rc = 1 ] && has "로그인 필요" && [ "$(notes)" = "$n" ]'
 : >"$TMP/calls"
 run "https://plain.example.com/t/slug/99" "$TMP/vault"
 check "non-Discourse /t/ URL behind /auth -> falls back to markitdown" \
@@ -215,10 +221,12 @@ run "https://private.example.com/private" "$TMP/vault"
 rc=$?
 check "non-topic URL redirected to /login -> [FAIL] 로그인 필요, nothing written, no markitdown" \
     eval '[ $rc = 1 ] && has "[FAIL] 로그인 필요 (https://private.example.com/login)" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
-check "login-wall [FAIL] names the OBSIDIAN_CLIP_NO_PROBE=1 opt-out" has "OBSIDIAN_CLIP_NO_PROBE=1"
+check "probe wall -> Next: line names the OBSIDIAN_CLIP_NO_PROBE=1 opt-out" has "Next: 공개 페이지인데"
+: >"$TMP/curlcalls"
 OBSIDIAN_CLIP_NO_PROBE=1 run "https://private.example.com/private" "$TMP/vault"
-check "OBSIDIAN_CLIP_NO_PROBE=1 -> same /login redirect skips the probe, clipped by markitdown" \
-    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Private Page.md" ]'
+rc=$?
+check "OBSIDIAN_CLIP_NO_PROBE=1 -> same /login redirect skips the probe (curl not called), clipped by markitdown" \
+    eval '[ $rc = 0 ] && ! has "로그인 필요" && [ ! -s "$TMP/curlcalls" ] && [ -s "$TMP/vault/99-Inbox/$TODAY Private Page.md" ]'
 n="$(notes)"
 : >"$TMP/calls"
 run "https://sso.example.com/page" "$TMP/vault"

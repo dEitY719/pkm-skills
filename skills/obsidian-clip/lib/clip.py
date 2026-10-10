@@ -159,8 +159,7 @@ def wall(effective):
     # ;jsessionid path params; scheme, host and the bare path are enough.
     p = urllib.parse.urlsplit(effective)
     bare = f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
-    return FetchError(f"로그인 필요 ({bare}) -- 브라우저의 Obsidian Web Clipper 를 쓰라 "
-                      "(Next: 공개 페이지인데 리다이렉트 프로브가 막았으면 OBSIDIAN_CLIP_NO_PROBE=1 로 다시 실행)")
+    return FetchError(f"로그인 필요 ({bare}) -- 브라우저의 Obsidian Web Clipper 를 쓰라")
 
 
 def probe_login_wall(url):
@@ -406,12 +405,16 @@ def clip(src, vault):
         return 1
 
     meta = {"title": "", "author": [], "published": ""}
+    probed = False
     try:
         found = discourse(src) if kind == "article" else None
-        if kind == "article" and not found and os.environ.get("OBSIDIAN_CLIP_NO_PROBE") != "1":
+        probed = kind == "article" and not found and os.environ.get("OBSIDIAN_CLIP_NO_PROBE") != "1"
+        if probed:
             probe_login_wall(src)
     except FetchError as e:
         print(f"[FAIL] {e} -- 파일을 만들지 않았다")
+        if probed:  # the opt-out only skips the probe; a Discourse topic's own wall stays a stop
+            print("Next: 공개 페이지인데 리다이렉트 프로브가 막았으면 OBSIDIAN_CLIP_NO_PROBE=1 로 다시 실행")
         return 1
     if found:
         meta, body = found
