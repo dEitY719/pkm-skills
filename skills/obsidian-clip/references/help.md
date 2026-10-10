@@ -85,14 +85,14 @@ video ID, and a `/t/<slug>/<id>[/<post>]` topic URL collapses to `/t/<id>`. A ma
 | `[OK] Discourse 경로` | Discourse `/raw` path used. |
 | `[WARN] YouTube Description 이 '...' 로 잘렸다` | markitdown cut the description; check the video page. |
 | `[WARN] upload 매핑 누락 ...` | That `upload://` link had no cooked-HTML match and was left as is. |
-| `[WARN] Discourse /raw 실패 ... 폴백` | Discourse detected but `/raw` failed; markitdown used. URLs in curl's error are shortened to scheme, host and path. |
+| `[WARN] Discourse /raw 실패 ... 폴백` | Discourse detected but `/raw` failed; markitdown used. The reason is `network error <host>: curl exit <code>` or `HTTP <code> <host>`; curl's own error text is never printed. |
 | `[WARN] ... 변환 결과가 비었다` | Empty conversion (scanned PDF, video without captions); nothing written. |
 | `[FAIL] markitdown 미설치` + `Next:` | Install markitdown; nothing written. |
-| `[FAIL] <input>: <error>` + `Next: ... REQUESTS_CA_BUNDLE` | markitdown failed (network / TLS / unsupported file); nothing written. `<error>` is its first stderr line (when it printed a traceback, the exception after its last frame, joined onto one line), with URLs shortened to scheme, host and path and a scheme-less `url: /path?query` cut to its path. |
+| `[FAIL] <input>: <Class> (<host>)` + `Next:` | markitdown failed (network / TLS / unsupported file); nothing written. `<Class>` is the exception class of its last traceback (`ConnectionError`), or `markitdown exit <code>` when there is none; `(<host>)` only for a URL input. The exception message is never printed: it can quote token-bearing URLs. `Next: 원인 상세: markitdown "<input>" 를 직접 실행` shows the full error; a URL input also gets the `REQUESTS_CA_BUNDLE` / proxy hint. |
 | `[FAIL] 이미 클립됨 ...` | Same normalized source already under `99-Inbox/`; existing path shown. |
 | `[FAIL] 같은 이름의 다른 노트 ...` | Same date + title, different source; nothing overwritten. |
 | `[FAIL] <input>: markitdown timeout <N>s` | markitdown ran longer than `$OBSIDIAN_CLIP_TIMEOUT` seconds (default 300); nothing written. |
-| `[FAIL] 로그인 필요 ...` | Login wall: a Discourse wall, or a web page redirected to `/login`, `/signin`, `/sign_in`, `/sign-in` or `/session/sso`, or through `/auth/...` on the way (SSO to an IdP included); nothing written. The URL shown is reduced to scheme, host and path: query, fragment, userinfo and `;params` are dropped because they can carry session tokens. A page the user asked for at that path itself is clipped. Use the browser Web Clipper; if the page is public and the redirect probe refused it, rerun with `OBSIDIAN_CLIP_NO_PROBE=1`. A probe that fails (network error, non-2xx) is not a wall; markitdown still runs. |
+| `[FAIL] 로그인 필요 ...` | Login wall: a Discourse wall, or a web page redirected to `/login`, `/signin`, `/sign_in`, `/sign-in` or `/session/sso`, or through `/auth/...` on the way (SSO to an IdP included); nothing written. Only the host of the login page is shown: path, query, fragment and userinfo can carry session tokens. A page the user asked for at that path itself is clipped. Use the browser Web Clipper; if the page is public and the redirect probe refused it, rerun with `OBSIDIAN_CLIP_NO_PROBE=1`. A probe that fails (network error, non-2xx) is not a wall; markitdown still runs. |
 | `[FAIL] vault 없음 ...` | Vault path missing; pass `--vault` or set `OBSIDIAN_VAULT_DIR`. |
 
 ## What it will NOT do

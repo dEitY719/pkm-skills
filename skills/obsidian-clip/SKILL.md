@@ -63,7 +63,8 @@ YouTube URL shape → its video ID), converts, and writes
 skeleton. Paths, title rules, messages: `references/help.md`.
 
 It writes nothing on an empty conversion, any markitdown / network failure, a
-duplicate source, or a name collision.
+duplicate source, or a name collision. Error lines name only the exception
+class (or `curl exit <code>`) and host, never the downstream tool's text.
 
 ## Step 3: Report
 

@@ -120,13 +120,11 @@ def fetch(url, *curl_args):
             headers = []
     err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
-        # drop the -w trailer: its effective URL may be an IdP URL carrying session tokens
-        # (a stderr with no error line is the trailer alone: never fall back to it)
-        reason = scrub(err.rpartition("\n")[0]) or f"curl exit {r.returncode}"
-        raise FetchError(f"network error {url}: {reason}")
+        # curl's own text (and the -w trailer's effective URL) may carry session tokens
+        raise FetchError(f"network error {host(url)}: curl exit {r.returncode}")
     effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
-        raise FetchError(f"HTTP {code} {url}")
+        raise FetchError(f"HTTP {code} {host(url)}")
     hops, base = [], url
     for line in headers:
         name, _, value = line.partition(":")
@@ -154,35 +152,16 @@ def login_wall(effective, page, hops=()):
     return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
 
-def bare_url(url):
-    # Session tokens ride in the query/fragment (state, SAMLRequest), userinfo and
-    # ;jsessionid path params; scheme, host and the bare path are enough.
+def host(url):
+    """Only the host of `url`, or `?`: userinfo, path, query and fragment can carry tokens."""
     try:
-        p = urllib.parse.urlsplit(url)
-    except ValueError:  # e.g. a broken [ipv6] host: drop userinfo, keep what precedes any query
-        return re.split(r"[?#;]", re.sub(r"^([^:/]*://)[^/?#]*@", r"\1", url), maxsplit=1)[0]
-    path = re.sub(r";[^/]*", "", p.path)
-    return f"{p.scheme}://{p.netloc.rpartition('@')[2]}{path}" if p.scheme else path
-
-
-# Lazy up to trailing punctuation, so "(see https://h/a?x=1)." keeps its ")."
-# urllib3's "Max retries exceeded with url: /path?query" carries no scheme.
-# requests leaves ' unencoded, so a URL with a part bare_url() drops (?query,
-# #fragment, ;param, userinfo@) runs to the next whitespace and only a closing
-# quote/bracket before it stays out; a URL with none of those parts ends at '.
-_TAIL_END = r"""[).,;:'"\]}]*(?:[\s"<>]|$)"""
-URL_IN_TEXT = re.compile(rf"""(?:https?://|(?<=\burl: )/)(?:"""
-                         rf"""[^\s"<>?#;@]*[?#;@](?!{_TAIL_END})[^\s"<>]*?(?={_TAIL_END})|"""
-                         r"""[^\s'"<>]*?(?=[).,;:]*(?:[\s'"<>]|$)))""", re.I)
-
-
-def scrub(text):
-    """Shorten every http(s) URL, and every scheme-less `url: /path?query`, with bare_url()."""
-    return URL_IN_TEXT.sub(lambda m: bare_url(m.group(0)), text)
+        return urllib.parse.urlsplit(url).hostname or "?"
+    except ValueError:
+        return "?"
 
 
 def wall(effective):
-    return FetchError(f"로그인 필요 ({bare_url(effective)}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
+    return FetchError(f"로그인 필요 ({host(effective)}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
 
 
 def probe_login_wall(url):
@@ -281,19 +260,20 @@ def discourse(url):
 
 # --- markitdown --------------------------------------------------------------
 
-def stderr_reason(r):
-    """One line of `r.stderr` that says why the run failed."""
-    lines = [ln for ln in r.stderr.splitlines() if ln.strip()] or [f"exit {r.returncode}"]
+def exc_class(r):
+    """The last traceback's exception class name, else `markitdown exit <code>`.
+
+    Never the exception message: downstream text can quote token-bearing URLs.
+    """
+    lines = r.stderr.splitlines()
     tb = [i for i, ln in enumerate(lines) if ln.startswith("Traceback (most recent call last):")]
-    if not tb:
-        return lines[0].strip()
-    # The exception follows the last traceback's indented frames and may span lines
-    # (markitdown's FileConversionException ends with "* etc."), so join all of it.
-    rest = lines[tb[-1] + 1:]
-    start = next((i for i, ln in enumerate(rest) if not ln[:1].isspace()), len(rest))
-    reason = " ".join(ln.strip() for ln in rest[start:]) or lines[-1].strip()
-    # Cap it: anything a logger writes after the traceback would be joined in too.
-    return reason if len(reason) <= 300 else reason[:300] + " ..."
+    if tb:
+        # the exception line is the first unindented one after the last traceback's frames
+        line = next((ln for ln in lines[tb[-1] + 1:] if ln.strip() and not ln[:1].isspace()), "")
+        m = re.match(r"([\w.]+)(?::|$)", line)
+        if m:
+            return m.group(1).rpartition(".")[2]
+    return f"markitdown exit {r.returncode}"
 
 
 def markitdown(arg, url):
@@ -309,7 +289,9 @@ def markitdown(arg, url):
                 print("Next: 네트워크가 느리거나 막혔으면 HTTP(S)_PROXY 설정을 확인하고 다시 실행")
             return None
         if r.returncode != 0:
-            print(f"[FAIL] {arg}: {scrub(stderr_reason(r))} -- 파일을 만들지 않았다")
+            where = f" ({host(arg)})" if url else ""
+            print(f"[FAIL] {arg}: {exc_class(r)}{where} -- 파일을 만들지 않았다")
+            print(f'Next: 원인 상세: markitdown "{arg}" 를 직접 실행')
             if url or TLS_HINT.search(r.stderr):
                 print("Next: 네트워크/TLS 오류면 REQUESTS_CA_BUNDLE (사내 CA 번들) 과 "
                       "HTTP(S)_PROXY 설정을 확인 -- 인증서 검증은 끄지 않는다")
@@ -525,36 +507,20 @@ def self_test():
     assert 'title: "a \\"q\\""\n' in fm and '  - "youtube"\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02", "article")
     assert yaml_unquote(' "a \\"q\\" \\\\"') == 'a "q" \\'
-    tok = "https://u:PW@idp.kr/sso;jsessionid=J?state=S&SAMLRequest=R#f"
-    assert bare_url(tok) == "https://idp.kr/sso"
-    assert scrub(f"403 for url: {tok}. (see {tok}) '{tok}'") == \
-        "403 for url: https://idp.kr/sso. (see https://idp.kr/sso) 'https://idp.kr/sso'"
-    assert scrub("HTTP://H.kr/a?x=1 and http://[bad/b?state=S") == "http://H.kr/a and http://[bad/b"
-    assert scrub("no url here: /path?state=S") == "no url here: /path?state=S"
-    assert scrub("with url: /a;j=J?state=S#f (Caused by X)") == "with url: /a (Caused by X)"
-    # requests leaves ' unencoded: a quote inside the query must not end the match.
-    assert scrub("with url: /cb?state=a'SECRET (Caused") == "with url: /cb (Caused"
-    assert scrub("403 for url: https://h/cb?state=a'SECRET x") == "403 for url: https://h/cb x"
-    assert scrub("'https://h/cb#a'S'.") == "'https://h/cb'."
-    assert scrub("see http://h/a'b?x=1") == "see http://h/a'b"
-    assert scrub("with url: /a;jsessionid=AB'CD (Caused") == "with url: /a (Caused"
-    assert scrub("403 for url: https://u:P'W@h/x y") == "403 for url: https://h/x y"
-    assert scrub("['https://h/a?x=S']") == "['https://h/a']"
-    assert scrub("is it 'https://h/a'? see https://h/b; then") == \
-        "is it 'https://h/a'? see https://h/b; then"
-    assert bare_url("http://u:PW@[bad/b;j=J?state=S") == "http://[bad/b"
+    assert host("https://u:PW@Idp.kr:8443/sso;j=J?state=S#f") == "idp.kr"
+    assert host("http://[bad/b?state=S") == "?" and host("/no/scheme") == "?"
     def run(err, code=1):
         return subprocess.CompletedProcess([], code, "", err)
-    assert stderr_reason(run("SSLError: x\nmore\n")) == "SSLError: x"
-    assert stderr_reason(run("\n", 2)) == "exit 2"
+    assert exc_class(run("SSLError: x https://h/a?state=S\n")) == "markitdown exit 1"
+    assert exc_class(run("\n", 2)) == "markitdown exit 2"
     tb = ("Traceback (most recent call last):\n  File \"m.py\", line 1\n    f()\n"
-          "E: failed after 1 attempts:\n - P threw M with message: need [pdf]:\n\n* etc.\n")
-    assert stderr_reason(run(tb)) == \
-        "E: failed after 1 attempts: - P threw M with message: need [pdf]: * etc."
+          "requests.exceptions.ConnectionError: HTTPConnectionPool(url: /a?state=S)\n")
+    assert exc_class(run(tb)) == "ConnectionError"
     chained = ("Traceback (most recent call last):\n  File \"a\"\nKeyError: 'k'\n\n"
                "During handling of the above exception, another exception occurred:\n\n" + tb)
-    assert stderr_reason(run(chained)).startswith("E: failed")
-    assert stderr_reason(run(tb + "x" * 400)).endswith(" ...")
+    assert exc_class(run(chained)) == "ConnectionError"
+    assert exc_class(run("Traceback (most recent call last):\n  File \"a\"\nnot a class line\n", 3)) == \
+        "markitdown exit 3"
     assert login_wall("https://d.kr/login", "<html></html>")
     assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
     idp = "https://idp.example/oauth2/v1/authorize?s=2"
