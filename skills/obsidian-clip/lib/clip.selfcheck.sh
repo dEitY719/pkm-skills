@@ -39,7 +39,8 @@ has() { grep -qF -- "$1" "$TMP/out"; }
 notes() { find "$TMP/vault/99-Inbox" -name '*.md' 2>/dev/null | wc -l; }
 
 # Stub markitdown: YouTube URLs give the real output shape, *empty* gives an
-# empty file, *boom* fails with a TLS error, anything else one H1 + a line.
+# empty file, *boom* fails with a TLS error, *tbfail* with a real-shaped
+# traceback, anything else one H1 + a line.
 mkdir -p "$TMP/bin"
 cat >"$TMP/bin/markitdown" <<SH
 #!/bin/sh
@@ -48,6 +49,7 @@ in=\$1; out=\$3
 case "\$in" in
 *empty*) : >"\$out" ;;
 *boom*) echo "SSLError: certificate verify failed" >&2; echo more >&2; exit 1 ;;
+*tbfail*) printf '%s\n' 'Traceback (most recent call last):' '  File "/x/markitdown/__main__.py", line 1, in main' "requests.exceptions.ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=9): Max retries exceeded with url: /sso;jsessionid=TOKJ?SAMLRequest=TOKSAML&state=TOKSTATE#frag (Caused by NewConnectionError(...))" >&2; exit 1 ;;
 *tokfail*) echo "HTTPError: 403 Forbidden for url: https://u:TOKPW@idp.example.net/saml;jsessionid=TOKJ?state=TOKSTATE&SAMLRequest=TOKSAML#frag" >&2; exit 1 ;;
 */auth/intro) printf '# Auth Intro\n\nbody\n' >"\$out" ;;
 *netfail*) printf '# Probe Down\n\nbody\n' >"\$out" ;;
@@ -184,6 +186,9 @@ check "markitdown failure -> first stderr line + TLS Next:, nothing written" \
 run "https://tokfail.example.com/x" "$TMP/vault"
 check "markitdown failure with a token-bearing URL -> URL shortened, no state=/SAMLRequest=, nothing written" \
     eval 'has "Forbidden for url: https://idp.example.net/saml --" && ! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
+run "https://tbfail.example.com/x" "$TMP/vault"
+check "markitdown traceback -> last (exception) line, scheme-less url: query dropped" \
+    eval 'has "requests.exceptions.ConnectionError" && has "with url: /sso (Caused" && ! has "Traceback" && ! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
 run "$TMP/docs/missing.pdf" "$TMP/vault"
 check "missing local file -> [FAIL]" eval 'has "[FAIL] 입력을 찾을 수 없다" && [ "$(notes)" = "$n" ]'
 run "https://example.com/z" "$TMP/no-such-vault"
