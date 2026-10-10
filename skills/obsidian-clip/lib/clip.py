@@ -167,7 +167,11 @@ def bare_url(url):
 
 # Lazy up to trailing punctuation, so "(see https://h/a?x=1)." keeps its ")."
 # urllib3's "Max retries exceeded with url: /path?query" carries no scheme.
-URL_IN_TEXT = re.compile(r"""(?:https?://|(?<=\burl: )/)[^\s'"<>]*?(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
+# requests leaves ' unencoded, so a URL with a query/fragment runs to the next
+# whitespace and only a closing quote before it stays out; without one, ' ends it.
+URL_IN_TEXT = re.compile(r"""(?:https?://|(?<=\burl: )/)(?:"""
+                         r"""[^\s"<>?#]*[?#][^\s"<>]*?(?=[).,;:'"]*(?:[\s"<>]|$))|"""
+                         r"""[^\s'"<>]*?(?=[).,;:]*(?:[\s'"<>]|$)))""", re.I)
 
 
 def scrub(text):
@@ -526,6 +530,11 @@ def self_test():
     assert scrub("HTTP://H.kr/a?x=1 and http://[bad/b?state=S") == "http://H.kr/a and http://[bad/b"
     assert scrub("no url here: /path?state=S") == "no url here: /path?state=S"
     assert scrub("with url: /a;j=J?state=S#f (Caused by X)") == "with url: /a (Caused by X)"
+    # requests leaves ' unencoded: a quote inside the query must not end the match.
+    assert scrub("with url: /cb?state=a'SECRET (Caused") == "with url: /cb (Caused"
+    assert scrub("403 for url: https://h/cb?state=a'SECRET x") == "403 for url: https://h/cb x"
+    assert scrub("'https://h/cb#a'S'.") == "'https://h/cb'."
+    assert scrub("see http://h/a'b?x=1") == "see http://h/a'b"
     assert bare_url("http://u:PW@[bad/b;j=J?state=S") == "http://[bad/b"
     def run(err, code=1):
         return subprocess.CompletedProcess([], code, "", err)
