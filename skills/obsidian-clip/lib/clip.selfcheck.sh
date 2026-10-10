@@ -83,8 +83,11 @@ check "markitdown missing -> [FAIL] + Next: install, exit 1, nothing written" \
     eval '[ $rc = 1 ] && has "[FAIL] markitdown 미설치" && has "Next: markitdown-help install" && has "uv tool install '"'"'markitdown[all]'"'"'" && [ -z "$(ls -A "$TMP/vault")" ]'
 
 # 2. YouTube share URL -> 99-Inbox/<today> <## title>.md, tag youtube
+: >"$TMP/calls"
 run "https://youtube.com/shorts/nGKKWne_O2s?si=0WCRD0677GIEY8KB" "$TMP/vault"
 yt="$TMP/vault/99-Inbox/$TODAY Video AB test.md"
+check "YouTube shorts -> markitdown gets the canonical watch URL" \
+    grep -qF "https://www.youtube.com/watch?v=nGKKWne_O2s -o " "$TMP/calls"
 check "YouTube -> 99-Inbox/ root, title from ## heading, forbidden chars removed" \
     eval '[ -s "$yt" ] && has "[OK] $yt" && tail -n1 "$TMP/out" | grep -qxF "/ingest $yt"'
 check "YouTube note: Web Clipper frontmatter, tag youtube, source verbatim, body kept" \
