@@ -65,7 +65,8 @@ chmod +x "$TMP/bin/markitdown"
 # Discourse topic, which answers the topic JSON and its /raw markdown; topic
 # 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth,
 # 66 a topic whose /raw times out after a redirect to a token-bearing IdP URL,
-# 64 one whose /raw curl error line itself names a token-bearing URL,
+# 64 one whose /raw curl error line itself names a token-bearing URL
+# (synthetic: real curl names host and port there; this guards the scrub),
 # 65 the same as 66 with no curl error line (the -w trailer alone on stderr).
 # private.* redirects to /login, sso.* hops via /session/sso to a third-party
 # IdP, *netfail* is a network error, redir.* adds a trailing slash, and
