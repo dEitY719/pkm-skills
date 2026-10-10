@@ -159,7 +159,7 @@ def wall(effective):
     # ;jsessionid path params; scheme, host and the bare path are enough.
     p = urllib.parse.urlsplit(effective)
     bare = f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
-    return FetchError(f"로그인 필요 ({bare}) -- 브라우저의 Obsidian Web Clipper 를 쓰라")
+    return FetchError(f"로그인 필요 ({bare}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
 
 
 def probe_login_wall(url):
