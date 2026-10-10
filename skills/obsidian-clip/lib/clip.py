@@ -133,10 +133,10 @@ def fetch(url):
     return r.stdout.decode("utf-8", "replace"), hops, effective
 
 
-LOGIN_PATH = re.compile(r"/(login|sign_?in|sign-in|session/sso)/?$")
+LOGIN_PATH = re.compile(r"/(login|sign[-_]?in|session/sso)/?$")
 # Broader, but only for redirect targets: a server sending you to /auth/... is
 # a login wall; a page the user asked for at /auth/intro is not.
-HOP_PATH = re.compile(r"/(login|sign_?in|sign-in|session/sso|auth)(/|$)")
+HOP_PATH = re.compile(r"/(login|sign[-_]?in|session/sso|auth)(/|$)")
 DISCOURSE_MARK = re.compile(r'data-discourse-setup|name="generator" content="Discourse', re.I)
 LOGIN_MARK = re.compile(r"login-required|login_required|id=\"login-form\"|/session/sso", re.I)
 
