@@ -62,7 +62,8 @@ chmod +x "$TMP/bin/markitdown"
 # Stub curl: every URL answers 200 with an empty body unless it is the fake
 # Discourse topic, which answers the topic JSON and its /raw markdown; topic
 # 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth,
-# 66 a topic whose /raw times out after a redirect to a token-bearing IdP URL.
+# 66 a topic whose /raw times out after a redirect to a token-bearing IdP URL,
+# 65 the same with no curl error line (the -w trailer alone on stderr).
 # private.* redirects to /login, sso.* hops via /session/sso to a third-party
 # IdP, *netfail* is a network error, redir.* adds a trailing slash, and
 # */c/general is a public Discourse page (generator meta + the preloaded
@@ -84,6 +85,8 @@ https://sso.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?
 */t/88.json) printf '<meta name="generator" content="Discourse 3.2"><body class="login-required">'; eff='https://walled.example.com/login?nonce=TOK88' ;;
 */t/99.json) printf 'HTTP/1.1 302 Found\r\nLocation: /auth/sign-in\r\n\r\n' >"$hdr"; printf '<html>sign in</html>'; eff=https://plain.example.com/auth/sign-in ;;
 */t/66.json) printf '{"title":"Raw Down","post_stream":{"posts":[{"username":"kim"}]}}' ;;
+*/raw/65/1) printf '\n%s 000' 'https://idp.example.net/a?state=TOKTRL' >&2; exit 28 ;;
+*/t/65.json) printf '{"title":"Raw Bare","post_stream":{"posts":[{"username":"kim"}]}}' ;;
 */t/77.json) printf '{"title":"Disc Topic","post_stream":{"posts":[{"username":"kim","created_at":"2026-01-02T00:00:00Z","cooked":"<img src=\\"https://cdn/x.png\\" data-base62-sha1=\\"AbC\\">"}]}}' ;;
 */raw/77/1) printf 'raw body ![i|10x20](upload://AbC.png)\n' ;;
 *) : ;;
@@ -189,6 +192,9 @@ check "same Discourse topic, other post / referral -> duplicate" eval 'has "이�
 run "https://forum.example.com/t/raw-down/66" "$TMP/vault"
 check "/raw network error -> [WARN] without the -w trailer's effective URL" \
     eval 'has "[WARN] Discourse /raw 실패" && has "Operation timed out" && ! has "TOKRAW"'
+run "https://forum.example.com/t/raw-bare/65" "$TMP/vault"
+check "Discourse /raw failure with only the -w trailer on stderr -> [WARN], trailer URL never printed" \
+    eval 'has "[WARN] Discourse /raw 실패" && has "curl exit 28" && ! has "TOKTRL"'
 
 # 9. login walls: Discourse's own is a stop; another site's walled /t/<id>.json
 # is not (its page is probed instead, see 9b)
