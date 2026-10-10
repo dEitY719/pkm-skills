@@ -97,8 +97,8 @@ def classify(src):
 
 # --- fetch (Discourse + the login-wall probe; markitdown fetches the body) ---
 
-def fetch(url):
-    """Return (body, redirect hop URLs, effective URL)."""
+def fetch(url, *curl_args):
+    """Return (body, redirect hop URLs, effective URL); curl_args go before the URL."""
     # curl, not urllib: it uses the system trust store, which a corporate TLS
     # proxy's CA lives in, and python 3.13's strict X509 checks reject some
     # chains curl accepts.
@@ -108,7 +108,7 @@ def fetch(url):
             r = subprocess.run(
                 ["curl", "-sSL", "--proto", "=http,https", "--proto-redir", "=http,https",
                  "--max-time", "30", "-A", UA, "-D", hdr,
-                 "-w", "%{stderr}\n%{url_effective} %{http_code}", "--", url],
+                 "-w", "%{stderr}\n%{url_effective} %{http_code}", *curl_args, "--", url],
                 capture_output=True, check=False,
             )
         except FileNotFoundError as e:
@@ -161,15 +161,21 @@ def probe_login_wall(url):
     A failed probe is not a wall: markitdown still gets the URL, as before.
     Page markers are not checked: every public Discourse page preloads the
     `login_required` site setting. A hop that keeps the requested path
-    (http->https, trailing slash) is the page the user asked for, not a wall.
+    (http->https, trailing slash) is the page the user asked for, not a wall,
+    and so is a final URL on that same path (a page at /guide/sign-in).
     """
     try:
-        _, hops, effective = fetch(url)
+        # -r 0-0: only the redirect chain matters; a server that honours ranges
+        # sends 1 byte instead of the whole page markitdown downloads again.
+        _, hops, effective = fetch(url, "-r", "0-0")
     except FetchError:
         return
     asked = urllib.parse.urlsplit(url).path.rstrip("/")
-    hops = [h for h in hops if urllib.parse.urlsplit(h).path.rstrip("/") != asked]
-    if login_wall(effective, "", hops):
+
+    def other(u):
+        return urllib.parse.urlsplit(u).path.rstrip("/") != asked
+
+    if login_wall(effective if other(effective) else "", "", [h for h in hops if other(h)]):
         raise FetchError(WALL.format(effective))
 
 
