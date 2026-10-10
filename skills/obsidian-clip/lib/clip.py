@@ -154,12 +154,27 @@ def login_wall(effective, page, hops=()):
     return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
 
-def wall(effective):
+def bare_url(url):
     # Session tokens ride in the query/fragment (state, SAMLRequest), userinfo and
     # ;jsessionid path params; scheme, host and the bare path are enough.
-    p = urllib.parse.urlsplit(effective)
-    bare = f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
-    return FetchError(f"로그인 필요 ({bare}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
+    try:
+        p = urllib.parse.urlsplit(url)
+    except ValueError:  # e.g. a broken [ipv6] host: keep what precedes any query
+        return re.split(r"[?#;@]", url, maxsplit=1)[0]
+    return f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
+
+
+# Lazy up to trailing punctuation, so "(see https://h/a?x=1)." keeps its ")."
+URL_IN_TEXT = re.compile(r"""https?://[^\s'"<>]+?(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
+
+
+def scrub(text):
+    """Shorten every http(s) URL in a downstream tool's error text with bare_url()."""
+    return URL_IN_TEXT.sub(lambda m: bare_url(m.group(0)), text)
+
+
+def wall(effective):
+    return FetchError(f"로그인 필요 ({bare_url(effective)}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
 
 
 def probe_login_wall(url):
@@ -242,7 +257,7 @@ def discourse(url):
     try:
         raw = fetch(f"{origin}/raw/{tid}/1")[0]
     except FetchError as e:
-        print(f"[WARN] Discourse /raw 실패 ({e}) -- markitdown 경로로 폴백")
+        print(f"[WARN] Discourse /raw 실패 ({scrub(str(e))}) -- markitdown 경로로 폴백")
         return None
     body, missing = map_uploads(raw, post.get("cooked", ""))
     for link in missing:
@@ -272,7 +287,7 @@ def markitdown(arg, url):
             return None
         if r.returncode != 0:
             err = next((ln for ln in r.stderr.splitlines() if ln.strip()), f"exit {r.returncode}")
-            print(f"[FAIL] {arg}: {err.strip()} -- 파일을 만들지 않았다")
+            print(f"[FAIL] {arg}: {scrub(err.strip())} -- 파일을 만들지 않았다")
             if url or TLS_HINT.search(r.stderr):
                 print("Next: 네트워크/TLS 오류면 REQUESTS_CA_BUNDLE (사내 CA 번들) 과 "
                       "HTTP(S)_PROXY 설정을 확인 -- 인증서 검증은 끄지 않는다")
@@ -412,7 +427,7 @@ def clip(src, vault):
         if probed:
             probe_login_wall(src)
     except FetchError as e:
-        print(f"[FAIL] {e} -- 파일을 만들지 않았다")
+        print(f"[FAIL] {scrub(str(e))} -- 파일을 만들지 않았다")
         if probed:  # the opt-out only skips the probe; a Discourse topic's own wall stays a stop
             print("Next: 공개 페이지인데 리다이렉트 프로브가 막았으면 OBSIDIAN_CLIP_NO_PROBE=1 로 다시 실행")
         return 1
@@ -488,6 +503,12 @@ def self_test():
     assert 'title: "a \\"q\\""\n' in fm and '  - "youtube"\n' in fm and fm.endswith("---\n\n")
     assert "\npublished:\n" in frontmatter("t", "u", [""], "", "2026-01-02", "article")
     assert yaml_unquote(' "a \\"q\\" \\\\"') == 'a "q" \\'
+    tok = "https://u:PW@idp.kr/sso;jsessionid=J?state=S&SAMLRequest=R#f"
+    assert bare_url(tok) == "https://idp.kr/sso"
+    assert scrub(f"403 for url: {tok}. (see {tok}) '{tok}'") == \
+        "403 for url: https://idp.kr/sso. (see https://idp.kr/sso) 'https://idp.kr/sso'"
+    assert scrub("HTTP://H.kr/a?x=1 and http://[bad/b?state=S") == "http://H.kr/a and http://[bad/b"
+    assert scrub("no url here: /path?state=S") == "no url here: /path?state=S"
     assert login_wall("https://d.kr/login", "<html></html>")
     assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
     idp = "https://idp.example/oauth2/v1/authorize?s=2"
