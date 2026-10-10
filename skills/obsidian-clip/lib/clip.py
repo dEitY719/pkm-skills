@@ -167,10 +167,12 @@ def bare_url(url):
 
 # Lazy up to trailing punctuation, so "(see https://h/a?x=1)." keeps its ")."
 # urllib3's "Max retries exceeded with url: /path?query" carries no scheme.
-# requests leaves ' unencoded, so a URL with a query/fragment runs to the next
-# whitespace and only a closing quote before it stays out; without one, ' ends it.
-URL_IN_TEXT = re.compile(r"""(?:https?://|(?<=\burl: )/)(?:"""
-                         r"""[^\s"<>?#]*[?#][^\s"<>]*?(?=[).,;:'"]*(?:[\s"<>]|$))|"""
+# requests leaves ' unencoded, so a URL with a part bare_url() drops (?query,
+# #fragment, ;param, userinfo@) runs to the next whitespace and only a closing
+# quote/bracket before it stays out; without one, ' ends it.
+_TAIL_END = r"""[).,;:'"\]}]*(?:[\s"<>]|$)"""
+URL_IN_TEXT = re.compile(rf"""(?:https?://|(?<=\burl: )/)(?:"""
+                         rf"""[^\s"<>?#;@]*[?#;@](?!{_TAIL_END})[^\s"<>]*?(?={_TAIL_END})|"""
                          r"""[^\s'"<>]*?(?=[).,;:]*(?:[\s'"<>]|$)))""", re.I)
 
 
@@ -535,6 +537,11 @@ def self_test():
     assert scrub("403 for url: https://h/cb?state=a'SECRET x") == "403 for url: https://h/cb x"
     assert scrub("'https://h/cb#a'S'.") == "'https://h/cb'."
     assert scrub("see http://h/a'b?x=1") == "see http://h/a'b"
+    assert scrub("with url: /a;jsessionid=AB'CD (Caused") == "with url: /a (Caused"
+    assert scrub("403 for url: https://u:P'W@h/x y") == "403 for url: https://h/x y"
+    assert scrub("['https://h/a?x=S']") == "['https://h/a']"
+    assert scrub("is it 'https://h/a'? see https://h/b; then") == \
+        "is it 'https://h/a'? see https://h/b; then"
     assert bare_url("http://u:PW@[bad/b;j=J?state=S") == "http://[bad/b"
     def run(err, code=1):
         return subprocess.CompletedProcess([], code, "", err)
