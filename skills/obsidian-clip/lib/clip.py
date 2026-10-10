@@ -89,7 +89,7 @@ def classify(src):
 
 # --- fetch (Discourse only; markitdown fetches everything else itself) -------
 
-def fetch_ex(url):
+def fetch(url):
     """Return (body, redirect hop URLs, effective URL)."""
     # curl, not urllib: it uses the system trust store, which a corporate TLS
     # proxy's CA lives in, and python 3.13's strict X509 checks reject some
@@ -123,10 +123,6 @@ def fetch_ex(url):
             base = urllib.parse.urljoin(base, value.strip())
             hops.append(base)
     return r.stdout.decode("utf-8", "replace"), hops, effective
-
-
-def fetch(url):
-    return fetch_ex(url)[0]
 
 
 LOGIN_PATH = re.compile(r"/(login|session/sso)/?$")
@@ -185,7 +181,7 @@ def discourse(url):
     parts = urllib.parse.urlsplit(url)
     origin = f"{parts.scheme}://{parts.netloc}"
     try:
-        page, hops, effective = fetch_ex(f"{origin}/t/{tid}.json")
+        page, hops, effective = fetch(f"{origin}/t/{tid}.json")
     except FetchError:
         return None
     if login_wall(effective, page, hops):
@@ -196,7 +192,7 @@ def discourse(url):
     except (ValueError, TypeError, KeyError, IndexError):
         return None
     try:
-        raw = fetch(f"{origin}/raw/{tid}/1")
+        raw = fetch(f"{origin}/raw/{tid}/1")[0]
     except FetchError as e:
         print(f"[WARN] Discourse /raw 실패 ({e}) -- markitdown 경로로 폴백")
         return None
@@ -352,7 +348,6 @@ def clip(src, vault):
         return 1
 
     meta = {"title": "", "author": [], "published": ""}
-    found = None
     try:
         found = discourse(src) if kind == "article" else None
     except FetchError as e:
