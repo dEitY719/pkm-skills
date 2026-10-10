@@ -120,7 +120,9 @@ def fetch(url, *curl_args):
             headers = []
     err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
-        raise FetchError(f"network error {url}: {err}")
+        # drop the -w trailer: its effective URL may be an IdP URL carrying session tokens
+        reason = err.rpartition("\n")[0] or err
+        raise FetchError(f"network error {url}: {reason}")
     effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
         raise FetchError(f"HTTP {code} {url}")
@@ -151,12 +153,12 @@ def login_wall(effective, page, hops=()):
     return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
 
-WALL = "로그인 필요 ({}) -- 브라우저의 Obsidian Web Clipper 를 쓰라."
-
-
 def wall(effective):
-    # An IdP URL's query/fragment carries session tokens (state, SAMLRequest); host+path is enough.
-    return FetchError(WALL.format(urllib.parse.urlsplit(effective)._replace(query="", fragment="").geturl()))
+    # Session tokens ride in the query/fragment (state, SAMLRequest), userinfo and
+    # ;jsessionid path params; scheme, host and the bare path are enough.
+    p = urllib.parse.urlsplit(effective)
+    bare = f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
+    return FetchError(f"로그인 필요 ({bare}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
 
 
 def probe_login_wall(url):
