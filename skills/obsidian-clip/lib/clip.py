@@ -285,7 +285,9 @@ def stderr_reason(r):
     # (markitdown's FileConversionException ends with "* etc."), so join all of it.
     rest = lines[tb[-1] + 1:]
     start = next((i for i, ln in enumerate(rest) if not ln[:1].isspace()), len(rest))
-    return " ".join(ln.strip() for ln in rest[start:]) or lines[-1].strip()
+    reason = " ".join(ln.strip() for ln in rest[start:]) or lines[-1].strip()
+    # Cap it: anything a logger writes after the traceback would be joined in too.
+    return reason if len(reason) <= 300 else reason[:300] + " ..."
 
 
 def markitdown(arg, url):
@@ -533,6 +535,10 @@ def self_test():
           "E: failed after 1 attempts:\n - P threw M with message: need [pdf]:\n\n* etc.\n")
     assert stderr_reason(run(tb)) == \
         "E: failed after 1 attempts: - P threw M with message: need [pdf]: * etc."
+    chained = ("Traceback (most recent call last):\n  File \"a\"\nKeyError: 'k'\n\n"
+               "During handling of the above exception, another exception occurred:\n\n" + tb)
+    assert stderr_reason(run(chained)).startswith("E: failed")
+    assert stderr_reason(run(tb + "x" * 400)).endswith(" ...")
     assert login_wall("https://d.kr/login", "<html></html>")
     assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
     idp = "https://idp.example/oauth2/v1/authorize?s=2"
