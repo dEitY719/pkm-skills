@@ -121,7 +121,8 @@ def fetch(url, *curl_args):
     err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
         # drop the -w trailer: its effective URL may be an IdP URL carrying session tokens
-        reason = err.rpartition("\n")[0] or err
+        # (a stderr with no error line is the trailer alone: never fall back to it)
+        reason = err.rpartition("\n")[0] or f"curl exit {r.returncode}"
         raise FetchError(f"network error {url}: {reason}")
     effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
