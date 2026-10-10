@@ -119,10 +119,10 @@ def fetch(url, *curl_args):
                 headers = fh.read().splitlines()
         except FileNotFoundError:
             headers = []
-    err = r.stderr.decode(errors="replace").strip()
     if r.returncode != 0:
         # curl's own text (and the -w trailer's effective URL) may carry session tokens
         raise FetchError(f"network error {url_host(url)}: curl exit {r.returncode}")
+    err = r.stderr.decode(errors="replace").strip()
     effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
         raise FetchError(f"HTTP {code} {url_host(url)}")
