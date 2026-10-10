@@ -78,7 +78,7 @@ case "$url" in
 https://redir.example.com/guide/auth) printf 'HTTP/1.1 301 Moved\r\nLocation: /guide/auth/\r\n\r\n' >"$hdr"; printf '<html>guide</html>'; eff=https://redir.example.com/guide/auth/ ;;
 */c/general) printf '<meta name="generator" content="Discourse 3.2"><div data-preloaded="{&quot;login_required&quot;:false}">' ;;
 https://private.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n' >"$hdr"; printf '<form>sign in</form>'; eff=https://private.example.com/login ;;
-https://sso.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?return_path=/x\r\n\r\nHTTP/1.1 302 Found\r\nLocation: https://idp.example.net/oauth2/authorize?s=1\r\n\r\n' >"$hdr"; printf '<html>IdP</html>'; eff=https://idp.example.net/oauth2/authorize?s=1 ;;
+https://sso.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?return_path=/x\r\n\r\nHTTP/1.1 302 Found\r\nLocation: https://idp.example.net/oauth2/authorize?state=TOKSTATE&SAMLRequest=TOKSAML#frag\r\n\r\n' >"$hdr"; printf '<html>IdP</html>'; eff='https://idp.example.net/oauth2/authorize?state=TOKSTATE&SAMLRequest=TOKSAML#frag' ;;
 */t/88.json) printf '<meta name="generator" content="Discourse 3.2"><body class="login-required">'; eff=https://walled.example.com/login ;;
 */t/99.json) printf 'HTTP/1.1 302 Found\r\nLocation: /auth/sign-in\r\n\r\n' >"$hdr"; printf '<html>sign in</html>'; eff=https://plain.example.com/auth/sign-in ;;
 */t/77.json) printf '{"title":"Disc Topic","post_stream":{"posts":[{"username":"kim","created_at":"2026-01-02T00:00:00Z","cooked":"<img src=\\"https://cdn/x.png\\" data-base62-sha1=\\"AbC\\">"}]}}' ;;
@@ -204,7 +204,9 @@ check "non-topic URL redirected to /login -> [FAIL] 로그인 필요, nothing wr
 run "https://sso.example.com/page" "$TMP/vault"
 rc=$?
 check "SSO hop via /session/sso to a third-party IdP -> [FAIL] 로그인 필요, nothing written" \
-    eval '[ $rc = 1 ] && has "로그인 필요 (https://idp.example.net/" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+    eval '[ $rc = 1 ] && has "로그인 필요 (https://idp.example.net/oauth2/authorize)" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+check "SSO IdP query/fragment (state=, SAMLRequest=) never reach the output" \
+    eval '! has "TOKSTATE" && ! has "TOKSAML" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag"'
 run "https://blog.example.com/auth/intro" "$TMP/vault"
 check "user-requested /auth/intro (no redirect) -> still clipped" \
     eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Auth Intro.md" ]'

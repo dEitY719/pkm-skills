@@ -154,6 +154,11 @@ def login_wall(effective, page, hops=()):
 WALL = "로그인 필요 ({}) -- 브라우저의 Obsidian Web Clipper 를 쓰라."
 
 
+def wall(effective):
+    # An IdP URL's query/fragment carries session tokens (state, SAMLRequest); host+path is enough.
+    return FetchError(WALL.format(urllib.parse.urlsplit(effective)._replace(query="", fragment="").geturl()))
+
+
 def probe_login_wall(url):
     """Raise FetchError when `url` lands behind a login wall.
 
@@ -176,7 +181,7 @@ def probe_login_wall(url):
         return urllib.parse.urlsplit(u).path.rstrip("/") != asked
 
     if login_wall(effective if other(effective) else "", "", [h for h in hops if other(h)]):
-        raise FetchError(WALL.format(effective))
+        raise wall(effective)
 
 
 def discourse_topic_id(url):
@@ -225,7 +230,7 @@ def discourse(url):
     ours = DISCOURSE_MARK.search(page) or any(
         "/session/sso" in urllib.parse.urlsplit(u).path for u in [*hops, effective])
     if ours and login_wall(effective, page, hops):
-        raise FetchError(WALL.format(effective))
+        raise wall(effective)
     try:
         topic = json.loads(page)
         post = topic["post_stream"]["posts"][0]
