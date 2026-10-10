@@ -52,6 +52,7 @@ case "\$in" in
 *netfail*) printf '# Probe Down\n\nbody\n' >"\$out" ;;
 */guide/auth) printf '# Guide Auth\n\nbody\n' >"\$out" ;;
 */c/general) printf '# Forum Category\n\nbody\n' >"\$out" ;;
+*/guide/sign-in) printf '# Sign-in Guide\n\nbody\n' >"\$out" ;;
 *youtube.com*|*youtu.be*)
     printf '# YouTube\n\n## Video: A/B "test"\n\n### Description\nfirst line ...\n\n### Transcript\nhello\n' >"\$out" ;;
 *) printf 'nav\n\n# Page Title\n\nbody of %s\n' "\$in" >"\$out" ;;
@@ -70,6 +71,7 @@ cat >"$TMP/bin/curl" <<'SH'
 hdr=/dev/null
 for a; do [ "${prev:-}" = -D ] && hdr=$a; prev=$a; url=$a; done
 echo "$url" >>"$(dirname "$0")/../curlcalls"
+echo "$*" >>"$(dirname "$0")/../curlargs"
 eff=$url
 case "$url" in
 *netfail*) echo "curl: (6) Could not resolve host" >&2; exit 6 ;;
@@ -212,6 +214,10 @@ check "probe network error -> falls through to markitdown, clipped" \
 run "https://redir.example.com/guide/auth" "$TMP/vault"
 check "redirect that keeps the asked /auth path (trailing slash) -> still clipped" \
     eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Guide Auth.md" ]'
+run "https://docs.example.com/guide/sign-in" "$TMP/vault"
+check "user-requested page on a sign-in path (no redirect) -> still clipped" \
+    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Sign-in Guide.md" ]'
+check "probe asks for a 1-byte range only" grep -qF -- "-r 0-0" "$TMP/curlargs"
 run "https://forum.example.com/c/general" "$TMP/vault"
 check "public Discourse non-topic page (login_required preloaded) -> still clipped" \
     eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Forum Category.md" ]'
