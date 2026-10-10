@@ -52,6 +52,7 @@ case "\$in" in
 *netfail*) printf '# Probe Down\n\nbody\n' >"\$out" ;;
 */guide/auth) printf '# Guide Auth\n\nbody\n' >"\$out" ;;
 */c/general) printf '# Forum Category\n\nbody\n' >"\$out" ;;
+*/private) printf '# Private Page\n\nbody\n' >"\$out" ;;
 */guide/sign-in) printf '# Sign-in Guide\n\nbody\n' >"\$out" ;;
 *youtube.com*|*youtu.be*)
     printf '# YouTube\n\n## Video: A/B "test"\n\n### Description\nfirst line ...\n\n### Transcript\nhello\n' >"\$out" ;;
@@ -214,6 +215,12 @@ run "https://private.example.com/private" "$TMP/vault"
 rc=$?
 check "non-topic URL redirected to /login -> [FAIL] 로그인 필요, nothing written, no markitdown" \
     eval '[ $rc = 1 ] && has "[FAIL] 로그인 필요 (https://private.example.com/login)" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+check "login-wall [FAIL] names the OBSIDIAN_CLIP_NO_PROBE=1 opt-out" has "OBSIDIAN_CLIP_NO_PROBE=1"
+OBSIDIAN_CLIP_NO_PROBE=1 run "https://private.example.com/private" "$TMP/vault"
+check "OBSIDIAN_CLIP_NO_PROBE=1 -> same /login redirect skips the probe, clipped by markitdown" \
+    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Private Page.md" ]'
+n="$(notes)"
+: >"$TMP/calls"
 run "https://sso.example.com/page" "$TMP/vault"
 rc=$?
 check "SSO hop via /session/sso to a third-party IdP -> [FAIL] 로그인 필요, nothing written" \

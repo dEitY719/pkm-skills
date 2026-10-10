@@ -31,7 +31,9 @@ retry and no fallback in prose — the script owns every path decision.
 ## Step 1: Args + vault
 
 `SKILL_DIR` = this file's directory. Positional `<input>` (required, exactly
-one: URL or local file path); flag `--vault <path>`. Missing `<input>` → print
+one: URL or local file path); flag `--vault <path>`; env
+`OBSIDIAN_CLIP_NO_PROBE=1` skips the login-wall redirect probe (opt-out for a
+public page it wrongly refuses). Missing `<input>` → print
 `Run /pkm:obsidian-clip -h for usage.` and stop.
 
 ```bash
