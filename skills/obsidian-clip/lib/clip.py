@@ -241,8 +241,8 @@ def first_heading(md, levels):
 def title_for(kind, src, md):
     if kind == "document":
         return os.path.splitext(os.path.basename(src))[0]
-    if kind == "youtube":  # markitdown: "# YouTube" then "## <video title>"
-        return first_heading(md, "2") or first_heading(md, "1") or src
+    if kind == "youtube":  # markitdown: "# YouTube" then "## <video title>"; that H1 is no title
+        return first_heading(md, "2") or src
     return first_heading(md, "1") or first_heading(md, "1,6") or src
 
 
@@ -316,13 +316,14 @@ def existing_clip(inbox, key):
 
 def write_new(path, text):
     """Write `text` to `path` only if it does not exist; no partial file on error."""
-    fd, tmp = tempfile.mkstemp(prefix=".clip-", suffix=".md", dir=os.path.dirname(path))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+    # "x", not a temp file + os.link: hard links fail on FAT/exFAT and some
+    # network mounts, and a killed run would strand a .clip-*.md for obsidian-git.
+    with open(path, "x", encoding="utf-8") as fh:  # FileExistsError: never overwrite
+        try:
             fh.write(text)
-        os.link(tmp, path)  # atomic, and fails with FileExistsError: never overwrite
-    finally:
-        os.remove(tmp)
+        except BaseException:
+            os.remove(path)
+            raise
 
 
 # --- main --------------------------------------------------------------------
@@ -360,7 +361,10 @@ def clip(src, vault):
     if found:
         meta, body = found
     else:
-        body = markitdown(source, kind != "document")
+        # markitdown's YouTube converter only accepts https://www.youtube.com/watch?
+        # URLs; shorts / youtu.be / m. shapes would get the generic HTML pass.
+        arg = f"https://www.youtube.com/watch?v={youtube_id(src)}" if kind == "youtube" else source
+        body = markitdown(arg, kind != "document")
         if body is None:
             return 1
         meta["title"] = title_for(kind, src, body)
@@ -413,6 +417,7 @@ def self_test():
     assert normalize("https://example.com/a?id=2") != normalize("https://example.com/a?id=3")
     assert classify("/no/such/file.pdf") is None
     assert title_for("youtube", "u", "# YouTube\n\n## Video T\n### Video Metadata\n") == "Video T"
+    assert title_for("youtube", "u", "# YouTube\n\nno metadata\n") == "u"
     assert title_for("article", "u", "intro\n## Sub\n# Main\n") == "Main"
     assert title_for("article", "u", "intro\n### Only\n") == "Only"
     assert title_for("article", "u", "no heading\n") == "u"
