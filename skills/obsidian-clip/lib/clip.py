@@ -161,20 +161,18 @@ def bare_url(url):
         p = urllib.parse.urlsplit(url)
     except ValueError:  # e.g. a broken [ipv6] host: drop userinfo, keep what precedes any query
         return re.split(r"[?#;]", re.sub(r"^([^:/]*://)[^/?#]*@", r"\1", url), maxsplit=1)[0]
-    return f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
+    path = re.sub(r";[^/]*", "", p.path)
+    return f"{p.scheme}://{p.netloc.rpartition('@')[2]}{path}" if p.scheme else path
 
 
 # Lazy up to trailing punctuation, so "(see https://h/a?x=1)." keeps its ")."
-URL_IN_TEXT = re.compile(r"""https?://[^\s'"<>]+?(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
 # urllib3's "Max retries exceeded with url: /path?query" carries no scheme.
-REL_URL_IN_TEXT = re.compile(r"""(\burl: )(/[^\s'"<>]*?)(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
+URL_IN_TEXT = re.compile(r"""(?:https?://|(?<=\burl: )/)[^\s'"<>]*?(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
 
 
 def scrub(text):
-    """Shorten every http(s) URL, and every scheme-less `url: /path?query`, the bare_url() way."""
-    text = URL_IN_TEXT.sub(lambda m: bare_url(m.group(0)), text)
-    return REL_URL_IN_TEXT.sub(
-        lambda m: m.group(1) + re.sub(r";[^/]*", "", re.split(r"[?#]", m.group(2), maxsplit=1)[0]), text)
+    """Shorten every http(s) URL, and every scheme-less `url: /path?query`, with bare_url()."""
+    return URL_IN_TEXT.sub(lambda m: bare_url(m.group(0)), text)
 
 
 def wall(effective):
@@ -277,6 +275,19 @@ def discourse(url):
 
 # --- markitdown --------------------------------------------------------------
 
+def stderr_reason(r):
+    """One line of `r.stderr` that says why the run failed."""
+    lines = [ln for ln in r.stderr.splitlines() if ln.strip()] or [f"exit {r.returncode}"]
+    tb = [i for i, ln in enumerate(lines) if ln.startswith("Traceback (most recent call last):")]
+    if not tb:
+        return lines[0].strip()
+    # The exception follows the last traceback's indented frames and may span lines
+    # (markitdown's FileConversionException ends with "* etc."), so join all of it.
+    rest = lines[tb[-1] + 1:]
+    start = next((i for i, ln in enumerate(rest) if not ln[:1].isspace()), len(rest))
+    return " ".join(ln.strip() for ln in rest[start:]) or lines[-1].strip()
+
+
 def markitdown(arg, url):
     """Return the converted markdown, or None after printing the [FAIL] lines."""
     with tempfile.TemporaryDirectory() as d:
@@ -290,10 +301,7 @@ def markitdown(arg, url):
                 print("Next: 네트워크가 느리거나 막혔으면 HTTP(S)_PROXY 설정을 확인하고 다시 실행")
             return None
         if r.returncode != 0:
-            lines = [ln for ln in r.stderr.splitlines() if ln.strip()] or [f"exit {r.returncode}"]
-            # A traceback's first line says nothing; its last line is the exception.
-            err = lines[-1] if "Traceback (most recent call last):" in r.stderr else lines[0]
-            print(f"[FAIL] {arg}: {scrub(err.strip())} -- 파일을 만들지 않았다")
+            print(f"[FAIL] {arg}: {scrub(stderr_reason(r))} -- 파일을 만들지 않았다")
             if url or TLS_HINT.search(r.stderr):
                 print("Next: 네트워크/TLS 오류면 REQUESTS_CA_BUNDLE (사내 CA 번들) 과 "
                       "HTTP(S)_PROXY 설정을 확인 -- 인증서 검증은 끄지 않는다")
@@ -517,6 +525,14 @@ def self_test():
     assert scrub("no url here: /path?state=S") == "no url here: /path?state=S"
     assert scrub("with url: /a;j=J?state=S#f (Caused by X)") == "with url: /a (Caused by X)"
     assert bare_url("http://u:PW@[bad/b;j=J?state=S") == "http://[bad/b"
+    def run(err, code=1):
+        return subprocess.CompletedProcess([], code, "", err)
+    assert stderr_reason(run("SSLError: x\nmore\n")) == "SSLError: x"
+    assert stderr_reason(run("\n", 2)) == "exit 2"
+    tb = ("Traceback (most recent call last):\n  File \"m.py\", line 1\n    f()\n"
+          "E: failed after 1 attempts:\n - P threw M with message: need [pdf]:\n\n* etc.\n")
+    assert stderr_reason(run(tb)) == \
+        "E: failed after 1 attempts: - P threw M with message: need [pdf]: * etc."
     assert login_wall("https://d.kr/login", "<html></html>")
     assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
     idp = "https://idp.example/oauth2/v1/authorize?s=2"
