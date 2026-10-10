@@ -166,11 +166,15 @@ def bare_url(url):
 
 # Lazy up to trailing punctuation, so "(see https://h/a?x=1)." keeps its ")."
 URL_IN_TEXT = re.compile(r"""https?://[^\s'"<>]+?(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
+# urllib3's "Max retries exceeded with url: /path?query" carries no scheme.
+REL_URL_IN_TEXT = re.compile(r"""(\burl: )(/[^\s'"<>]*?)(?=[).,;:]*(?:[\s'"<>]|$))""", re.I)
 
 
 def scrub(text):
-    """Shorten every http(s) URL in a downstream tool's error text with bare_url()."""
-    return URL_IN_TEXT.sub(lambda m: bare_url(m.group(0)), text)
+    """Shorten every http(s) URL, and every scheme-less `url: /path?query`, the bare_url() way."""
+    text = URL_IN_TEXT.sub(lambda m: bare_url(m.group(0)), text)
+    return REL_URL_IN_TEXT.sub(
+        lambda m: m.group(1) + re.sub(r";[^/]*", "", re.split(r"[?#]", m.group(2), maxsplit=1)[0]), text)
 
 
 def wall(effective):
@@ -286,7 +290,9 @@ def markitdown(arg, url):
                 print("Next: 네트워크가 느리거나 막혔으면 HTTP(S)_PROXY 설정을 확인하고 다시 실행")
             return None
         if r.returncode != 0:
-            err = next((ln for ln in r.stderr.splitlines() if ln.strip()), f"exit {r.returncode}")
+            lines = [ln for ln in r.stderr.splitlines() if ln.strip()] or [f"exit {r.returncode}"]
+            # A traceback's first line says nothing; its last line is the exception.
+            err = lines[-1] if "Traceback (most recent call last):" in r.stderr else lines[0]
             print(f"[FAIL] {arg}: {scrub(err.strip())} -- 파일을 만들지 않았다")
             if url or TLS_HINT.search(r.stderr):
                 print("Next: 네트워크/TLS 오류면 REQUESTS_CA_BUNDLE (사내 CA 번들) 과 "
@@ -509,6 +515,7 @@ def self_test():
         "403 for url: https://idp.kr/sso. (see https://idp.kr/sso) 'https://idp.kr/sso'"
     assert scrub("HTTP://H.kr/a?x=1 and http://[bad/b?state=S") == "http://H.kr/a and http://[bad/b"
     assert scrub("no url here: /path?state=S") == "no url here: /path?state=S"
+    assert scrub("with url: /a;j=J?state=S#f (Caused by X)") == "with url: /a (Caused by X)"
     assert bare_url("http://u:PW@[bad/b;j=J?state=S") == "http://[bad/b"
     assert login_wall("https://d.kr/login", "<html></html>")
     assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")

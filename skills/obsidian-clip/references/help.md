@@ -88,7 +88,7 @@ video ID, and a `/t/<slug>/<id>[/<post>]` topic URL collapses to `/t/<id>`. A ma
 | `[WARN] Discourse /raw 실패 ... 폴백` | Discourse detected but `/raw` failed; markitdown used. URLs in curl's error are shortened to scheme, host and path. |
 | `[WARN] ... 변환 결과가 비었다` | Empty conversion (scanned PDF, video without captions); nothing written. |
 | `[FAIL] markitdown 미설치` + `Next:` | Install markitdown; nothing written. |
-| `[FAIL] <input>: <error>` + `Next: ... REQUESTS_CA_BUNDLE` | markitdown failed (network / TLS / unsupported file); nothing written. `<error>` is its first stderr line, with URLs shortened to scheme, host and path. |
+| `[FAIL] <input>: <error>` + `Next: ... REQUESTS_CA_BUNDLE` | markitdown failed (network / TLS / unsupported file); nothing written. `<error>` is its first stderr line (the exception line, the last one, when it printed a traceback), with URLs shortened to scheme, host and path and a scheme-less `url: /path?query` cut to its path. |
 | `[FAIL] 이미 클립됨 ...` | Same normalized source already under `99-Inbox/`; existing path shown. |
 | `[FAIL] 같은 이름의 다른 노트 ...` | Same date + title, different source; nothing overwritten. |
 | `[FAIL] <input>: markitdown timeout <N>s` | markitdown ran longer than `$OBSIDIAN_CLIP_TIMEOUT` seconds (default 300); nothing written. |
