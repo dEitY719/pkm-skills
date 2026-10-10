@@ -226,7 +226,7 @@ check "probe wall -> Next: line names the OBSIDIAN_CLIP_NO_PROBE=1 opt-out" has 
 OBSIDIAN_CLIP_NO_PROBE=1 run "https://private.example.com/private" "$TMP/vault"
 rc=$?
 check "OBSIDIAN_CLIP_NO_PROBE=1 -> same /login redirect skips the probe (curl not called), clipped by markitdown" \
-    eval '[ $rc = 0 ] && ! has "로그인 필요" && [ ! -s "$TMP/curlcalls" ] && [ -s "$TMP/vault/99-Inbox/$TODAY Private Page.md" ]'
+    eval '[ $rc = 0 ] && ! has "로그인 필요" && [ ! -s "$TMP/curlcalls" ] && grep -q "private.example.com/private" "$TMP/calls" && [ -s "$TMP/vault/99-Inbox/$TODAY Private Page.md" ]'
 n="$(notes)"
 : >"$TMP/calls"
 run "https://sso.example.com/page" "$TMP/vault"

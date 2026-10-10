@@ -6,7 +6,7 @@
 |-------|---------|-------------|
 | `<input>` | — | One URL, YouTube URL, or local file (required, one per run). |
 | `--vault <path>` | see below | Vault root. Otherwise `$OBSIDIAN_VAULT_DIR`, otherwise `~/para/project/obsidian-para` (`-company` on an internal-mode PC). |
-| `OBSIDIAN_CLIP_NO_PROBE=1` (env) | unset | Skip the login-wall redirect probe for a public page it wrongly refuses. A Discourse topic's own wall still stops. |
+| `OBSIDIAN_CLIP_NO_PROBE=1` (env) | unset | Skip the login-wall redirect probe for a public page it wrongly refuses. Only the exact value `1` counts. A Discourse topic's own wall still stops. On a real wall markitdown clips the login page instead; delete that note before clipping the URL again, or the duplicate check stops the retry. |
 | `-h` / `--help` / `help` | — | Print this help and stop. |
 
 ## Usage
