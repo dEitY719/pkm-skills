@@ -12,7 +12,7 @@ body -> title -> write with mode "never overwrite".
 
   youtube   youtube.com/watch?v= | /shorts/ | youtu.be/   markitdown
   article   Discourse topic (<origin>/t/<id>.json post_stream)  first post /raw
-  article   any other http(s) URL                         markitdown
+  article   any other http(s) URL                         curl login-wall probe, then markitdown
   document  an existing local file                        markitdown
 
 Output lines start with [OK] / [WARN] / [FAIL]; the last line of a success is
@@ -95,7 +95,7 @@ def classify(src):
     return "document" if os.path.isfile(src) else None
 
 
-# --- fetch (Discourse only; markitdown fetches everything else itself) -------
+# --- fetch (Discourse + the login-wall probe; markitdown fetches the body) ---
 
 def fetch(url):
     """Return (body, redirect hop URLs, effective URL)."""
@@ -151,6 +151,23 @@ def login_wall(effective, page, hops=()):
     return bool(DISCOURSE_MARK.search(page) and LOGIN_MARK.search(page))
 
 
+WALL = "로그인 필요 ({}) -- 브라우저의 Obsidian Web Clipper 를 쓰라."
+
+
+def probe_login_wall(url):
+    """Raise FetchError when `url` lands behind a login wall.
+
+    markitdown follows redirects out of sight, so the chain is read here first.
+    A failed probe is not a wall: markitdown still gets the URL, as before.
+    """
+    try:
+        page, hops, effective = fetch(url)
+    except FetchError:
+        return
+    if login_wall(effective, page, hops):
+        raise FetchError(WALL.format(effective))
+
+
 def discourse_topic_id(url):
     # /t/<slug>/<id>[/<post>] or /t/<id>[/<post>]; a slug is never all digits
     m = re.match(r"/t/(?:[^/]*[^/\d][^/]*/)?(\d+)", urllib.parse.urlsplit(url).path)
@@ -196,7 +213,7 @@ def discourse(url):
     ours = DISCOURSE_MARK.search(page) or any(
         "/session/sso" in urllib.parse.urlsplit(u).path for u in [*hops, effective])
     if ours and login_wall(effective, page, hops):
-        raise FetchError(f"로그인 필요 ({effective}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
+        raise FetchError(WALL.format(effective))
     try:
         topic = json.loads(page)
         post = topic["post_stream"]["posts"][0]
@@ -370,6 +387,8 @@ def clip(src, vault):
     meta = {"title": "", "author": [], "published": ""}
     try:
         found = discourse(src) if kind == "article" else None
+        if kind == "article" and not found:
+            probe_login_wall(src)
     except FetchError as e:
         print(f"[FAIL] {e} -- 파일을 만들지 않았다")
         return 1
