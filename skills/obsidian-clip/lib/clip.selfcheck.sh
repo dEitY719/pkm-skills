@@ -48,6 +48,7 @@ in=\$1; out=\$3
 case "\$in" in
 *empty*) : >"\$out" ;;
 *boom*) echo "SSLError: certificate verify failed" >&2; echo more >&2; exit 1 ;;
+*tokfail*) echo "HTTPError: 403 Forbidden for url: https://u:TOKPW@idp.example.net/saml;jsessionid=TOKJ?state=TOKSTATE&SAMLRequest=TOKSAML#frag" >&2; exit 1 ;;
 */auth/intro) printf '# Auth Intro\n\nbody\n' >"\$out" ;;
 *netfail*) printf '# Probe Down\n\nbody\n' >"\$out" ;;
 */guide/auth) printf '# Guide Auth\n\nbody\n' >"\$out" ;;
@@ -64,7 +65,8 @@ chmod +x "$TMP/bin/markitdown"
 # Discourse topic, which answers the topic JSON and its /raw markdown; topic
 # 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth,
 # 66 a topic whose /raw times out after a redirect to a token-bearing IdP URL,
-# 65 the same with no curl error line (the -w trailer alone on stderr).
+# 64 one whose /raw curl error line itself names a token-bearing URL,
+# 65 the same as 66 with no curl error line (the -w trailer alone on stderr).
 # private.* redirects to /login, sso.* hops via /session/sso to a third-party
 # IdP, *netfail* is a network error, redir.* adds a trailing slash, and
 # */c/general is a public Discourse page (generator meta + the preloaded
@@ -86,6 +88,8 @@ https://sso.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?
 */t/88.json) printf '<meta name="generator" content="Discourse 3.2"><body class="login-required">'; eff='https://walled.example.com/login?nonce=TOK88' ;;
 */t/99.json) printf 'HTTP/1.1 302 Found\r\nLocation: /auth/sign-in\r\n\r\n' >"$hdr"; printf '<html>sign in</html>'; eff=https://plain.example.com/auth/sign-in ;;
 */t/66.json) printf '{"title":"Raw Down","post_stream":{"posts":[{"username":"kim"}]}}' ;;
+*/raw/64/1) printf 'curl: (7) Failed to connect to %s\n%s 000' 'https://idp.example.net/a?state=TOKCURL' 'https://idp.example.net/b?state=TOKTRL64' >&2; exit 7 ;;
+*/t/64.json) printf '{"title":"Raw Tok","post_stream":{"posts":[{"username":"kim"}]}}' ;;
 */raw/65/1) printf '\n%s 000' 'https://idp.example.net/a?state=TOKTRL' >&2; exit 28 ;;
 */t/65.json) printf '{"title":"Raw Bare","post_stream":{"posts":[{"username":"kim"}]}}' ;;
 */t/77.json) printf '{"title":"Disc Topic","post_stream":{"posts":[{"username":"kim","created_at":"2026-01-02T00:00:00Z","cooked":"<img src=\\"https://cdn/x.png\\" data-base62-sha1=\\"AbC\\">"}]}}' ;;
@@ -176,6 +180,9 @@ check "empty conversion -> [WARN], nothing written" eval 'has "[WARN]" && [ "$(n
 run "https://boom.example.com/x" "$TMP/vault"
 check "markitdown failure -> first stderr line + TLS Next:, nothing written" \
     eval 'has "SSLError: certificate verify failed" && ! has "more" && has "REQUESTS_CA_BUNDLE" && [ "$(notes)" = "$n" ]'
+run "https://tokfail.example.com/x" "$TMP/vault"
+check "markitdown failure with a token-bearing URL -> URL shortened, no state=/SAMLRequest=, nothing written" \
+    eval 'has "Forbidden for url: https://idp.example.net/saml --" && ! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
 run "$TMP/docs/missing.pdf" "$TMP/vault"
 check "missing local file -> [FAIL]" eval 'has "[FAIL] 입력을 찾을 수 없다" && [ "$(notes)" = "$n" ]'
 run "https://example.com/z" "$TMP/no-such-vault"
@@ -193,6 +200,9 @@ check "same Discourse topic, other post / referral -> duplicate" eval 'has "이�
 run "https://forum.example.com/t/raw-down/66" "$TMP/vault"
 check "/raw network error -> [WARN] without the -w trailer's effective URL" \
     eval 'has "[WARN] Discourse /raw 실패" && has "Operation timed out" && ! has "TOKRAW"'
+run "https://forum.example.com/t/raw-tok/64" "$TMP/vault"
+check "/raw curl error line carrying a token-bearing URL -> [WARN] with the URL shortened" \
+    eval 'has "[WARN] Discourse /raw 실패" && has "Failed to connect to https://idp.example.net/a)" && ! has "TOKCURL" && ! has "TOKTRL64"'
 run "https://forum.example.com/t/raw-bare/65" "$TMP/vault"
 check "Discourse /raw failure with only the -w trailer on stderr -> [WARN], trailer URL never printed" \
     eval 'has "[WARN] Discourse /raw 실패" && has "curl exit 28" && ! has "TOKTRL"'
