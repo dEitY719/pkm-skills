@@ -50,6 +50,9 @@ VAULT=$(bash "${SKILL_DIR}/lib/vendor/resolve-vault.sh" "$VAULT_ARG")
 python3 "${SKILL_DIR}/lib/clip.py" "$INPUT" "$VAULT"
 ```
 
+When the user asks to skip the login-wall probe, prefix the call with
+`OBSIDIAN_CLIP_NO_PROBE=1`.
+
 It checks `markitdown` is on PATH first (missing → `[FAIL]` + `Next:` install
 hint, nothing written; never install it), classifies the input — YouTube,
 Discourse topic (`/raw` markdown), other URL, local file — refuses a source
