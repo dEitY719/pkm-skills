@@ -134,6 +134,11 @@ for ext in pdf docx xlsx; do
 done
 run "$TMP/docs/report-pdf.pdf" "$TMP/vault"
 check "same local file again -> duplicate" eval 'has "이미 클립됨"'
+# shellcheck disable=SC2088  # the literal tilde is the point: clip.py must expand it
+HOME="$TMP" run "~/docs/report-pdf.pdf" "$TMP/vault"
+check "tilde input expanded -> same file, duplicate" eval 'has "이미 클립됨"'
+OBSIDIAN_CLIP_TIMEOUT=abc run -h
+check "non-numeric OBSIDIAN_CLIP_TIMEOUT -> no traceback" eval 'has "## Arguments" && ! has "Traceback"'
 
 # 7. failures write nothing
 n="$(notes)"
