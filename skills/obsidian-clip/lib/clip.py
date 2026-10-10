@@ -169,7 +169,7 @@ def bare_url(url):
 # urllib3's "Max retries exceeded with url: /path?query" carries no scheme.
 # requests leaves ' unencoded, so a URL with a part bare_url() drops (?query,
 # #fragment, ;param, userinfo@) runs to the next whitespace and only a closing
-# quote/bracket before it stays out; without one, ' ends it.
+# quote/bracket before it stays out; a URL with none of those parts ends at '.
 _TAIL_END = r"""[).,;:'"\]}]*(?:[\s"<>]|$)"""
 URL_IN_TEXT = re.compile(rf"""(?:https?://|(?<=\burl: )/)(?:"""
                          rf"""[^\s"<>?#;@]*[?#;@](?!{_TAIL_END})[^\s"<>]*?(?={_TAIL_END})|"""
