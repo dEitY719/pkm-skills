@@ -8,7 +8,7 @@ text. Edit `CLAUDE.md`; never replace the symlink with a second copy.
 
 A single-plugin skill marketplace. The plugin is named `pkm` and it bundles ten
 personal-knowledge-management skills spanning two external services (one of
-them a one-release deprecation stub):
+the skills is a one-release deprecation stub):
 
 | Skill | Service | Role |
 |-------|---------|------|

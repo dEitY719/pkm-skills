@@ -1,7 +1,7 @@
 # pkm — skill index
 
-Ten personal-knowledge-management skills across two services (one of them a
-deprecation stub). Each lives in
+Ten personal-knowledge-management skills across two services (one of the
+skills is a deprecation stub). Each lives in
 this extension's `skills/` directory. They are explicitly invoked, never
 ambient: load the one that matches the request by reading its `SKILL.md`, then
 follow it. Do not load them all.

@@ -36,7 +36,8 @@ UA = "Mozilla/5.0 (pkm:obsidian-clip)"
 FORBIDDEN = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 TLS_HINT = re.compile(r"ssl|tls|certificate|cert|proxy|connection|resolve|timed? ?out", re.I)
 YT_HOSTS = ("youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com")
-MARKITDOWN_TIMEOUT = int(os.environ.get("OBSIDIAN_CLIP_TIMEOUT", "300"))
+_t = os.environ.get("OBSIDIAN_CLIP_TIMEOUT", "")
+MARKITDOWN_TIMEOUT = int(_t) if _t.isdigit() and int(_t) > 0 else 300  # bad value: default, never a traceback
 TRACKING = re.compile(r"^(si|feature|utm_.*)$", re.I)
 
 
@@ -353,6 +354,8 @@ def clip(src, vault):
     if not os.path.isdir(vault):
         print(f"[FAIL] vault 없음: {vault} -- --vault <path> 또는 OBSIDIAN_VAULT_DIR 로 지정")
         return 1
+    if not is_url(src):
+        src = os.path.expanduser(src)  # "$INPUT" is quoted, so the shell never expanded ~
     kind = classify(src)
     if kind is None:
         print(f"[FAIL] 입력을 찾을 수 없다 (URL 도 파일도 아님): {src}")
