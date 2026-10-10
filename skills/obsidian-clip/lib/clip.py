@@ -294,7 +294,8 @@ def markitdown(arg, url):
             print(f"[FAIL] {arg}: {exc_class(r)}{where} -- 파일을 만들지 않았다")
             print(f"Next: 원인 상세: markitdown {shlex.quote(arg)} 를 직접 실행")
             if "MissingDependencyException" in r.stderr:  # the class alone hides which extra is missing
-                print("Next: 이 형식의 markitdown extra 미설치: uv tool install 'markitdown[all]'")
+                print("Next: 이 형식의 markitdown extra 미설치: markitdown-help install (dotfiles 셸) "
+                      "또는 uv tool install 'markitdown[all]'")
             if url or TLS_HINT.search(r.stderr):
                 print("Next: 네트워크/TLS 오류면 REQUESTS_CA_BUNDLE (사내 CA 번들) 과 "
                       "HTTP(S)_PROXY 설정을 확인 -- 인증서 검증은 끄지 않는다")

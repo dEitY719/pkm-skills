@@ -81,6 +81,8 @@ last line is `/ingest <path>`; keep it last.
   images, never fill the `## 메모` sections, never run `/ingest`.
 - Never disable certificate verification; a TLS failure gets the
   `REQUESTS_CA_BUNDLE` hint instead.
+- Never run the `Next: 원인 상세: markitdown ...` command yourself: its raw
+  stderr can carry session tokens. Relay the line; the user runs it.
 - One input per run; comments (posts after the first) are not collected.
 
 ## Related Skills
