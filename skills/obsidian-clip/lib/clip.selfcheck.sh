@@ -50,6 +50,8 @@ case "\$in" in
 *boom*) echo "SSLError: certificate verify failed" >&2; echo more >&2; exit 1 ;;
 */auth/intro) printf '# Auth Intro\n\nbody\n' >"\$out" ;;
 *netfail*) printf '# Probe Down\n\nbody\n' >"\$out" ;;
+*/guide/auth) printf '# Guide Auth\n\nbody\n' >"\$out" ;;
+*/c/general) printf '# Forum Category\n\nbody\n' >"\$out" ;;
 *youtube.com*|*youtu.be*)
     printf '# YouTube\n\n## Video: A/B "test"\n\n### Description\nfirst line ...\n\n### Transcript\nhello\n' >"\$out" ;;
 *) printf 'nav\n\n# Page Title\n\nbody of %s\n' "\$in" >"\$out" ;;
@@ -60,7 +62,9 @@ chmod +x "$TMP/bin/markitdown"
 # Discourse topic, which answers the topic JSON and its /raw markdown; topic
 # 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth.
 # private.* redirects to /login, sso.* hops via /session/sso to a third-party
-# IdP, *netfail* is a network error. Every URL is logged to $TMP/curlcalls.
+# IdP, *netfail* is a network error, redir.* adds a trailing slash, and
+# */c/general is a public Discourse page (generator meta + the preloaded
+# login_required setting). Every URL is logged to $TMP/curlcalls.
 cat >"$TMP/bin/curl" <<'SH'
 #!/bin/sh
 hdr=/dev/null
@@ -69,6 +73,8 @@ echo "$url" >>"$(dirname "$0")/../curlcalls"
 eff=$url
 case "$url" in
 *netfail*) echo "curl: (6) Could not resolve host" >&2; exit 6 ;;
+https://redir.example.com/guide/auth) printf 'HTTP/1.1 301 Moved\r\nLocation: /guide/auth/\r\n\r\n' >"$hdr"; printf '<html>guide</html>'; eff=https://redir.example.com/guide/auth/ ;;
+*/c/general) printf '<meta name="generator" content="Discourse 3.2"><div data-preloaded="{&quot;login_required&quot;:false}">' ;;
 https://private.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n' >"$hdr"; printf '<form>sign in</form>'; eff=https://private.example.com/login ;;
 https://sso.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?return_path=/x\r\n\r\nHTTP/1.1 302 Found\r\nLocation: https://idp.example.net/oauth2/authorize?s=1\r\n\r\n' >"$hdr"; printf '<html>IdP</html>'; eff=https://idp.example.net/oauth2/authorize?s=1 ;;
 */t/88.json) printf '<meta name="generator" content="Discourse 3.2"><body class="login-required">'; eff=https://walled.example.com/login ;;
@@ -176,7 +182,8 @@ check "Discourse -> /raw body, author/published, upload mapped, markitdown not c
 run "https://forum.example.com/t/other-slug/77/5?u=kim" "$TMP/vault"
 check "same Discourse topic, other post / referral -> duplicate" eval 'has "이미 클립됨" && has "$disc"'
 
-# 9. login walls: Discourse's own is a stop, another site's /auth redirect is not
+# 9. login walls: Discourse's own is a stop; another site's walled /t/<id>.json
+# is not (its page is probed instead, see 9b)
 n="$(notes)"
 run "https://walled.example.com/t/slug/88" "$TMP/vault"
 check "login-walled Discourse -> [FAIL] 로그인 필요, nothing written" eval 'has "로그인 필요" && [ "$(notes)" = "$n" ]'
@@ -202,6 +209,12 @@ check "user-requested /auth/intro (no redirect) -> still clipped" \
 run "https://netfail.example.com/a" "$TMP/vault"
 check "probe network error -> falls through to markitdown, clipped" \
     eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Probe Down.md" ]'
+run "https://redir.example.com/guide/auth" "$TMP/vault"
+check "redirect that keeps the asked /auth path (trailing slash) -> still clipped" \
+    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Guide Auth.md" ]'
+run "https://forum.example.com/c/general" "$TMP/vault"
+check "public Discourse non-topic page (login_required preloaded) -> still clipped" \
+    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Forum Category.md" ]'
 
 # 10. markitdown that hangs -> timeout [FAIL], nothing written
 n="$(notes)"

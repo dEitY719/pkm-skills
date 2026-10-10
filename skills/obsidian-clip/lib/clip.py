@@ -133,10 +133,10 @@ def fetch(url):
     return r.stdout.decode("utf-8", "replace"), hops, effective
 
 
-LOGIN_PATH = re.compile(r"/(login|session/sso)/?$")
+LOGIN_PATH = re.compile(r"/(login|sign_?in|sign-in|session/sso)/?$")
 # Broader, but only for redirect targets: a server sending you to /auth/... is
 # a login wall; a page the user asked for at /auth/intro is not.
-HOP_PATH = re.compile(r"/(login|session/sso|auth)(/|$)")
+HOP_PATH = re.compile(r"/(login|sign_?in|sign-in|session/sso|auth)(/|$)")
 DISCOURSE_MARK = re.compile(r'data-discourse-setup|name="generator" content="Discourse', re.I)
 LOGIN_MARK = re.compile(r"login-required|login_required|id=\"login-form\"|/session/sso", re.I)
 
@@ -159,12 +159,17 @@ def probe_login_wall(url):
 
     markitdown follows redirects out of sight, so the chain is read here first.
     A failed probe is not a wall: markitdown still gets the URL, as before.
+    Page markers are not checked: every public Discourse page preloads the
+    `login_required` site setting. A hop that keeps the requested path
+    (http->https, trailing slash) is the page the user asked for, not a wall.
     """
     try:
-        page, hops, effective = fetch(url)
+        _, hops, effective = fetch(url)
     except FetchError:
         return
-    if login_wall(effective, page, hops):
+    asked = urllib.parse.urlsplit(url).path.rstrip("/")
+    hops = [h for h in hops if urllib.parse.urlsplit(h).path.rstrip("/") != asked]
+    if login_wall(effective, "", hops):
         raise FetchError(WALL.format(effective))
 
 
@@ -209,7 +214,8 @@ def discourse(url):
         page, hops, effective = fetch(f"{origin}/t/{tid}.json")
     except FetchError:
         return None
-    # Only a wall that is Discourse's own is a stop; any other site falls back to markitdown.
+    # Only a wall that is Discourse's own is a stop here: another site's /t/<id>.json may be
+    # a walled API while its page is public, so that page is probed on the markitdown path.
     ours = DISCOURSE_MARK.search(page) or any(
         "/session/sso" in urllib.parse.urlsplit(u).path for u in [*hops, effective])
     if ours and login_wall(effective, page, hops):
@@ -470,6 +476,7 @@ def self_test():
     assert login_wall(idp, "<html></html>", ["https://d.kr/session/sso?x=1", idp])
     assert not login_wall("https://d.kr/t/slug/1", "<html></html>", ["https://d.kr/t/slug/1"])
     assert not login_wall("https://blog.kr/auth/intro", "<html></html>")
+    assert login_wall("https://gitlab.kr/users/sign_in", "")
     assert login_wall("https://d.kr/t/1.json",
                       '<meta name="generator" content="Discourse 3.2"><body class="login-required">')
     print("[OK] self-test")
