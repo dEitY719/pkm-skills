@@ -73,8 +73,8 @@ never copied into the vault; `source` keeps its absolute path.
 
 Before converting, every note under `99-Inbox/` is checked by its normalized
 `source`: tracking parameters (`si`, `feature`, `utm_*`), `www.`, the fragment
-and a trailing `/` are dropped, and every YouTube URL shape collapses to its
-video ID. A match is a stop that prints the existing note's path.
+and a trailing `/` are dropped, every YouTube URL shape collapses to its
+video ID, and a `/t/<slug>/<id>[/<post>]` topic URL collapses to `/t/<id>`. A match is a stop that prints the existing note's path.
 
 ## Messages
 
@@ -90,6 +90,7 @@ video ID. A match is a stop that prints the existing note's path.
 | `[FAIL] <input>: <error>` + `Next: ... REQUESTS_CA_BUNDLE` | markitdown failed (network / TLS / unsupported file); nothing written. |
 | `[FAIL] 이미 클립됨 ...` | Same normalized source already under `99-Inbox/`; existing path shown. |
 | `[FAIL] 같은 이름의 다른 노트 ...` | Same date + title, different source; nothing overwritten. |
+| `[FAIL] <input>: markitdown timeout <N>s` | markitdown ran longer than `$OBSIDIAN_CLIP_TIMEOUT` seconds (default 300); nothing written. |
 | `[FAIL] 로그인 필요 ...` | Login-walled Discourse; use the browser Web Clipper. |
 | `[FAIL] vault 없음 ...` | Vault path missing; pass `--vault` or set `OBSIDIAN_VAULT_DIR`. |
 

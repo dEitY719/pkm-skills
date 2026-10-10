@@ -54,16 +54,21 @@ esac
 SH
 chmod +x "$TMP/bin/markitdown"
 # Stub curl: every URL answers 200 with an empty body unless it is the fake
-# Discourse topic, which answers the topic JSON and its /raw markdown.
+# Discourse topic, which answers the topic JSON and its /raw markdown; topic
+# 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth.
 cat >"$TMP/bin/curl" <<'SH'
 #!/bin/sh
-for a; do url=$a; done
+hdr=/dev/null
+for a; do [ "${prev:-}" = -D ] && hdr=$a; prev=$a; url=$a; done
+eff=$url
 case "$url" in
+*/t/88.json) printf '<meta name="generator" content="Discourse 3.2"><body class="login-required">'; eff=https://walled.example.com/login ;;
+*/t/99.json) printf 'HTTP/1.1 302 Found\r\nLocation: /auth/sign-in\r\n\r\n' >"$hdr"; printf '<html>sign in</html>'; eff=https://plain.example.com/auth/sign-in ;;
 */t/77.json) printf '{"title":"Disc Topic","post_stream":{"posts":[{"username":"kim","created_at":"2026-01-02T00:00:00Z","cooked":"<img src=\\"https://cdn/x.png\\" data-base62-sha1=\\"AbC\\">"}]}}' ;;
 */raw/77/1) printf 'raw body ![i|10x20](upload://AbC.png)\n' ;;
 *) : ;;
 esac
-printf '\n%s 200' "$url" >&2
+printf '\n%s 200' "$eff" >&2
 SH
 chmod +x "$TMP/bin/curl"
 
@@ -150,7 +155,26 @@ disc="$TMP/vault/99-Inbox/$TODAY Disc Topic.md"
 check "Discourse -> /raw body, author/published, upload mapped, markitdown not called" \
     eval 'has "[OK] Discourse" && grep -qxF "raw body ![i](https://cdn/x.png)" "$disc" && grep -qxF "  - \"kim\"" "$disc" && grep -qxF "published: 2026-01-02" "$disc" && [ ! -s "$TMP/calls" ]'
 
-# 9. help writes nothing, calls nothing
+run "https://forum.example.com/t/other-slug/77/5?u=kim" "$TMP/vault"
+check "same Discourse topic, other post / referral -> duplicate" eval 'has "이미 클립됨" && has "$disc"'
+
+# 9. login walls: Discourse's own is a stop, another site's /auth redirect is not
+n="$(notes)"
+run "https://walled.example.com/t/slug/88" "$TMP/vault"
+check "login-walled Discourse -> [FAIL] 로그인 필요, nothing written" eval 'has "로그인 필요" && [ "$(notes)" = "$n" ]'
+: >"$TMP/calls"
+run "https://plain.example.com/t/slug/99" "$TMP/vault"
+check "non-Discourse /t/ URL behind /auth -> falls back to markitdown" \
+    eval '! has "로그인 필요" && grep -q "plain.example.com/t/slug/99" "$TMP/calls"'
+
+# 10. markitdown that hangs -> timeout [FAIL], nothing written
+n="$(notes)"
+printf '#!/bin/sh\nsleep 5\n' >"$TMP/slowbin-markitdown"
+mkdir -p "$TMP/slowbin" && mv "$TMP/slowbin-markitdown" "$TMP/slowbin/markitdown" && chmod +x "$TMP/slowbin/markitdown"
+PATH="$TMP/slowbin:$PATH" OBSIDIAN_CLIP_TIMEOUT=1 python3 "$PY" https://slow.example.com/x "$TMP/vault" >"$TMP/out" 2>&1
+check "markitdown timeout -> [FAIL], nothing written" eval 'has "markitdown timeout 1s" && [ "$(notes)" = "$n" ]'
+
+# 11. help writes nothing, calls nothing
 for h in -h --help help; do
     run "$h"
     check "$h prints help" eval 'has "## Arguments"'

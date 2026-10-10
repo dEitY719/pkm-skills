@@ -36,6 +36,7 @@ UA = "Mozilla/5.0 (pkm:obsidian-clip)"
 FORBIDDEN = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 TLS_HINT = re.compile(r"ssl|tls|certificate|cert|proxy|connection|resolve|timed? ?out", re.I)
 YT_HOSTS = ("youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com")
+MARKITDOWN_TIMEOUT = int(os.environ.get("OBSIDIAN_CLIP_TIMEOUT", "300"))
 TRACKING = re.compile(r"^(si|feature|utm_.*)$", re.I)
 
 
@@ -72,6 +73,12 @@ def normalize(src):
     if vid:
         return f"youtube:{vid}"
     u = urllib.parse.urlsplit(src)
+    tid = discourse_topic_id(src)
+    if tid:
+        # shortcut: any /t/<slug>/<id>[/<post>] path is taken as Discourse (the clip is the
+        # whole topic's first post, so post number and query never matter); probe the
+        # site here instead if a non-Discourse /t/ path ever collides.
+        u = u._replace(path=f"/t/{tid}", query="")
     host = (u.hostname or "").lower().removeprefix("www.")
     if u.port:
         host += f":{u.port}"
@@ -184,7 +191,10 @@ def discourse(url):
         page, hops, effective = fetch(f"{origin}/t/{tid}.json")
     except FetchError:
         return None
-    if login_wall(effective, page, hops):
+    # Only a wall that is Discourse's own is a stop; any other site falls back to markitdown.
+    ours = DISCOURSE_MARK.search(page) or any(
+        "/session/sso" in urllib.parse.urlsplit(u).path for u in [*hops, effective])
+    if ours and login_wall(effective, page, hops):
         raise FetchError(f"로그인 필요 ({effective}) -- 브라우저의 Obsidian Web Clipper 를 쓰라.")
     try:
         topic = json.loads(page)
@@ -214,7 +224,14 @@ def markitdown(arg, url):
     """Return the converted markdown, or None after printing the [FAIL] lines."""
     with tempfile.TemporaryDirectory() as d:
         out = os.path.join(d, "out.md")
-        r = subprocess.run(["markitdown", arg, "-o", out], capture_output=True, text=True, check=False)
+        try:
+            r = subprocess.run(["markitdown", arg, "-o", out], capture_output=True, text=True,
+                               check=False, timeout=MARKITDOWN_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            print(f"[FAIL] {arg}: markitdown timeout {MARKITDOWN_TIMEOUT}s -- 파일을 만들지 않았다")
+            if url:
+                print("Next: 네트워크가 느리거나 막혔으면 HTTP(S)_PROXY 설정을 확인하고 다시 실행")
+            return None
         if r.returncode != 0:
             err = next((ln for ln in r.stderr.splitlines() if ln.strip()), f"exit {r.returncode}")
             print(f"[FAIL] {arg}: {err.strip()} -- 파일을 만들지 않았다")
@@ -409,6 +426,7 @@ def self_test():
     assert classify("https://www.youtube.com/channel/x") == "article"
     assert normalize("https://www.Example.com/a/?utm_source=x&id=2&si=q#frag") == "https://example.com/a?id=2"
     assert normalize("https://example.com/a") == normalize("https://example.com/a/")
+    assert normalize("https://d.kr/t/slug/9652/3?u=kim") == normalize("https://d.kr/t/9652") == "https://d.kr/t/9652"
     assert normalize("https://example.com/a?id=2") != normalize("https://example.com/a?id=3")
     assert classify("/no/such/file.pdf") is None
     assert title_for("youtube", "u", "# YouTube\n\n## Video T\n### Video Metadata\n") == "Video T"
