@@ -1,4 +1,4 @@
-# pkm:obsidian-session-clip — Help
+# pkm:obsidian-clip-session — Help
 
 이번 AI 세션에서 한 작업을 PARA vault 의 `99-Inbox/ai-session/` 에 md 노트
 1개로 클립한다. Web Clipper 가 "웹페이지 → Inbox" 라면 이 스킬은
@@ -7,7 +7,7 @@
 ## Usage
 
 ```
-/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault <path>]
+/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault <path>]
 ```
 
 ## Options

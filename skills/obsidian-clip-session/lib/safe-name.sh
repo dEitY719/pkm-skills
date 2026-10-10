@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# skills/obsidian-session-clip/lib/safe-name.sh
+# skills/obsidian-clip-session/lib/safe-name.sh
 #
 # NF-1 Windows-safe filename normalisation + F-2 collision resolution for the
-# pkm:obsidian-session-clip skill.
+# pkm:obsidian-clip-session skill.
 #
 # The vault original lives on a Windows filesystem, so a note whose filename
 # carries any of  \ / : * ? " < > |  (or a control character) is unusable
@@ -40,7 +40,7 @@ MAX_CANDIDATES=10
 
 usage() {
     cat <<'EOF'
-safe-name.sh — Windows-safe filenames for pkm:obsidian-session-clip
+safe-name.sh — Windows-safe filenames for pkm:obsidian-clip-session
 
 Usage:
   safe-name.sh sanitize <raw-name>

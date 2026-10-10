@@ -1,21 +1,21 @@
-# obsidian-session-clip 사용 결과
+# obsidian-clip-session 사용 결과
 
 > **한 줄 요약** — 끝난 AI 세션을 받아 vault Inbox 의 markdown 노트 1개를 생성합니다.
 
 ```
-AI 세션  ──▶  /pkm:obsidian-session-clip  ──▶  99-Inbox/ai-session/<stem>.md
+AI 세션  ──▶  /pkm:obsidian-clip-session  ──▶  99-Inbox/ai-session/<stem>.md
 ```
 
 ## 1. 실행한 명령
 
 ```
-/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault <path>]
+/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault <path>]
 ```
 
 이번 예시 — 개인 vault 무변경을 위해 `--dry-run` 경로로 실행했습니다:
 
 ```
-/pkm:obsidian-session-clip pkm-skills 스킬 문서화 및 HTML 시각화 --dry-run
+/pkm:obsidian-clip-session pkm-skills 스킬 문서화 및 HTML 시각화 --dry-run
 ```
 
 ## 2. 입력

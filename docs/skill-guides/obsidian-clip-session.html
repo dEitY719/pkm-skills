@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>obsidian-session-clip 사용 결과</title>
+<title>obsidian-clip-session — 스킬 가이드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -152,60 +152,96 @@ footer { margin-top:72px; padding-top:24px; border-top:1px solid var(--border);
 <main id="main-content">
 <div class="wrap">
 
-
   <header class="hero">
-    <span class="eyebrow">pkm plugin · usage example</span>
-    <h1><span class="mono">obsidian-session-clip</span> 사용 결과</h1>
-    <p class="lede">끝난 AI 세션을 받아 vault Inbox 의 markdown 노트 1개를 생성합니다.</p>
+    <span class="eyebrow">pkm plugin · skill guide</span>
+    <h1><span class="mono">obsidian-clip-session</span></h1>
+    <p class="lede">끝난 AI 세션 하나를 PARA vault 의 <code>99-Inbox/ai-session/</code> 아래
+    markdown 노트 <strong>1개</strong>로 남기고, 그 파일 하나만 커밋한다. 산출물은 항상 파일 1개다.</p>
     <div class="pipe">
-      <div class="pipe-node"><div class="k">입력</div><div class="v">AI 세션</div></div>
+      <div class="pipe-node"><div class="k">입력</div><div class="v">끝난 AI 세션</div></div>
       <div class="pipe-arrow">&#9656;</div>
-      <div class="pipe-node is-skill"><div class="k">스킬</div><div class="v mono">/pkm:obsidian-session-clip</div></div>
+      <div class="pipe-node is-skill"><div class="k">스킬</div><div class="v mono">/pkm:obsidian-clip-session</div></div>
       <div class="pipe-arrow">&#9656;</div>
       <div class="pipe-node"><div class="k">산출물</div><div class="v mono">99-Inbox/ai-session/&lt;stem&gt;.md</div></div>
     </div>
   </header>
 
   <section data-reveal>
-    <h2>1. 실행한 명령</h2>
-<pre><code>/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault &lt;path&gt;]</code></pre>
-    <p>이번 예시 &mdash; 개인 vault 무변경을 위해 <code>--dry-run</code> 경로로 실행했습니다:</p>
-<pre><code>/pkm:obsidian-session-clip pkm-skills 스킬 문서화 및 HTML 시각화 --dry-run</code></pre>
+    <h2>언제 쓰고, 언제 안 쓰나</h2>
+    <table>
+      <thead><tr><th>상황</th><th class="c">이 스킬</th><th>대신 쓸 것</th></tr></thead>
+      <tbody>
+        <tr><td>완료된 세션을 vault 에 보관</td><td class="c yes">예</td><td class="text-secondary">&mdash;</td></tr>
+        <tr><td>일자별 daily log 에 누적 기록</td><td class="c no">아니오</td><td><code>notes:task-history</code></td></tr>
+        <tr><td>미완 작업을 다음 세션에 인계</td><td class="c no">아니오</td><td><code>session:handoff</code></td></tr>
+        <tr><td>vault 를 원격과 동기화</td><td class="c no">아니오</td><td><code>pkm:obsidian-resolve-conflict</code></td></tr>
+      </tbody>
+    </table>
+    <p>이웃 스킬 <code>pkm:obsidian-resolve-conflict</code> 와 vault 는 공유하지만 remote 는 공유하지 않는다.
+    이 스킬은 원격을 <strong>절대</strong> 건드리지 않는다 &mdash; vault 동기화는 obsidian-git 소관이다.</p>
+    <div class="note warn">
+      <div class="t">명시 호출 전용</div>
+      <p style="margin:0;color:var(--text-secondary)">"세션이 끝난 것 같다"는 호출 근거가 아니다. 자동 트리거는 금지되어 있다.</p>
+    </div>
   </section>
 
   <section data-reveal>
-    <h2>2. 입력</h2>
-    <ul>
-      <li>세션: 이 대화 (pkm 4개 스킬의 guide/usage 문서화)</li>
-      <li>vault: <code>lib/resolve-vault.sh</code> 해석 결과 <code>/home/bwyoon/para/project/obsidian-para</code>
-        (<code>--vault</code> 없음, <code>$OBSIDIAN_VAULT_DIR</code> 없음, <code>~/.dotfiles-setup-mode</code> = <code>external</code>)</li>
-      <li>git 컨텍스트: repo <code>pkm-skills-feat-1</code>, branch <code>wt/feat/1</code>, <code>main..HEAD</code> 커밋 0개</li>
-    </ul>
+    <h2>호출 형식</h2>
+<pre><code>/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault &lt;path&gt;]
+/pkm:obsidian-clip-session -h</code></pre>
+    <table>
+      <thead><tr><th style="width:200px">인자</th><th>뜻</th></tr></thead>
+      <tbody>
+        <tr><td><code>description</code></td><td>플래그가 아닌 토큰들이 합쳐져 파일명 slug 와 제목의 재료가 된다</td></tr>
+        <tr><td><code>--no-commit</code></td><td>노트는 쓰되 커밋은 건너뛴다</td></tr>
+        <tr><td><code>--dry-run</code></td><td>경로와 본문만 출력하고 아무것도 쓰지 않는다 (<code>--no-commit</code> 보다 우선)</td></tr>
+        <tr><td><code>--vault &lt;path&gt;</code></td><td>vault 경로 직접 지정</td></tr>
+      </tbody>
+    </table>
+    <h3>vault 해석 우선순위</h3>
+    <div class="priority">
+      <span class="chip">--vault</span><span class="gt">&gt;</span>
+      <span class="chip">$OBSIDIAN_VAULT_DIR</span><span class="gt">&gt;</span>
+      <span class="chip">~/.dotfiles-setup-mode 기반 기본값</span>
+    </div>
+    <p class="text-secondary" style="font-size:15px">모드가 <code>internal</code> 이면 <code>obsidian-para-company</code>,
+    그 외에는 <code>obsidian-para</code>.</p>
   </section>
 
   <section data-reveal>
-    <h2>3. 결과</h2>
-<pre>분류    session_type: research   (커밋 0개, PR 없음)
-파일명  safe-name.sh sanitize -&gt; 2026-09-01-1634-pkm-skills-feat-1-skill-docs-html-visualization
-예약    safe-name.sh resolve -&gt; 빈 파일로 원자적 예약 (reserved? yes)
-NOTE    /home/bwyoon/para/project/obsidian-para/99-Inbox/ai-session/
-        2026-09-01-1634-pkm-skills-feat-1-skill-docs-html-visualization.md
+    <h2>동작 단계</h2>
+    <ol class="steps">
+      <li><h4>인자 + vault 해석</h4><p><code>lib/resolve-vault.sh</code>. vault 가 없으면 해석된 경로를 찍고 정지한다.</p></li>
+      <li><h4>git 컨텍스트 + 분류</h4><p>vault 가 아니라 <strong>현재 작업 repo</strong> 에서 repo/branch/커밋을 읽는다.
+        커밋 1개 이상 또는 PR 생성이 있었으면 <code>session_type: code</code>, 아니면 <code>research</code>.</p></li>
+      <li><h4>본문 작성</h4><p>frontmatter 9개 키 고정 순서, 본문은 code/research 템플릿의 섹션 제목과 순서를 그대로 따른다.
+        <code>## 메모</code> 3개 하위 섹션을 모두 채운다.</p></li>
+      <li><h4>파일명 확정</h4><p><code>safe-name.sh sanitize</code> 로 Windows 안전 이름을 만들고,
+        <code>safe-name.sh resolve</code> 가 빈 파일을 만들어 이름을 <strong>원자적으로 예약</strong>한다 (병렬 세션 경합 차단).</p></li>
+      <li><h4>쓰기</h4><p>이 단계가 목표다. 이후는 전부 best-effort.</p></li>
+      <li><h4>커밋</h4><p><code>commit-note.sh</code> 가 <strong>pathspec 으로 그 파일 하나만</strong> stage/commit 한다.</p></li>
+      <li><h4>검증 + 보고</h4><p><code>verify-clip.sh</code> 의 <code>[OK]</code>/<code>[FAIL]</code> 줄을 그대로 출력하고,
+        마지막 줄은 <code>/ingest &lt;NOTE&gt;</code>.</p></li>
+    </ol>
+  </section>
 
-[DRY-RUN] 본문 출력 후 rm -f 로 예약 해제 -&gt; 파일 미생성 (gone)
-Step 6 커밋, Step 7 verify-clip.sh 는 --dry-run 이므로 미실행
-
-/ingest &lt;NOTE&gt;</pre>
-    <p>무변경 확인: 실행 후 vault <code>git status --short</code> 0줄.</p>
-    <div class="note">
-      <div class="t">개인 데이터 무변경 경로</div>
-      <p style="margin:0;color:var(--text-secondary)">이 실행은 <code>--dry-run</code> 경로였습니다.
-      예약 파일은 <code>rm -f</code> 로 해제되어 노트가 생성되지 않았고, vault <code>git status --short</code> 는 0줄이었습니다.</p>
+  <section data-reveal>
+    <h2>주의사항</h2>
+    <div class="card">
+      <ul class="rules">
+        <li>커밋은 pathspec 전용이다. <code>-a</code>, <code>-A</code>, <code>git add .</code> 는 금지 &mdash; 병렬 세션의 노트를 삼킨다.</li>
+        <li>원격에 절대 접속하지 않는다.</li>
+        <li>vault 경로가 없으면 만들지 않고 정지한다. 오타난 경로에 vault 를 생성하지 않는다.</li>
+        <li>transcript 를 덤프하지 않고, 여러 세션을 노트 하나로 합치지 않는다.</li>
+        <li><code>/ingest</code> 는 사람이 실행한다. 이 스킬이 대신 돌리지 않는다 &mdash; vault 의 사람 게이트가 요점이다.</li>
+        <li><code>memo: ai-generated</code> 는 "승인 대상이 아니라 교정 대상"이라는 뜻이다.</li>
+      </ul>
     </div>
   </section>
 
   <footer>
-    <span>pkm-skills &middot; usage example</span>
-    <span class="mono">docs/skill-output/obsidian-session-clip-usage.md</span>
+    <span>pkm-skills &middot; skill guide</span>
+    <span class="mono">skills/obsidian-clip-session/SKILL.md</span>
   </footer>
 </div>
 </main>

@@ -73,7 +73,7 @@ glob 이 사용자명 차이를 흡수한다 — Windows 사용자명 ≠ WSL �
 | Variable | 기본값 | 비고 |
 |---|---|---|
 | `OBSIDIAN_VAULT_WIN_DIR` | — | Windows 클론 직접 지정 |
-| `OBSIDIAN_VAULT_DIR` | — | WSL 클론 직접 지정. `pkm:obsidian-session-clip` 과 같은 변수 |
+| `OBSIDIAN_VAULT_DIR` | — | WSL 클론 직접 지정. `pkm:obsidian-clip-session` 과 같은 변수 |
 | `OBSIDIAN_VAULT_WIN_ROOT` | `/mnt/c/Users` | glob 루트 |
 | `OBSIDIAN_VAULT_WIN_NAME` | `ObsidianVault-PARA` | vault 폴더명. 폴더명이 다른 PC 를 만나면 여기로 흡수한다 |
 | `OBSIDIAN_VAULT_WSL_ROOT` | `$HOME/para/project` | WSL 클론 부모 |

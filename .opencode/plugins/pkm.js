@@ -6,7 +6,7 @@
  * Unlike superpowers, this plugin injects no per-session bootstrap context.
  * The pkm skills are explicitly invoked — you reach for them when clipping a
  * session or filing a bookmark — so OpenCode's native `skill` tool discovering
- * them is all that is needed. `obsidian-session-clip` must never fire on its
+ * them is all that is needed. `obsidian-clip-session` must never fire on its
  * own, which is another reason there is no preamble here.
  */
 

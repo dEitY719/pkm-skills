@@ -1,7 +1,7 @@
 {
   "name": "pkm-skills",
-  "version": "0.2.10",
-  "description": "Skills for personal knowledge management — Obsidian vault clips, conflict resolution, and note / Bases / Canvas authoring, Karakeep bookmark filing, and convert documents and URLs to markdown",
+  "version": "0.3.0",
+  "description": "Skills for personal knowledge management — Obsidian vault clips (sessions, web pages, videos, documents), conflict resolution, and note / Bases / Canvas authoring, Karakeep bookmark filing",
   "type": "module",
   "main": ".opencode/plugins/pkm.js",
   "license": "MIT",

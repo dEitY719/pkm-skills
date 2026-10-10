@@ -1,8 +1,8 @@
 ---
-name: obsidian-session-clip
+name: obsidian-clip-session
 description: >-
   AI 세션 작업을 PARA vault Inbox 에 md 노트 1개로 클립한다. 명시 호출에만
-  실행: /pkm:obsidian-session-clip, "이번 세션 볼트에 클립", "세션 옵시디언에
+  실행: /pkm:obsidian-clip-session, "이번 세션 볼트에 클립", "세션 옵시디언에
   남겨", "clip this session to my vault". 자동 트리거 금지. Do NOT use for
   일자별 daily log (notes:task-history) or 노트 문법 편집 (pkm:obsidian-markdown).
 allowed-tools: Bash, Read, Write, Grep
@@ -15,7 +15,7 @@ metadata:
     non_claude: advisory-only
 ---
 
-# pkm:obsidian-session-clip — 세션 → vault Inbox
+# pkm:obsidian-clip-session — 세션 → vault Inbox
 
 ## Help
 

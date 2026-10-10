@@ -20,7 +20,7 @@ callouts, properties, tags, comments, highlight, math, Mermaid, footnotes.
 ## What the skill will NOT do
 
 - Apply Obsidian syntax to a plain `.md` outside a vault (README, docs).
-- Clip or commit an AI session note — that is `/pkm:obsidian-session-clip`,
+- Clip or commit an AI session note — that is `/pkm:obsidian-clip-session`,
   explicit invocation only.
 - Commit, push, or sync the vault.
 

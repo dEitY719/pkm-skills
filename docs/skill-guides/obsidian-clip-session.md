@@ -1,4 +1,4 @@
-# obsidian-session-clip
+# obsidian-clip-session
 
 ## 한 줄 요약
 
@@ -22,8 +22,8 @@
 ## 호출 형식
 
 ```
-/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault <path>]
-/pkm:obsidian-session-clip -h
+/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault <path>]
+/pkm:obsidian-clip-session -h
 ```
 
 | 인자 | 뜻 |

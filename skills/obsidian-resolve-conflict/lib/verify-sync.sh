@@ -2,7 +2,7 @@
 # skills/obsidian-resolve-conflict/lib/verify-sync.sh
 #
 # F-9 verification report for the target vault and its peer clone, in the
-# self-check spirit of obsidian-session-clip/lib/verify-clip.sh: the design
+# self-check spirit of obsidian-clip-session/lib/verify-clip.sh: the design
 # constraints of a conflict resolution are exactly the kind of thing that
 # breaks silently, so they get an executable check shipped with the skill.
 #

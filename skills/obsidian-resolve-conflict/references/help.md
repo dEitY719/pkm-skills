@@ -83,4 +83,4 @@ peer 클론 동기화까지 한 번에 처리한다. 대상은 같은 원격을 
 - `references/merge-flow.md` — 진입 상태 3종 절차, 커밋 메시지, peer 동기화
 - `references/pc-modes.md` — 모드 인지와 런타임 탐지 (SSOT 참조)
 - 형제 스킬 `gh-resolve:conflict` — PR 브랜치 전용, 히스토리 재작성 방식
-- 이웃 스킬 `pkm:obsidian-session-clip` — 같은 vault 를 다루지만 원격은 건드리지 않는다
+- 이웃 스킬 `pkm:obsidian-clip-session` — 같은 vault 를 다루지만 원격은 건드리지 않는다
