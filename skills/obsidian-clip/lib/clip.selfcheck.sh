@@ -2,9 +2,10 @@
 # skills/obsidian-clip/lib/clip.selfcheck.sh
 #
 # Offline check for lib/clip.py with a stub `markitdown` (and a stub `curl`
-# for the Discourse path) on PATH: input classification, source
-# normalization, filename, duplicate refusal, the missing-markitdown stop,
-# empty / failed conversion, and the never-overwrite collision. Every run
+# for the Discourse path and the login-wall probe) on PATH: input
+# classification, source normalization, filename, duplicate refusal, the
+# missing-markitdown stop, empty / failed conversion, login walls, and the
+# never-overwrite collision. Every run
 # writes into a throwaway vault under mktemp -- never the real one.
 #
 # Usage:
@@ -47,6 +48,8 @@ in=\$1; out=\$3
 case "\$in" in
 *empty*) : >"\$out" ;;
 *boom*) echo "SSLError: certificate verify failed" >&2; echo more >&2; exit 1 ;;
+*/auth/intro) printf '# Auth Intro\n\nbody\n' >"\$out" ;;
+*netfail*) printf '# Probe Down\n\nbody\n' >"\$out" ;;
 *youtube.com*|*youtu.be*)
     printf '# YouTube\n\n## Video: A/B "test"\n\n### Description\nfirst line ...\n\n### Transcript\nhello\n' >"\$out" ;;
 *) printf 'nav\n\n# Page Title\n\nbody of %s\n' "\$in" >"\$out" ;;
@@ -56,12 +59,18 @@ chmod +x "$TMP/bin/markitdown"
 # Stub curl: every URL answers 200 with an empty body unless it is the fake
 # Discourse topic, which answers the topic JSON and its /raw markdown; topic
 # 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth.
+# private.* redirects to /login, sso.* hops via /session/sso to a third-party
+# IdP, *netfail* is a network error. Every URL is logged to $TMP/curlcalls.
 cat >"$TMP/bin/curl" <<'SH'
 #!/bin/sh
 hdr=/dev/null
 for a; do [ "${prev:-}" = -D ] && hdr=$a; prev=$a; url=$a; done
+echo "$url" >>"$(dirname "$0")/../curlcalls"
 eff=$url
 case "$url" in
+*netfail*) echo "curl: (6) Could not resolve host" >&2; exit 6 ;;
+https://private.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n' >"$hdr"; printf '<form>sign in</form>'; eff=https://private.example.com/login ;;
+https://sso.example.com/*) printf 'HTTP/1.1 302 Found\r\nLocation: /session/sso?return_path=/x\r\n\r\nHTTP/1.1 302 Found\r\nLocation: https://idp.example.net/oauth2/authorize?s=1\r\n\r\n' >"$hdr"; printf '<html>IdP</html>'; eff=https://idp.example.net/oauth2/authorize?s=1 ;;
 */t/88.json) printf '<meta name="generator" content="Discourse 3.2"><body class="login-required">'; eff=https://walled.example.com/login ;;
 */t/99.json) printf 'HTTP/1.1 302 Found\r\nLocation: /auth/sign-in\r\n\r\n' >"$hdr"; printf '<html>sign in</html>'; eff=https://plain.example.com/auth/sign-in ;;
 */t/77.json) printf '{"title":"Disc Topic","post_stream":{"posts":[{"username":"kim","created_at":"2026-01-02T00:00:00Z","cooked":"<img src=\\"https://cdn/x.png\\" data-base62-sha1=\\"AbC\\">"}]}}' ;;
@@ -89,6 +98,7 @@ check "markitdown missing -> [FAIL] + Next: install, exit 1, nothing written" \
 
 # 2. YouTube share URL -> 99-Inbox/<today> <## title>.md, tag youtube
 : >"$TMP/calls"
+: >"$TMP/curlcalls"
 run "https://youtube.com/shorts/nGKKWne_O2s?si=0WCRD0677GIEY8KB" "$TMP/vault"
 yt="$TMP/vault/99-Inbox/$TODAY Video AB test.md"
 check "YouTube shorts -> markitdown gets the canonical watch URL" \
@@ -98,6 +108,7 @@ check "YouTube -> 99-Inbox/ root, title from ## heading, forbidden chars removed
 check "YouTube note: Web Clipper frontmatter, tag youtube, source verbatim, body kept" \
     eval 'grep -qxF "  - \"youtube\"" "$yt" && grep -qxF "status: \"unread\"" "$yt" && grep -qxF "source: \"https://youtube.com/shorts/nGKKWne_O2s?si=0WCRD0677GIEY8KB\"" "$yt" && grep -q "^### Transcript" "$yt" && grep -q "^## 메모" "$yt"'
 check "truncated Description -> [WARN]" eval 'has "[WARN] YouTube Description"'
+check "YouTube -> no login-wall probe (curl not called)" eval '[ ! -s "$TMP/curlcalls" ]'
 
 # 3. same video, other URL shapes -> duplicate refusal with the existing path
 for u in "https://www.youtube.com/shorts/nGKKWne_O2s" "https://www.youtube.com/watch?v=nGKKWne_O2s&t=3s" "https://youtu.be/nGKKWne_O2s"; do
@@ -125,6 +136,7 @@ check "same title + date, other source -> [FAIL], existing note untouched" \
 
 # 6. local documents -> stem title, tag document, absolute source
 mkdir -p "$TMP/docs"
+: >"$TMP/curlcalls"
 for ext in pdf docx xlsx; do
     : >"$TMP/docs/report-$ext.$ext"
     (cd "$TMP/docs" && PATH="$TMP/bin:$PATH" python3 "$PY" "report-$ext.$ext" "$TMP/vault") >"$TMP/out" 2>&1
@@ -132,6 +144,7 @@ for ext in pdf docx xlsx; do
     check "local .$ext -> document note, absolute source" \
         eval '[ -s "$d" ] && grep -qxF "  - \"document\"" "$d" && grep -qxF "source: \"$TMP/docs/report-$ext.$ext\"" "$d"'
 done
+check "local files -> no login-wall probe (curl not called)" eval '[ ! -s "$TMP/curlcalls" ]'
 run "$TMP/docs/report-pdf.pdf" "$TMP/vault"
 check "same local file again -> duplicate" eval 'has "이미 클립됨"'
 # shellcheck disable=SC2088  # the literal tilde is the point: clip.py must expand it
@@ -171,6 +184,24 @@ check "login-walled Discourse -> [FAIL] 로그인 필요, nothing written" eval 
 run "https://plain.example.com/t/slug/99" "$TMP/vault"
 check "non-Discourse /t/ URL behind /auth -> falls back to markitdown" \
     eval '! has "로그인 필요" && grep -q "plain.example.com/t/slug/99" "$TMP/calls"'
+
+# 9b. login walls on any article URL: the curl probe refuses before markitdown
+n="$(notes)"
+: >"$TMP/calls"
+run "https://private.example.com/private" "$TMP/vault"
+rc=$?
+check "non-topic URL redirected to /login -> [FAIL] 로그인 필요, nothing written, no markitdown" \
+    eval '[ $rc = 1 ] && has "[FAIL] 로그인 필요 (https://private.example.com/login)" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+run "https://sso.example.com/page" "$TMP/vault"
+rc=$?
+check "SSO hop via /session/sso to a third-party IdP -> [FAIL] 로그인 필요, nothing written" \
+    eval '[ $rc = 1 ] && has "로그인 필요 (https://idp.example.net/" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+run "https://blog.example.com/auth/intro" "$TMP/vault"
+check "user-requested /auth/intro (no redirect) -> still clipped" \
+    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Auth Intro.md" ]'
+run "https://netfail.example.com/a" "$TMP/vault"
+check "probe network error -> falls through to markitdown, clipped" \
+    eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Probe Down.md" ]'
 
 # 10. markitdown that hangs -> timeout [FAIL], nothing written
 n="$(notes)"

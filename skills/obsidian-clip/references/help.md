@@ -26,7 +26,7 @@ first: when missing, nothing is written. The skill never installs it.
 |-------|-------------|------|--------|
 | `youtube.com/watch?v=`, `youtube.com/shorts/`, `youtu.be/` | host + path | markitdown (title, metadata, description, transcript) | `youtube` |
 | Discourse topic | `<origin>/t/<id>.json` answers with a `post_stream` | first post's `/raw` markdown; `upload://` links mapped through the cooked HTML, `![alt\|WxH]` suffix removed | `article` |
-| any other `http(s)://` URL | — | markitdown | `article` |
+| any other `http(s)://` URL | — | markitdown, after a curl probe of the redirect chain refuses a login wall | `article` |
 | existing local file (pdf, docx, xlsx, pptx, ...) | path exists | markitdown | `document` |
 
 ## Output
@@ -91,7 +91,7 @@ video ID, and a `/t/<slug>/<id>[/<post>]` topic URL collapses to `/t/<id>`. A ma
 | `[FAIL] 이미 클립됨 ...` | Same normalized source already under `99-Inbox/`; existing path shown. |
 | `[FAIL] 같은 이름의 다른 노트 ...` | Same date + title, different source; nothing overwritten. |
 | `[FAIL] <input>: markitdown timeout <N>s` | markitdown ran longer than `$OBSIDIAN_CLIP_TIMEOUT` seconds (default 300); nothing written. |
-| `[FAIL] 로그인 필요 ...` | Login-walled Discourse; use the browser Web Clipper. |
+| `[FAIL] 로그인 필요 ...` | Login wall: a Discourse wall, or a web page that ends on / redirects through `/login`, `/session/sso` or `/auth` (SSO to an IdP included); nothing written. Use the browser Web Clipper. A probe that fails (network error, non-2xx) is not a wall; markitdown still runs. |
 | `[FAIL] vault 없음 ...` | Vault path missing; pass `--vault` or set `OBSIDIAN_VAULT_DIR`. |
 
 ## What it will NOT do
