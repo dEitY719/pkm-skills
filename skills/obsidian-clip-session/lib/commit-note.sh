@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/obsidian-session-clip/lib/commit-note.sh
+# skills/obsidian-clip-session/lib/commit-note.sh
 #
 # NF-2 parallel-session-safe commit of exactly ONE note file into the vault.
 #

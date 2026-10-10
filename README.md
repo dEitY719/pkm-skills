@@ -1,11 +1,10 @@
 # pkm-skills
 
 Ten skills for personal knowledge management across two services — clip a
-finished AI session or a web page into an Obsidian vault, resolve that vault's sync conflicts,
-write Obsidian notes, Bases, and Canvas files, drive a running Obsidian app
-through its CLI, file a URL into Karakeep, and decide where a URL belongs before
-filing it — plus a local `markitdown` converter that turns documents and URLs
-into markdown. Packaged as a single plugin named `pkm`, installable on six
+finished AI session, a web page, a YouTube video, or a local document into an
+Obsidian vault, resolve that vault's sync conflicts, write Obsidian notes,
+Bases, and Canvas files, drive a running Obsidian app through its CLI, file a
+URL into Karakeep, and decide where a URL belongs before filing it. Packaged as a single plugin named `pkm`, installable on six
 coding-agent harnesses.
 
 Unlike its sibling [`harness-skills`](https://github.com/dEitY719/harness-skills),
@@ -16,8 +15,9 @@ this repo owns no shared assets — it links out for the
 
 | Skill | Invoke | What it does |
 |-------|--------|--------------|
-| `obsidian-session-clip` | `/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault <path>]` | Writes the current AI session to the vault as one markdown note under `99-Inbox/ai-session/`, classified `code` or `research`, then commits that single file. **Explicit invocation only** — never auto-triggered. |
-| `obsidian-web-clip` | `/pkm:obsidian-web-clip <url> [--vault <path>]` | Saves one URL into `99-Inbox/Web/` as an Obsidian Web Clipper note (same frontmatter, empty `## 메모` skeleton). Discourse topics keep their original markdown via `/raw`; other pages take a lossy HTML-to-markdown fallback. Writes the file only — never commits. |
+| `obsidian-clip-session` | `/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault <path>]` | Writes the current AI session to the vault as one markdown note under `99-Inbox/ai-session/`, classified `code` or `research`, then commits that single file. **Explicit invocation only** — never auto-triggered. |
+| `obsidian-clip` | `/pkm:obsidian-clip <input> [--vault <path>]` | Clips one URL, YouTube video, or local document (PDF / DOCX / XLSX / PPTX ...) into `99-Inbox/` as an Obsidian Web Clipper note (same frontmatter, empty `## 메모` skeleton), converted by the `markitdown` CLI. Discourse topics keep their original markdown via `/raw`. Refuses a source already clipped (tracking params dropped, every YouTube URL shape folded to its video ID). Writes the file only — never commits. |
+| `obsidian-web-clip` | `/pkm:obsidian-web-clip` | **Deprecated** stub for one release: prints a pointer to `/pkm:obsidian-clip` and writes nothing. |
 | `obsidian-resolve-conflict` | `/pkm:obsidian-resolve-conflict [windows\|wsl] [--no-push] [--no-sync-peer] [--dry-run] [--vault <path>]` | Diagnoses a vault `git pull` conflict, sorts it into local-state / note-body / other, auto-resolves only the local-state class, asks about the rest, commits, pushes, and fast-forwards the peer clone. |
 | `karakeep-classify` | `/pkm:karakeep-classify <url> [--apply]` | Reads the live Karakeep List tree and proposes the best-fit List path for a URL, with a rationale and the exact follow-up command. Dry-run by default; writes nothing. |
 | `karakeep-add` | `/pkm:karakeep-add <url> --list <path>` | Adds the URL to that List over REST, creating every missing parent in a nested `parent/child` path. Idempotent on both the List and the bookmark. |
@@ -25,23 +25,22 @@ this repo owns no shared assets — it links out for the
 | `obsidian-bases` | `/pkm:obsidian-bases [path] [request]` | Creates and edits Obsidian Bases (`.base`) files — filters, formulas, summaries, and table / cards / list / map views. |
 | `obsidian-canvas` | `/pkm:obsidian-canvas [path] [request]` | Creates and edits JSON Canvas (`.canvas`) files — text, file, link, and group nodes and the edges between them, with ID and edge-reference validation. |
 | `obsidian-cli` | `/pkm:obsidian-cli [request]` | Runs the `obsidian` CLI against a running Obsidian desktop app — read, search, append, properties, tasks, and the plugin / theme reload-and-debug loop. |
-| `md-convert` | `/pkm:md-convert <input>... [--output-path <dir>] [--force]` | Converts PDF / DOCX / PPTX / XLSX files and URLs (YouTube transcripts included) to `.md` through the `markitdown` CLI. Files land beside the input, URLs in `<cwd>/.md-convert/` (git-excluded locally); an existing `.md` is skipped unless `--force`. Writes files only — never commits. |
 
 The two Karakeep skills are a propose-then-confirm pair: `karakeep-classify`
 judges, `karakeep-add` writes. Running `karakeep-add` without `--list` delegates
 to `karakeep-classify` rather than guessing.
 
 The two Obsidian workflow skills share a vault but not a remote:
-`obsidian-session-clip` and `obsidian-web-clip` never contact one, `obsidian-resolve-conflict` exists to
+`obsidian-clip-session` and `obsidian-clip` never contact one, `obsidian-resolve-conflict` exists to
 synchronise with one. The four Obsidian knowledge skills (`obsidian-markdown`,
 `obsidian-bases`, `obsidian-canvas`, `obsidian-cli`) edit vault files or drive
 the local app only — no commit, no remote write. `obsidian-markdown` is the
-syntax skill; clipping a session stays `obsidian-session-clip`, on explicit
+syntax skill; clipping a session stays `obsidian-clip-session`, on explicit
 request only.
 
 ### Visual guides and worked examples (GitHub Pages)
 
-- `obsidian-session-clip` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/obsidian-session-clip.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/obsidian-session-clip-usage.html) (AI session to vault note)
+- `obsidian-clip-session` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/obsidian-clip-session.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/obsidian-clip-session-usage.html) (AI session to vault note)
 - `obsidian-resolve-conflict` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/obsidian-resolve-conflict.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/obsidian-resolve-conflict-usage.html) (vault conflict to merge commit)
 - `karakeep-classify` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-classify.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-classify-usage.html) (URL to List suggestion)
 - `karakeep-add` — [visual guide](https://deity719.github.io/pkm-skills/skill-guides/karakeep-add.html) · [usage example](https://deity719.github.io/pkm-skills/skill-output/karakeep-add-usage.html) (URL to filed bookmark)
@@ -53,12 +52,11 @@ Each page is generated from a Markdown source under
 
 | Skill | Needs |
 |-------|-------|
-| `obsidian-session-clip` | A local git-backed PARA vault. Resolution order: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived from `~/.dotfiles-setup-mode`. A missing vault is a stop, never a `mkdir`. |
-| `obsidian-web-clip` | The same vault resolution as `obsidian-session-clip`, plus `curl` and `python3` on PATH and network access to the page. |
+| `obsidian-clip-session` | A local git-backed PARA vault. Resolution order: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived from `~/.dotfiles-setup-mode`. A missing vault is a stop, never a `mkdir`. |
+| `obsidian-clip` | The same vault resolution as `obsidian-clip-session`, plus `markitdown` (`uv tool install 'markitdown[all]'`; the skill never installs it), `curl`, and `python3` on PATH. Network access only for URL inputs. |
 | `obsidian-resolve-conflict` | Two clones of the same vault remote (`windows` / `wsl`). Overrides: `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT` (default `/mnt/c/Users`), `$OBSIDIAN_VAULT_WIN_NAME` (default `ObsidianVault-PARA`), `$OBSIDIAN_VAULT_WSL_ROOT` (default `$HOME/para/project`). |
 | `obsidian-markdown`, `obsidian-bases`, `obsidian-canvas` | An Obsidian vault on disk. Nothing else — no network, no `lib/`. |
 | `obsidian-cli` | The Obsidian desktop app running, and the `obsidian` CLI on PATH (`obsidian help` lists every command). |
-| `md-convert` | `markitdown` on PATH (`uv tool install 'markitdown[all]'`; the skill never installs it) and `python3`. Network access only for URL inputs. |
 | `karakeep-add`, `karakeep-classify` | A reachable Karakeep instance and its API token, read from the working directory's `.env`: `NEXTAUTH_URL` (the live base URL — never `localhost:3001`) and `KARAKEEP_API_KEY`. Either unset is a hard failure, not a fallback. Their `lib/*.sh` need `curl`, `jq`, and `python3` on PATH. |
 
 ## Install
@@ -112,7 +110,8 @@ read the one file for the harness you are on.
 
 | Skill | Claude Code | Codex | Kimi | Gemini / Antigravity | Hermes | OpenCode |
 |-------|:-----------:|:-----:|:----:|:--------------------:|:------:|:--------:|
-| `obsidian-session-clip` | full | full | full | full | full | full |
+| `obsidian-clip-session` | full | full | full | full | full | full |
+| `obsidian-clip` | full | full | full | full | full | full |
 | `obsidian-web-clip` | full | full | full | full | full | full |
 | `obsidian-resolve-conflict` | full | full, confirm in chat | full | full | full, confirm in chat | full, confirm in chat |
 | `karakeep-classify` | full | needs `curl` | needs `curl` | full | full | needs `curl` |
@@ -121,7 +120,6 @@ read the one file for the harness you are on.
 | `obsidian-bases` | full | full | full | full | full | full |
 | `obsidian-canvas` | full | full | full | full | full | full |
 | `obsidian-cli` | needs app | needs app | needs app | needs app | needs app | needs app |
-| `md-convert` | full | full | full | full | full | full |
 
 *confirm in chat* — the skill must stop and ask before resolving a note-body
 conflict. Kimi (`AskUserQuestion`) and Gemini (`ask_user`) have a structured
@@ -142,7 +140,7 @@ headless or remote session; it runs through each harness's shell tool unchanged.
 sibling skill's `SKILL.md` and follow it inline; the handoff contract (a URL and
 a List path) is unchanged.
 
-The `lib/*.sh` helpers under `obsidian-session-clip`,
+The `lib/*.sh` helpers under `obsidian-clip-session`,
 `obsidian-resolve-conflict`, and `karakeep-add` (which `karakeep-classify`
 shares rather than copying) are plain bash and run identically on every
 harness; the Karakeep pair additionally needs `curl`, `jq`, and `python3` on
@@ -170,13 +168,14 @@ Manifests live at the repo root and all point at one flat `skills/` directory:
 
 ```
 .
-├── skills/{obsidian-session-clip,obsidian-web-clip,obsidian-resolve-conflict,karakeep-add,karakeep-classify,md-convert}/
+├── skills/{obsidian-clip,obsidian-clip-session,obsidian-resolve-conflict,karakeep-add,karakeep-classify}/
 │   ├── SKILL.md
 │   ├── references/
 │   └── lib/                                  (not karakeep-classify)
 ├── skills/{obsidian-markdown,obsidian-bases,obsidian-canvas,obsidian-cli}/
 │   ├── SKILL.md
 │   └── references/                           (no lib/)
+├── skills/obsidian-web-clip/SKILL.md         deprecated stub (removed next release)
 ├── .claude-plugin/{marketplace,plugin}.json  Claude Code
 ├── .codex-plugin/plugin.json                 Codex
 ├── .kimi-plugin/plugin.json                  Kimi CLI

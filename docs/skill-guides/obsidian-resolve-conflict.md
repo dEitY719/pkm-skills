@@ -11,7 +11,7 @@ Obsidian vault 의 `git pull` 충돌을 분류·해결한 뒤 **merge 커밋 1�
 |------|:------:|-----------|
 | vault 클론 두 개가 갈라져 pull 이 충돌 | 예 | |
 | PR 브랜치 충돌 | 아니오 | `gh-resolve:conflict` |
-| 세션 기록을 vault 에 남기기 | 아니오 | `pkm:obsidian-session-clip` |
+| 세션 기록을 vault 에 남기기 | 아니오 | `pkm:obsidian-clip-session` |
 
 형제 `gh-resolve:conflict` 는 히스토리 재작성과 강제 push 로 푼다. 이 스킬은
 **merge 로만** 푼다 — vault 에는 사람이 직접 쓴 노트가 들어 있기 때문이다.

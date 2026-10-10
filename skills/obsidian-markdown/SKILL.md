@@ -4,7 +4,7 @@ description: >-
   Write Obsidian vault notes: wikilinks, embeds, callouts, properties. Use for
   /pkm:obsidian-markdown, "옵시디언 노트에 콜아웃 넣어줘", "fix this
   wikilink". Not for plain .md outside a vault. Do NOT use to clip a session —
-  use pkm:obsidian-session-clip.
+  use pkm:obsidian-clip-session.
 allowed-tools: Read, Write, Edit, Bash
 license: MIT
 metadata:
@@ -93,7 +93,7 @@ Next: open the note in reading view; unresolved links are listed above
 
 ## Related Skills
 
-- `/pkm:obsidian-session-clip` writes and commits a session note on explicit
+- `/pkm:obsidian-clip-session` writes and commits a session note on explicit
   request; this skill only edits note syntax.
 - `/pkm:obsidian-bases` for `.base` files, `/pkm:obsidian-canvas` for
   `.canvas` files, `/pkm:obsidian-cli` to drive the running app.

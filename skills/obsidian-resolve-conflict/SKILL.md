@@ -94,5 +94,5 @@ follow-up command (`/pkm:obsidian-resolve-conflict <side> --vault <vault>/90-per
 ## Related Skills
 
 형제 [[gh-resolve:conflict]] 는 PR 브랜치를 히스토리 재작성 + 강제 push 로 풀지만
-이쪽은 vault 를 merge 로만 푼다. 이웃 [[pkm:obsidian-session-clip]] 은 원격을
+이쪽은 vault 를 merge 로만 푼다. 이웃 [[pkm:obsidian-clip-session]] 은 원격을
 건드리지 않지만 이 스킬은 원격 동기화가 목적이다. 옵션·env: `references/options.md`.

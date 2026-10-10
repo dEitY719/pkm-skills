@@ -52,7 +52,7 @@ skill names a tool you do not recognise. Short version:
 
 Two gaps matter here:
 
-- The `lib/*.sh` helpers that `obsidian-session-clip` and
+- The `lib/*.sh` helpers that `obsidian-clip-session` and
   `obsidian-resolve-conflict` call are plain bash. Run them with `bash` and pass
   their `[OK]` / `[FAIL]` lines through verbatim — do not reimplement them.
 - `karakeep-classify` declares Claude Code's `WebFetch` for reading a page title
@@ -74,7 +74,7 @@ Two gaps matter here:
   edit vault files or drive the local Obsidian app only; none commits or writes
   to a remote. `obsidian-cli` needs the Obsidian desktop app running and the
   `obsidian` CLI on PATH.
-- `obsidian-session-clip` is explicit-invocation only. Never trigger it because
+- `obsidian-clip-session` is explicit-invocation only. Never trigger it because
   a session looks finished.
 
 ## Troubleshooting

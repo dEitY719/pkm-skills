@@ -1,9 +1,9 @@
-# pkm:obsidian-session-clip — 옵션 / 환경변수 상세
+# pkm:obsidian-clip-session — 옵션 / 환경변수 상세
 
 ## 인자 파싱
 
 ```
-/pkm:obsidian-session-clip [description] [--no-commit] [--dry-run] [--vault <path>]
+/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault <path>]
 ```
 
 `[description]` 은 위치 인자이며, 플래그가 아닌 첫 토큰들을 공백으로 이어

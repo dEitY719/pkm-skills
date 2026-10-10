@@ -1,15 +1,16 @@
 # pkm — skill index
 
-Ten personal-knowledge-management skills across two services, plus a local
-document converter. Each lives in
+Ten personal-knowledge-management skills across two services (one of them a
+deprecation stub). Each lives in
 this extension's `skills/` directory. They are explicitly invoked, never
 ambient: load the one that matches the request by reading its `SKILL.md`, then
 follow it. Do not load them all.
 
 | Skill | Read | Use when |
 |-------|------|----------|
-| `obsidian-session-clip` | `@./skills/obsidian-session-clip/SKILL.md` | The user explicitly asks to clip this session to their vault. Writes one note to `99-Inbox/ai-session/`. **Never load this on your own initiative** — see the safety rules. |
-| `obsidian-web-clip` | `@./skills/obsidian-web-clip/SKILL.md` | Saving one URL into the vault's `99-Inbox/Web/` in Obsidian Web Clipper format. Writes the file only, never commits. |
+| `obsidian-clip-session` | `@./skills/obsidian-clip-session/SKILL.md` | The user explicitly asks to clip this session to their vault. Writes one note to `99-Inbox/ai-session/`. **Never load this on your own initiative** — see the safety rules. |
+| `obsidian-clip` | `@./skills/obsidian-clip/SKILL.md` | Clipping one URL, YouTube video, or local document (PDF / DOCX / XLSX / PPTX) into the vault's `99-Inbox/` in Obsidian Web Clipper format, via the `markitdown` CLI. Writes the file only, never commits. |
+| `obsidian-web-clip` | `@./skills/obsidian-web-clip/SKILL.md` | Deprecated stub: only when invoked by name; prints a pointer to `obsidian-clip` and writes nothing. |
 | `obsidian-resolve-conflict` | `@./skills/obsidian-resolve-conflict/SKILL.md` | An Obsidian vault clone has a `git pull` conflict to diagnose, resolve, commit, and push. Not for PR branches — that is `gh-resolve:conflict`, in another repo. |
 | `karakeep-classify` | `@./skills/karakeep-classify/SKILL.md` | Deciding which Karakeep List a URL belongs in. Dry-run by default; writes nothing. |
 | `karakeep-add` | `@./skills/karakeep-add/SKILL.md` | Adding a URL to a known Karakeep List path. Only with an explicit `--list`; without one, classify first. |
@@ -17,7 +18,6 @@ follow it. Do not load them all.
 | `obsidian-bases` | `@./skills/obsidian-bases/SKILL.md` | Creating or editing a `.base` file: filters, formulas, views. |
 | `obsidian-canvas` | `@./skills/obsidian-canvas/SKILL.md` | Creating or editing a JSON Canvas `.canvas` file: nodes, edges, groups. |
 | `obsidian-cli` | `@./skills/obsidian-cli/SKILL.md` | Running the `obsidian` CLI against a running Obsidian desktop app, including plugin debugging. |
-| `md-convert` | `@./skills/md-convert/SKILL.md` | Converting PDF / DOCX / PPTX / XLSX files or URLs to `.md` with the `markitdown` CLI. Writes files only, never commits. |
 
 Each skill's `references/` directory holds the detail it loads on demand, and
 the deterministic steps live in `lib/*.sh` (`karakeep-classify` calls its
@@ -28,7 +28,7 @@ read `references/` up front, and do not reimplement `lib/` in prose.
 ## What each skill needs
 
 - **Obsidian skills** — a local git-backed vault. Resolution order for
-  `obsidian-session-clip` and `obsidian-web-clip`: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived
+  `obsidian-clip-session` and `obsidian-clip`: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived
   from `~/.dotfiles-setup-mode`. `obsidian-resolve-conflict` additionally reads
   `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT`,
   `$OBSIDIAN_VAULT_WIN_NAME`, and `$OBSIDIAN_VAULT_WSL_ROOT`. A path that does
@@ -36,8 +36,8 @@ read `references/` up front, and do not reimplement `lib/` in prose.
   `obsidian-bases`, and `obsidian-canvas` only need the vault's files;
   `obsidian-cli` needs the Obsidian desktop app running and the `obsidian` CLI
   on PATH, run through `run_shell_command`.
-- **md-convert** — `markitdown` on PATH (never auto-installed); network only
-  for URL inputs.
+- **obsidian-clip** — additionally `markitdown` on PATH (never auto-installed);
+  network only for URL inputs.
 - **Karakeep skills** — a reachable Karakeep instance and its API token, read
   from the working directory's `.env`: `NEXTAUTH_URL` and `KARAKEEP_API_KEY`.
   Either unset is a hard failure. Never guess a base URL, never fall back to
@@ -83,7 +83,7 @@ On Antigravity read `antigravity-tools.md` in that same directory instead —
 
 ## Safety rules
 
-- `obsidian-session-clip` must **never** be auto-triggered. A finished-looking
+- `obsidian-clip-session` must **never** be auto-triggered. A finished-looking
   session is not a request. When it does run, it commits only the note it
   created, by pathspec, and never contacts a remote.
 - `obsidian-resolve-conflict` performs destructive git operations on the user's

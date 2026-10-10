@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# skills/obsidian-session-clip/lib/verify-clip.sh
+# skills/obsidian-clip-session/lib/verify-clip.sh
 #
 # Self-verification of a generated session-clip note. Mirrors the vault-side
 # docs/webclipper/verify-article-clip.py pattern from dEitY719/obsidian-para#5:
@@ -29,7 +29,7 @@ FAILURES=0
 
 usage() {
     cat <<'EOF'
-verify-clip.sh — structural check of a pkm:obsidian-session-clip note
+verify-clip.sh — structural check of a pkm:obsidian-clip-session note
 
 Usage:
   verify-clip.sh <note-path>

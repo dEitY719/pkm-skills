@@ -1,4 +1,4 @@
-# pkm:obsidian-session-clip — frontmatter 스펙 (F-3) 과 `/ingest` 계약
+# pkm:obsidian-clip-session — frontmatter 스펙 (F-3) 과 `/ingest` 계약
 
 노트 최상단에 아래 9개 키를 **이 순서 그대로** 넣는다. 하나라도 빠지면
 `lib/verify-clip.sh` 가 FAIL 한다. Web Clipper 템플릿

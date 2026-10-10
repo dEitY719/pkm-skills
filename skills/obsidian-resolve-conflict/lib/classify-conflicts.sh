@@ -70,7 +70,7 @@ err() { printf 'ERROR: %s\n' "$1" >&2; }
 # obsidian-git's own contention (NF-6): 5 attempts, sleeping i*i seconds
 # between them. The lock is never deleted — obsidian-git may be mid-commit
 # and removing it corrupts that commit. Same shape as
-# obsidian-session-clip/lib/commit-note.sh.
+# obsidian-clip-session/lib/commit-note.sh.
 run_git_index() {
     local i=1 out=""
     while [ "$i" -le "$LOCK_RETRIES" ]; do

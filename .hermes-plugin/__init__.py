@@ -6,7 +6,7 @@ skill loader so `skill_view("pkm:<name>")` can load them on demand.
 Unlike superpowers, this plugin injects no session bootstrap context: the pkm
 skills are explicitly invoked (you reach for them when clipping a session or
 filing a bookmark), so there is nothing worth paying for on every first turn.
-`obsidian-session-clip` in particular must never be auto-triggered, which a
+`obsidian-clip-session` in particular must never be auto-triggered, which a
 bootstrap preamble would quietly encourage.
 """
 
@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 # Sentinel skill used to recognise a correctly laid out skills/ tree.
-_SENTINEL = ("obsidian-session-clip", "SKILL.md")
+_SENTINEL = ("obsidian-clip-session", "SKILL.md")
 
 
 def _skills_dir() -> str:

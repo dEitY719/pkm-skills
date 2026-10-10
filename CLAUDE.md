@@ -7,13 +7,14 @@ text. Edit `CLAUDE.md`; never replace the symlink with a second copy.
 ## What this repo is
 
 A single-plugin skill marketplace. The plugin is named `pkm` and it bundles ten
-personal-knowledge-management skills spanning two external services plus a
-local document converter:
+personal-knowledge-management skills spanning two external services (one of
+them a one-release deprecation stub):
 
 | Skill | Service | Role |
 |-------|---------|------|
-| `obsidian-session-clip` | Obsidian vault | Writes one markdown note per finished AI session into `99-Inbox/ai-session/` and commits just that file. |
-| `obsidian-web-clip` | Obsidian vault | Saves one URL into `99-Inbox/Web/` in Obsidian Web Clipper format. Never commits. |
+| `obsidian-clip-session` | Obsidian vault | Writes one markdown note per finished AI session into `99-Inbox/ai-session/` and commits just that file. |
+| `obsidian-clip` | Obsidian vault + local `markitdown` | Clips one URL, YouTube video, or local document into `99-Inbox/` in Obsidian Web Clipper format. Never commits. |
+| `obsidian-web-clip` | — | Deprecated stub: points at `obsidian-clip` and writes nothing. Removed next release. |
 | `obsidian-resolve-conflict` | Obsidian vault | Resolves a vault `git pull` conflict: classify, resolve, commit, push, fast-forward the peer clone. |
 | `karakeep-classify` | Karakeep | Reads the live List tree and proposes where a URL belongs. Dry-run by default. |
 | `karakeep-add` | Karakeep | Writes the URL into that List over REST, creating missing parents. Idempotent. |
@@ -21,7 +22,6 @@ local document converter:
 | `obsidian-bases` | Obsidian vault | Creates and edits `.base` files: filters, formulas, summaries, views. |
 | `obsidian-canvas` | Obsidian vault | Creates and edits JSON Canvas `.canvas` files: nodes, edges, groups. |
 | `obsidian-cli` | Obsidian app | Drives a running Obsidian desktop app through the `obsidian` CLI, including plugin debugging. |
-| `md-convert` | local `markitdown` | Converts files and URLs to `.md` beside the input or in `<cwd>/.md-convert/`. Never commits. |
 
 They write to the user's real personal data — a vault of notes they wrote by
 hand, and a bookmark database. That is the reason this domain is its own repo,
@@ -98,7 +98,7 @@ apply here on the next run, which is the whole point.
   `/pkm:karakeep-add` reads cleanly. Do not shorten them to `add` / `classify`.
 - **Invocation form in prose is namespaced.** Body text referring to a skill as
   a command writes `/pkm:karakeep-add`. The old dash-form aliases
-  (`/karakeep-add`, `/obsidian-session-clip`) were dropped in the migration —
+  (`/karakeep-add`, `/obsidian-clip-session`) were dropped in the migration —
   do not reintroduce them.
 - **Cross-repo references keep their own namespace.** `notes:task-history`,
   `session:handoff`, and `gh-resolve:conflict` live in other repos of
@@ -113,14 +113,15 @@ apply here on the next run, which is the whole point.
 - **`lib/*.sh` is the contract, not a suggestion.** `resolve-vault.sh`,
   `safe-name.sh`, `commit-note.sh`, `verify-clip.sh`, `classify-conflicts.sh`,
   and `verify-sync.sh` hold the deterministic half of the two Obsidian workflow
-  skills (`obsidian-session-clip`, `obsidian-resolve-conflict`);
+  skills (`obsidian-clip-session`, `obsidian-resolve-conflict`);
   `karakeep-env.sh`, `list-tree.sh`, and `karakeep-add.sh` under
   `skills/karakeep-add/lib/` do the same for the two Karakeep skills. That
   directory is the SSOT; `karakeep-classify` runs byte-identical copies of
   `list-tree.sh` and `karakeep-env.sh` from its own `lib/vendor/` so a
-  single-skill install works. `obsidian-web-clip` likewise runs a byte-identical
-  copy of `obsidian-session-clip/lib/resolve-vault.sh` from its `lib/vendor/`,
-  plus its own `lib/web-clip.py`. Edit the originals, then re-copy them.
+  single-skill install works. `obsidian-clip` likewise runs a byte-identical
+  copy of `obsidian-clip-session/lib/resolve-vault.sh` from its `lib/vendor/`,
+  plus its own `lib/clip.py`, the only place in the repo that calls
+  `markitdown`. Edit the originals, then re-copy them.
   `obsidian-canvas`, `obsidian-bases`, and `obsidian-markdown` validate
   through `lib/validate-canvas.py`, `lib/validate-base.py`, and
   `lib/check-note.py` (stdlib only; PyYAML optional).
@@ -128,28 +129,25 @@ apply here on the next run, which is the whole point.
   reimplement their logic in prose, and never swallow a warning to keep an exit
   code clean. CI shellchecks them at `--severity=warning`, and
   `bash tests/karakeep-lib-check.sh` asserts the Karakeep guards offline —
-  run it after touching that `lib/`; `bash tests/obsidian-web-clip-check.sh`
-  does the same for `obsidian-web-clip` and its vendored copy, and
+  run it after touching that `lib/`; `bash tests/obsidian-clip-check.sh`
+  does the same for `obsidian-clip` (its stub-markitdown `lib/clip.selfcheck.sh`)
+  and its vendored copy, and
   `bash tests/obsidian-validators-check.sh` for those three validators.
-  `md-convert` keeps all logic in `lib/md-convert.py`; run
-  `bash tests/md-convert-check.sh` (its stub-markitdown selfcheck) after touching it.
 
 ## Safety contracts
 
 These are acceptance criteria carried over from dotfiles, not advice:
 
-- **`obsidian-session-clip` is never auto-triggered.** "The session looks
+- **`obsidian-clip-session` is never auto-triggered.** "The session looks
   finished" is not an invocation. It runs on an explicit request only. It
   commits the one note it created, by pathspec — never `-a`, `-A`, or
   `git add .`, which would swallow a parallel session's note — and never
   contacts a remote; obsidian-git owns vault sync.
-- **`obsidian-web-clip` never commits.** It writes one new file under
-  `99-Inbox/Web/` and stops; obsidian-git owns commits and sync. It never
-  overwrites a note — an already-clipped `source` URL is a stop.
-- **`md-convert` writes files only.** Never commits, never installs
-  `markitdown`, never overwrites an existing `.md` without `--force`, never
-  touches `.gitignore` (only a local `.git/info/exclude` line), and never
-  disables certificate verification.
+- **`obsidian-clip` never commits.** It writes one new file under
+  `99-Inbox/` and stops; obsidian-git owns commits and sync. It never
+  overwrites a note — an already-clipped (normalized) `source` is a stop. It
+  never installs `markitdown`, never copies the original document into the
+  vault, and never disables certificate verification.
 - **`obsidian-resolve-conflict` is destructive and merge-only.** Never rewrite
   vault history, never force-push, never reset the worktree destructively, never
   delete a directory tree, never delete `.git/index.lock` (back off and retry),
