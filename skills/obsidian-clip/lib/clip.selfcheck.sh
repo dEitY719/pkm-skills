@@ -68,7 +68,7 @@ chmod +x "$TMP/bin/markitdown"
 # 88 is a login-walled Discourse, 99 a non-Discourse site redirecting via /auth,
 # 66 a topic whose /raw times out after a redirect to a token-bearing IdP URL,
 # 64 one whose /raw curl error line itself names a token-bearing URL
-# (synthetic: real curl names host and port there; this guards the scrub),
+# (synthetic: real curl names host and port there; none of it may be printed),
 # 65 the same as 66 with no curl error line (the -w trailer alone on stderr).
 # private.* redirects to /login, sso.* hops via /session/sso to a third-party
 # IdP, *netfail* is a network error, redir.* adds a trailing slash, and
@@ -181,14 +181,14 @@ n="$(notes)"
 run "$TMP/docs/scan-empty.pdf" "$TMP/vault"
 check "empty conversion -> [WARN], nothing written" eval 'has "[WARN]" && [ "$(notes)" = "$n" ]'
 run "https://boom.example.com/x" "$TMP/vault"
-check "markitdown failure -> first stderr line + TLS Next:, nothing written" \
-    eval 'has "SSLError: certificate verify failed" && ! has "more" && has "REQUESTS_CA_BUNDLE" && [ "$(notes)" = "$n" ]'
+check "markitdown failure, no traceback -> exit code + host, TLS and markitdown Next:, nothing written" \
+    eval 'has "[FAIL] https://boom.example.com/x: markitdown exit 1 (boom.example.com) -- " && ! has "SSLError" && ! has "more" && has "REQUESTS_CA_BUNDLE" && has "Next: 원인 상세: markitdown \"https://boom.example.com/x\" 를 직접 실행" && [ "$(notes)" = "$n" ]'
 run "https://tokfail.example.com/x" "$TMP/vault"
-check "markitdown failure with a token-bearing URL -> URL shortened, no state=/SAMLRequest=, nothing written" \
-    eval 'has "Forbidden for url: https://idp.example.net/saml --" && ! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
+check "markitdown stderr naming a token-bearing URL -> none of it printed, input host only, nothing written" \
+    eval 'has "markitdown exit 1 (tokfail.example.com) -- " && ! has "TOK" && ! has "idp.example.net" && ! has "/saml" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
 run "https://tbfail.example.com/x" "$TMP/vault"
-check "markitdown traceback -> last (exception) line, scheme-less url: query dropped" \
-    eval 'has "requests.exceptions.ConnectionError" && has "with url: /sso (Caused" && ! has "Traceback" && ! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
+check "markitdown traceback -> exception class + host only, message never printed" \
+    eval 'has "[FAIL] https://tbfail.example.com/x: ConnectionError (tbfail.example.com) -- " && ! has "requests.exceptions" && ! has "HTTPConnectionPool" && ! has "/sso" && ! has "Traceback" && ! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && [ "$(notes)" = "$n" ]'
 run "$TMP/docs/missing.pdf" "$TMP/vault"
 check "missing local file -> [FAIL]" eval 'has "[FAIL] 입력을 찾을 수 없다" && [ "$(notes)" = "$n" ]'
 run "https://example.com/z" "$TMP/no-such-vault"
@@ -204,11 +204,11 @@ check "Discourse -> /raw body, author/published, upload mapped, markitdown not c
 run "https://forum.example.com/t/other-slug/77/5?u=kim" "$TMP/vault"
 check "same Discourse topic, other post / referral -> duplicate" eval 'has "이미 클립됨" && has "$disc"'
 run "https://forum.example.com/t/raw-down/66" "$TMP/vault"
-check "/raw network error -> [WARN] without the -w trailer's effective URL" \
-    eval 'has "[WARN] Discourse /raw 실패" && has "Operation timed out" && ! has "TOKRAW"'
+check "/raw network error -> [WARN] with host + curl exit, no curl text, no -w trailer URL" \
+    eval 'has "[WARN] Discourse /raw 실패 (network error forum.example.com: curl exit 28)" && ! has "Operation timed out" && ! has "TOKRAW" && ! has "idp.example.net"'
 run "https://forum.example.com/t/raw-tok/64" "$TMP/vault"
-check "/raw curl error line carrying a token-bearing URL -> [WARN] with the URL shortened" \
-    eval 'has "[WARN] Discourse /raw 실패" && has "Failed to connect to https://idp.example.net/a)" && ! has "TOKCURL" && ! has "TOKTRL64"'
+check "/raw curl error line carrying a token-bearing URL -> [WARN], curl text never printed" \
+    eval 'has "[WARN] Discourse /raw 실패 (network error forum.example.com: curl exit 7)" && ! has "Failed to connect" && ! has "idp.example.net" && ! has "TOKCURL" && ! has "TOKTRL64"'
 run "https://forum.example.com/t/raw-bare/65" "$TMP/vault"
 check "Discourse /raw failure with only the -w trailer on stderr -> [WARN], trailer URL never printed" \
     eval 'has "[WARN] Discourse /raw 실패" && has "curl exit 28" && ! has "TOKTRL"'
@@ -217,8 +217,8 @@ check "Discourse /raw failure with only the -w trailer on stderr -> [WARN], trai
 # is not (its page is probed instead, see 9b)
 n="$(notes)"
 run "https://walled.example.com/t/slug/88" "$TMP/vault"
-check "login-walled Discourse -> [FAIL] 로그인 필요 without the query, nothing written" \
-    eval 'has "로그인 필요 (https://walled.example.com/login)" && ! has "TOK88" && [ "$(notes)" = "$n" ]'
+check "login-walled Discourse -> [FAIL] 로그인 필요 (host only), nothing written" \
+    eval 'has "로그인 필요 (walled.example.com)" && ! has "/login" && ! has "TOK88" && [ "$(notes)" = "$n" ]'
 check "Discourse's own wall -> no OBSIDIAN_CLIP_NO_PROBE hint (the opt-out cannot bypass it)" \
     eval '! has "OBSIDIAN_CLIP_NO_PROBE"'
 OBSIDIAN_CLIP_NO_PROBE=1 run "https://walled.example.com/t/slug/88" "$TMP/vault"
@@ -236,7 +236,7 @@ n="$(notes)"
 run "https://private.example.com/private" "$TMP/vault"
 rc=$?
 check "non-topic URL redirected to /login -> [FAIL] 로그인 필요, nothing written, no markitdown" \
-    eval '[ $rc = 1 ] && has "[FAIL] 로그인 필요 (https://private.example.com/login)" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+    eval '[ $rc = 1 ] && has "[FAIL] 로그인 필요 (private.example.com)" && ! has "/login" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
 check "probe wall -> Next: line names the OBSIDIAN_CLIP_NO_PROBE=1 opt-out" has "Next: 공개 페이지인데"
 : >"$TMP/curlcalls"
 OBSIDIAN_CLIP_NO_PROBE=1 run "https://private.example.com/private" "$TMP/vault"
@@ -248,9 +248,9 @@ n="$(notes)"
 run "https://sso.example.com/page" "$TMP/vault"
 rc=$?
 check "SSO hop via /session/sso to a third-party IdP -> [FAIL] 로그인 필요, nothing written" \
-    eval '[ $rc = 1 ] && has "로그인 필요 (https://idp.example.net/oauth2/authorize)" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
-check "SSO IdP query/fragment (state=, SAMLRequest=) never reach the output" \
-    eval '! has "TOK" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && ! has "jsessionid"'
+    eval '[ $rc = 1 ] && has "로그인 필요 (idp.example.net)" && ! has "/oauth2" && [ "$(notes)" = "$n" ] && [ ! -s "$TMP/calls" ]'
+check "SSO IdP path/query/fragment (state=, SAMLRequest=) never reach the output" \
+    eval '! has "TOK" && ! has "authorize" && ! has "state=" && ! has "SAMLRequest=" && ! has "#frag" && ! has "jsessionid"'
 run "https://blog.example.com/auth/intro" "$TMP/vault"
 check "user-requested /auth/intro (no redirect) -> still clipped" \
     eval '! has "로그인 필요" && [ -s "$TMP/vault/99-Inbox/$TODAY Auth Intro.md" ]'
