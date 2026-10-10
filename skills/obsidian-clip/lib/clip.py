@@ -122,7 +122,7 @@ def fetch(url, *curl_args):
     if r.returncode != 0:
         # drop the -w trailer: its effective URL may be an IdP URL carrying session tokens
         # (a stderr with no error line is the trailer alone: never fall back to it)
-        reason = err.rpartition("\n")[0] or f"curl exit {r.returncode}"
+        reason = scrub(err.rpartition("\n")[0]) or f"curl exit {r.returncode}"
         raise FetchError(f"network error {url}: {reason}")
     effective, _, code = err.rsplit("\n", 1)[-1].rpartition(" ")
     if not code.startswith("2"):
@@ -159,8 +159,8 @@ def bare_url(url):
     # ;jsessionid path params; scheme, host and the bare path are enough.
     try:
         p = urllib.parse.urlsplit(url)
-    except ValueError:  # e.g. a broken [ipv6] host: keep what precedes any query
-        return re.split(r"[?#;@]", url, maxsplit=1)[0]
+    except ValueError:  # e.g. a broken [ipv6] host: drop userinfo, keep what precedes any query
+        return re.split(r"[?#;]", re.sub(r"^([^:/]*://)[^/?#]*@", r"\1", url), maxsplit=1)[0]
     return f"{p.scheme}://{p.netloc.rpartition('@')[2]}{re.sub(r';[^/]*', '', p.path)}"
 
 
@@ -257,7 +257,7 @@ def discourse(url):
     try:
         raw = fetch(f"{origin}/raw/{tid}/1")[0]
     except FetchError as e:
-        print(f"[WARN] Discourse /raw 실패 ({scrub(str(e))}) -- markitdown 경로로 폴백")
+        print(f"[WARN] Discourse /raw 실패 ({e}) -- markitdown 경로로 폴백")
         return None
     body, missing = map_uploads(raw, post.get("cooked", ""))
     for link in missing:
@@ -427,7 +427,7 @@ def clip(src, vault):
         if probed:
             probe_login_wall(src)
     except FetchError as e:
-        print(f"[FAIL] {scrub(str(e))} -- 파일을 만들지 않았다")
+        print(f"[FAIL] {e} -- 파일을 만들지 않았다")
         if probed:  # the opt-out only skips the probe; a Discourse topic's own wall stays a stop
             print("Next: 공개 페이지인데 리다이렉트 프로브가 막았으면 OBSIDIAN_CLIP_NO_PROBE=1 로 다시 실행")
         return 1
@@ -509,6 +509,7 @@ def self_test():
         "403 for url: https://idp.kr/sso. (see https://idp.kr/sso) 'https://idp.kr/sso'"
     assert scrub("HTTP://H.kr/a?x=1 and http://[bad/b?state=S") == "http://H.kr/a and http://[bad/b"
     assert scrub("no url here: /path?state=S") == "no url here: /path?state=S"
+    assert bare_url("http://u:PW@[bad/b;j=J?state=S") == "http://[bad/b"
     assert login_wall("https://d.kr/login", "<html></html>")
     assert login_wall("https://d.kr/session/sso?return_path=/t/1", "")
     idp = "https://idp.example/oauth2/v1/authorize?s=2"
