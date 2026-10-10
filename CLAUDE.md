@@ -98,7 +98,7 @@ apply here on the next run, which is the whole point.
   `/pkm:karakeep-add` reads cleanly. Do not shorten them to `add` / `classify`.
 - **Invocation form in prose is namespaced.** Body text referring to a skill as
   a command writes `/pkm:karakeep-add`. The old dash-form aliases
-  (`/karakeep-add`, `/obsidian-clip-session`) were dropped in the migration —
+  (`/karakeep-add`, `/obsidian-session-clip`) were dropped in the migration —
   do not reintroduce them.
 - **Cross-repo references keep their own namespace.** `notes:task-history`,
   `session:handoff`, and `gh-resolve:conflict` live in other repos of
