@@ -1,6 +1,6 @@
 # pkm-skills
 
-Ten skills for personal knowledge management across two services — clip a
+Nine skills for personal knowledge management across two services — clip a
 finished AI session, a web page, a YouTube video, or a local document into an
 Obsidian vault, resolve that vault's sync conflicts, write Obsidian notes,
 Bases, and Canvas files, drive a running Obsidian app through its CLI, file a
@@ -17,7 +17,6 @@ this repo owns no shared assets — it links out for the
 |-------|--------|--------------|
 | `obsidian-clip-session` | `/pkm:obsidian-clip-session [description] [--no-commit] [--dry-run] [--vault <path>]` | Writes the current AI session to the vault as one markdown note under `99-Inbox/ai-session/`, classified `code` or `research`, then commits that single file. **Explicit invocation only** — never auto-triggered. |
 | `obsidian-clip` | `/pkm:obsidian-clip <input> [--vault <path>]` | Clips one URL, YouTube video, or local document (PDF / DOCX / XLSX / PPTX ...) into `99-Inbox/` as an Obsidian Web Clipper note (same frontmatter, empty `## 메모` skeleton), converted by the `markitdown` CLI. Discourse topics keep their original markdown via `/raw`. Refuses a source already clipped (tracking params dropped, every YouTube URL shape folded to its video ID). Writes the file only — never commits. |
-| `obsidian-web-clip` | `/pkm:obsidian-web-clip` | **Deprecated** stub for one release: prints a pointer to `/pkm:obsidian-clip` and writes nothing. |
 | `obsidian-resolve-conflict` | `/pkm:obsidian-resolve-conflict [windows\|wsl] [--no-push] [--no-sync-peer] [--dry-run] [--vault <path>]` | Diagnoses a vault `git pull` conflict, sorts it into local-state / note-body / other, auto-resolves only the local-state class, asks about the rest, commits, pushes, and fast-forwards the peer clone. |
 | `karakeep-classify` | `/pkm:karakeep-classify <url> [--apply]` | Reads the live Karakeep List tree and proposes the best-fit List path for a URL, with a rationale and the exact follow-up command. Dry-run by default; writes nothing. |
 | `karakeep-add` | `/pkm:karakeep-add <url> --list <path>` | Adds the URL to that List over REST, creating every missing parent in a nested `parent/child` path. Idempotent on both the List and the bookmark. |
@@ -112,7 +111,6 @@ read the one file for the harness you are on.
 |-------|:-----------:|:-----:|:----:|:--------------------:|:------:|:--------:|
 | `obsidian-clip-session` | full | full | full | full | full | full |
 | `obsidian-clip` | full | full | full | full | full | full |
-| `obsidian-web-clip` | full | full | full | full | full | full |
 | `obsidian-resolve-conflict` | full | full, confirm in chat | full | full | full, confirm in chat | full, confirm in chat |
 | `karakeep-classify` | full | needs `curl` | needs `curl` | full | full | needs `curl` |
 | `karakeep-add` | full | full | full | full | full | full |
@@ -175,7 +173,6 @@ Manifests live at the repo root and all point at one flat `skills/` directory:
 ├── skills/{obsidian-markdown,obsidian-bases,obsidian-canvas,obsidian-cli}/
 │   ├── SKILL.md
 │   └── references/                           (no lib/)
-├── skills/obsidian-web-clip/SKILL.md         deprecated stub (removed next release)
 ├── .claude-plugin/{marketplace,plugin}.json  Claude Code
 ├── .codex-plugin/plugin.json                 Codex
 ├── .kimi-plugin/plugin.json                  Kimi CLI

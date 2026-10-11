@@ -6,15 +6,13 @@ text. Edit `CLAUDE.md`; never replace the symlink with a second copy.
 
 ## What this repo is
 
-A single-plugin skill marketplace. The plugin is named `pkm` and it bundles ten
-personal-knowledge-management skills spanning two external services (one of
-the skills is a one-release deprecation stub):
+A single-plugin skill marketplace. The plugin is named `pkm` and it bundles nine
+personal-knowledge-management skills spanning two external services:
 
 | Skill | Service | Role |
 |-------|---------|------|
 | `obsidian-clip-session` | Obsidian vault | Writes one markdown note per finished AI session into `99-Inbox/ai-session/` and commits just that file. |
 | `obsidian-clip` | Obsidian vault + local `markitdown` | Clips one URL, YouTube video, or local document into `99-Inbox/` in Obsidian Web Clipper format. Never commits. |
-| `obsidian-web-clip` | — | Deprecated stub: points at `obsidian-clip` and writes nothing. Removed next release. |
 | `obsidian-resolve-conflict` | Obsidian vault | Resolves a vault `git pull` conflict: classify, resolve, commit, push, fast-forward the peer clone. |
 | `karakeep-classify` | Karakeep | Reads the live List tree and proposes where a URL belongs. Dry-run by default. |
 | `karakeep-add` | Karakeep | Writes the URL into that List over REST, creating missing parents. Idempotent. |
