@@ -37,7 +37,7 @@ without disabling certificate checks. Neither is ever installed by the skill.
 
 | Input | Detected by | Body | `tags` |
 |-------|-------------|------|--------|
-| `youtube.com/watch?v=`, `youtube.com/shorts/`, `youtu.be/` + agent-reach + yt-dlp | host + path, PATH | yt-dlp: `--dump-json` metadata, then VTT subtitles (manual before auto, `ko` > `en` > `<lang>-orig`; a regional track such as `en-US` counts as its base language; one failed track does not stop the rest) cleaned to text. Body: `# <title>`, `## Video Metadata` (Channel / Uploaded / Duration / Views / URL), `## Description` (full), `## Chapters` (when present), `## Transcript (<lang>, manual\|auto)` | `youtube` |
+| `youtube.com/watch?v=`, `youtube.com/shorts/`, `youtu.be/` + agent-reach + yt-dlp | host + path, PATH | yt-dlp: `--dump-json` metadata, then VTT subtitles (manual before auto; manual `ko` > `en` > `<lang>-orig`; auto `<lang>-orig`, the original-language track, before the machine-translated `ko` > `en`; a regional track such as `en-US` counts as its base language; one failed track does not stop the rest) cleaned to text. Body: `# <title>`, `## Video Metadata` (Channel / Uploaded / Duration / Views / URL), `## Description` (full), `## Chapters` (when present), `## Transcript (<lang>, manual\|auto)` | `youtube` |
 | same, without agent-reach or yt-dlp, or after a yt-dlp failure | host + path | markitdown (title, metadata, description, transcript) | `youtube` |
 | Discourse topic | `<origin>/t/<id>.json` answers with a `post_stream` | first post's `/raw` markdown; `upload://` links mapped through the cooked HTML, `![alt\|WxH]` suffix removed | `article` |
 | any other `http(s)://` URL | — | markitdown, after a curl probe of the redirect chain refuses a login wall | `article` |

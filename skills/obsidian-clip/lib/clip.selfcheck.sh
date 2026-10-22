@@ -152,6 +152,7 @@ if [ $dump = 1 ]; then
     case "$id" in
     ytBADJSON*) echo 'not json'; exit 0 ;;
     ytNOTITLE*) echo '{"id":"x","title":"  "}'; exit 0 ;;
+    ytTRANS*) printf '{"id":"%s","title":"YT Full %s","subtitles":{},"automatic_captions":{"ko":[{}],"en-orig":[{}]}}\n' "$id" "$id"; exit 0 ;;
     esac
     printf '{"id":"%s","title":"YT Full %s","uploader":"Chan Name","upload_date":"20260315","duration":3725,"view_count":1234567,"description":"line one\\nends with dots ...\\nno truncation here","chapters":[{"start_time":0,"title":"Intro"},{"start_time":65,"title":"Main"}],"subtitles":{"ko":[{}]},"automatic_captions":{"en":[{}]}}\n' "$id" "$id"
     exit 0
@@ -160,6 +161,8 @@ dir=$(dirname "$out")
 case "$id" in
 ytNOSUBS*) : ;;
 ytSUBFAIL*) echo "ERROR: subtitles https://x.example/?state=TOKSUB" >&2; exit 1 ;;
+ytTRANS*) printf 'WEBVTT\n\n00:00:00.000 --> 00:00:01.000\ntranslated ko\n' >"$dir/$id.ko.vtt"
+   printf 'WEBVTT\n\n00:00:00.000 --> 00:00:01.000\noriginal asr\n' >"$dir/$id.en-orig.vtt" ;;
 ytAUTO*) printf 'WEBVTT\nKind: captions\n\n00:00:00.000 --> 00:00:01.000 align:start\nroll one<00:00:00.500><c> two</c>\n\n00:00:01.000 --> 00:00:01.010\nroll one two\n\n00:00:01.010 --> 00:00:02.000\nroll one two\nroll three\n' >"$dir/$id.en.vtt" ;;
 *) printf 'WEBVTT\n\n1\n00:00:00.000 --> 00:00:01.000\n<v Kim>ko line one</v>\n\n2\n00:00:01.000 --> 00:00:02.000\nko line two\n' >"$dir/$id.ko.vtt"
    printf 'WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nenglish auto\n' >"$dir/$id.en.vtt" ;;
@@ -355,8 +358,8 @@ rc=$?
 ok1="$VAULT/99-Inbox/$TODAY YT Full ytOKvid0001.md"
 check "yt-dlp path -> [OK] yt-dlp 경로, note written, /ingest last, no TIP, markitdown not called" \
     eval '[ $rc = 0 ] && has "[OK] yt-dlp 경로 (agent-reach)" && has "[OK] $ok1" && tail -n1 "$TMP/out" | grep -qxF "/ingest $ok1" && ! has "[TIP]" && [ ! -s "$TMP/calls" ]'
-check "yt-dlp path -> canonical watch URL, no cookies, no --no-check-certificate, agent-reach never run" \
-    eval 'grep -qF -- "--dump-json --skip-download -- https://www.youtube.com/watch?v=ytOKvid0001" "$TMP/ytcalls" && ! grep -q "cookies\|no-check-certificate" "$TMP/ytcalls" && [ ! -s "$TMP/arcalls" ]'
+check "yt-dlp path -> canonical watch URL, --ignore-config, no cookies, no --no-check-certificate, agent-reach never run" \
+    eval '! grep -qv -- "--ignore-config" "$TMP/ytcalls" && grep -qF -- "--dump-json --skip-download -- https://www.youtube.com/watch?v=ytOKvid0001" "$TMP/ytcalls" && ! grep -q "cookies\|no-check-certificate" "$TMP/ytcalls" && [ ! -s "$TMP/arcalls" ]'
 check "yt-dlp note: author / published filled, tag youtube, source verbatim" \
     eval 'grep -qxF "  - \"Chan Name\"" "$ok1" && grep -qxF "published: 2026-03-15" "$ok1" && grep -qxF "  - \"youtube\"" "$ok1" && grep -qxF "source: \"https://youtu.be/ytOKvid0001?si=x\"" "$ok1"'
 check "yt-dlp note: metadata, full description, chapters, manual ko transcript first" \
@@ -374,6 +377,11 @@ RP="$ARYT" run "https://www.youtube.com/watch?v=ytAUTOsub01"
 auto="$VAULT/99-Inbox/$TODAY YT Full ytAUTOsub01.md"
 check "auto captions only -> (en, auto), rolling duplicate lines collapsed, tags stripped" \
     eval 'grep -qxF "## Transcript (en, auto)" "$auto" && [ "$(grep -cxF "roll one two" "$auto")" = 1 ] && grep -qxF "roll three" "$auto" && ! grep -q "<c>" "$auto"'
+
+RP="$ARYT" run "https://www.youtube.com/watch?v=ytTRANS0001"
+trans="$VAULT/99-Inbox/$TODAY YT Full ytTRANS0001.md"
+check "auto tracks only -> original-language <lang>-orig beats the machine-translated auto ko" \
+    eval 'grep -qxF "## Transcript (en-orig, auto)" "$trans" && grep -qxF "original asr" "$trans" && ! grep -q "translated ko" "$trans"'
 
 for id in ytNOSUBS001 ytSUBFAIL01; do
     RP="$ARYT" run "https://www.youtube.com/watch?v=$id"
