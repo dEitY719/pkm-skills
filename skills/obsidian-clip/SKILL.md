@@ -1,8 +1,9 @@
 ---
 name: obsidian-clip
 description: >-
-  URL·YouTube·로컬 문서(pdf/docx/xlsx/pptx) 1건을 markitdown 으로 변환해 PARA vault
-  99-Inbox 에 Web Clipper 형식 md 로 클립한다. Use for /pkm:obsidian-clip <input>,
+  URL·YouTube·로컬 문서(pdf/docx/xlsx/pptx) 1건을 markitdown 으로 변환해 고정 vault
+  ~/para/project/obsidian-para/99-Inbox 에 Web Clipper 형식 md 로 클립한다. agent-reach
+  설치 시 YouTube 는 yt-dlp 로(설명·자막·채널). Use for /pkm:obsidian-clip <input>,
   "이 URL/영상/문서 볼트 인박스에 클립", "clip this to my vault". Do NOT use for AI
   세션 클립 (pkm:obsidian-clip-session) or 북마크 (pkm:karakeep-add).
 allowed-tools: Bash, Read
@@ -28,33 +29,34 @@ stop. No network calls, no file writes.
 non-zero exit from `lib/clip.py`) stops the run at that step; there is no
 retry and no fallback in prose — the script owns every path decision.
 
-## Step 1: Args + vault
+## Step 1: Args
 
 `SKILL_DIR` = this file's directory. Positional `<input>` (required, exactly
-one: URL or local file path); flag `--vault <path>`; env
-`OBSIDIAN_CLIP_NO_PROBE=1` skips the login-wall redirect probe (opt-out for a
-public page it wrongly refuses). Missing `<input>` → print
-`Run /pkm:obsidian-clip -h for usage.` and stop.
+one: URL or local file path); env `OBSIDIAN_CLIP_NO_PROBE=1` skips the
+login-wall redirect probe (opt-out for a public page it wrongly refuses).
+Missing `<input>` → print `Run /pkm:obsidian-clip -h for usage.` and stop.
 
-```bash
-VAULT=$(bash "${SKILL_DIR}/lib/vendor/resolve-vault.sh" "$VAULT_ARG")
-```
-
-`$VAULT_ARG` = the `--vault` value, empty if absent. Priority is `--vault` >
-`$OBSIDIAN_VAULT_DIR` > the `~/.dotfiles-setup-mode` default, same as
-`pkm:obsidian-clip-session`. The script stops on a missing vault; never create one.
+The vault is fixed: `~/para/project/obsidian-para`, whatever the cwd,
+`$OBSIDIAN_VAULT_DIR` or setup mode. There is no `--vault`: if the user passes
+one, hand it to the script anyway (`... "$INPUT" --vault <path>`) so it stops
+with `[FAIL] --vault 는 지원하지 않는다` — never drop it silently.
 
 ## Step 2: Clip
 
 ```bash
-python3 "${SKILL_DIR}/lib/clip.py" "$INPUT" "$VAULT"
+python3 "${SKILL_DIR}/lib/clip.py" "$INPUT"
 ```
 
 When the user asks to skip the login-wall probe, prefix the call with
 `OBSIDIAN_CLIP_NO_PROBE=1`.
 
 It checks `markitdown` is on PATH first (missing → `[FAIL]` + `Next:` install
-hint, nothing written; never install it), classifies the input — YouTube,
+hint, nothing written; never install it), then the vault (missing → `[FAIL]`,
+never created), then `agent-reach` on PATH (missing → a light-bulb `[TIP]`
+line + `Next:` install pointer, not a failure). With agent-reach and `yt-dlp`,
+a YouTube input goes through the yt-dlp CLI (full description, transcript,
+channel, upload date); any yt-dlp failure is a `[WARN]` and a markitdown
+fallback. It classifies the input — YouTube,
 Discourse topic (`/raw` markdown), other URL, local file — refuses a source
 already clipped under `99-Inbox/` (normalized: tracking params dropped, every
 YouTube URL shape → its video ID), converts, and writes
@@ -64,13 +66,15 @@ skeleton. Paths, title rules, messages: `references/help.md`.
 
 It writes nothing on an empty conversion, any markitdown / network failure, a
 duplicate source, or a name collision. Error lines name only the exception
-class (or `curl exit <code>`) and host, never the downstream tool's text.
+class (or `curl exit <code>` / `yt-dlp exit <code>`) and host, never the
+downstream tool's text.
 
 ## Step 3: Report
 
-Show **every output line verbatim** (`[OK]` / `[WARN]` / `[FAIL]` / `Next:`).
-Never hide a `[WARN]` — a truncated YouTube description and each unmapped
-`upload://` link are the user's cue to check the note. On success the script's
+Show **every output line verbatim** (`[OK]` / `[WARN]` / `[TIP]` / `[FAIL]` /
+`Next:`). Never hide a `[WARN]` or the agent-reach `[TIP]` line — a truncated
+YouTube description, a yt-dlp fallback and each unmapped `upload://` link are
+the user's cue to check the note. On success the script's
 last line is `/ingest <path>`; keep it last.
 
 ## Constraints
@@ -79,6 +83,8 @@ last line is `/ingest <path>`; keep it last.
   obsidian-git picks the note up (`vault backup:`).
 - Never overwrite an existing note, never copy the original file or download
   images, never fill the `## 메모` sections, never run `/ingest`.
+- Never install `markitdown`, `agent-reach` or `yt-dlp`, never run
+  `agent-reach doctor` for the user, never pass yt-dlp cookies.
 - Never disable certificate verification; a TLS failure gets the
   `REQUESTS_CA_BUNDLE` hint instead.
 - Never run the `Next: 원인 상세: markitdown ...` command yourself: its raw

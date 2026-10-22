@@ -26,8 +26,9 @@ read `references/` up front, and do not reimplement `lib/` in prose.
 ## What each skill needs
 
 - **Obsidian skills** — a local git-backed vault. Resolution order for
-  `obsidian-clip-session` and `obsidian-clip`: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived
-  from `~/.dotfiles-setup-mode`. `obsidian-resolve-conflict` additionally reads
+  `obsidian-clip-session`: `--vault` > `$OBSIDIAN_VAULT_DIR` > a default derived
+  from `~/.dotfiles-setup-mode`; `obsidian-clip` always uses
+  `~/para/project/obsidian-para` and refuses `--vault`. `obsidian-resolve-conflict` additionally reads
   `$OBSIDIAN_VAULT_WIN_DIR`, `$OBSIDIAN_VAULT_WIN_ROOT`,
   `$OBSIDIAN_VAULT_WIN_NAME`, and `$OBSIDIAN_VAULT_WSL_ROOT`. A path that does
   not resolve is a stop, never a `mkdir`. `obsidian-markdown`,
@@ -35,7 +36,7 @@ read `references/` up front, and do not reimplement `lib/` in prose.
   `obsidian-cli` needs the Obsidian desktop app running and the `obsidian` CLI
   on PATH, run through `run_shell_command`.
 - **obsidian-clip** — additionally `markitdown` on PATH (never auto-installed);
-  network only for URL inputs.
+  optionally agent-reach + `yt-dlp` for YouTube; network only for URL inputs.
 - **Karakeep skills** — a reachable Karakeep instance and its API token, read
   from the working directory's `.env`: `NEXTAUTH_URL` and `KARAKEEP_API_KEY`.
   Either unset is a hard failure. Never guess a base URL, never fall back to

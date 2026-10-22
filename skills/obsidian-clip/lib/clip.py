@@ -2,22 +2,26 @@
 """skills/obsidian-clip/lib/clip.py -- one URL / YouTube / local file -> one vault note.
 
 Usage:
-  clip.py <input> <vault>     write <vault>/99-Inbox/<today> <title>.md
+  clip.py <input>             write ~/para/project/obsidian-para/99-Inbox/<today> <title>.md
   clip.py --self-test         offline asserts on the pure helpers
   clip.py -h | --help | help
 
-Flow: markitdown on PATH? -> classify the input -> refuse a duplicate
-(normalized source anywhere under 99-Inbox/) -> convert -> refuse an empty
-body -> title -> write with mode "never overwrite".
+The vault is fixed (VAULT below): no --vault, no env, no setup-mode branch.
+Flow: markitdown on PATH? -> vault exists? -> agent-reach on PATH? (no: a TIP
+line) -> classify the input -> refuse a duplicate (normalized source anywhere
+under 99-Inbox/) -> convert -> refuse an empty body -> title -> write with
+mode "never overwrite".
 
-  youtube   youtube.com/watch?v= | /shorts/ | youtu.be/   markitdown
+  youtube   youtube.com/watch?v= | /shorts/ | youtu.be/   yt-dlp when agent-reach is installed,
+                                                          else (or on failure) markitdown
   article   Discourse topic (<origin>/t/<id>.json post_stream)  first post /raw
   article   any other http(s) URL                         curl login-wall probe, then markitdown
   document  an existing local file                        markitdown
 
 Output lines start with [OK] / [WARN] / [FAIL]; the last line of a success is
 `/ingest <path>`. Exit 0 only when the note was written. Never touches git:
-the vault's obsidian-git owns commits and sync. stdlib + curl + markitdown.
+the vault's obsidian-git owns commits and sync. stdlib + curl + markitdown,
+plus the yt-dlp CLI (optional, never imported, never installed).
 """
 
 import datetime
@@ -38,7 +42,15 @@ FORBIDDEN = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 TLS_HINT = re.compile(r"ssl|tls|certificate|cert|proxy|connection|resolve|timed? ?out", re.I)
 YT_HOSTS = ("youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com")
 _t = os.environ.get("OBSIDIAN_CLIP_TIMEOUT", "")
-MARKITDOWN_TIMEOUT = int(_t) if _t.isdigit() and int(_t) > 0 else 300  # bad value: default, never a traceback
+TIMEOUT = int(_t) if _t.isdigit() and int(_t) > 0 else 300  # bad value: default, never a traceback
+VAULT = os.path.abspath(os.path.expanduser("~/para/project/obsidian-para"))
+VAULT_SHOWN = "~/para/project/obsidian-para/99-Inbox"
+# The light bulb is written as an escape: the repo's CI bans emoji characters in tracked text.
+TIP = ("\U0001F4A1 [TIP] agent-reach 미설치 — 설치하면 YouTube 를 yt-dlp 로 클립합니다 "
+       "(전체 설명·자막·채널·게시일)")
+TIP_NEXT = ("Next: 설치 안내 https://github.com/Panniantong/Agent-Reach (docs/install.md) "
+            "— 설치 후 agent-reach doctor 로 youtube: ok 확인")
+SUB_LANGS = ("ko", "en")  # then <lang>-orig; manual before auto
 TRACKING = re.compile(r"^(si|feature|utm_.*)$", re.I)
 
 
@@ -283,9 +295,9 @@ def markitdown(arg, url):
         out = os.path.join(d, "out.md")
         try:
             r = subprocess.run(["markitdown", arg, "-o", out], capture_output=True, text=True,
-                               check=False, timeout=MARKITDOWN_TIMEOUT)
+                               check=False, timeout=TIMEOUT)
         except subprocess.TimeoutExpired:
-            print(f"[FAIL] {arg}: markitdown timeout {MARKITDOWN_TIMEOUT}s -- 파일을 만들지 않았다")
+            print(f"[FAIL] {arg}: markitdown timeout {TIMEOUT}s -- 파일을 만들지 않았다")
             if url:
                 print("Next: 네트워크가 느리거나 막혔으면 HTTP(S)_PROXY 설정을 확인하고 다시 실행")
             return None
@@ -323,6 +335,146 @@ def title_for(kind, src, md):
 def description_truncated(md):
     m = re.search(r"^### Description\s*\n(.*?)(?=^#{1,3} |\Z)", md, re.M | re.S)
     return bool(m) and m.group(1).rstrip().endswith(("...", "…"))
+
+
+# --- yt-dlp (the agent-reach YouTube backend) --------------------------------
+
+def run_ytdlp(*args):
+    """Run the yt-dlp CLI; return stdout, or raise FetchError with a stderr-free reason.
+
+    Never cookies, never --no-check-certificate: a bot check is a fallback, not a retry.
+    """
+    try:
+        r = subprocess.run(["yt-dlp", "--no-warnings", *args], capture_output=True, text=True,
+                           check=False, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired as e:
+        raise FetchError(f"timeout {TIMEOUT}s") from e
+    except OSError as e:
+        raise FetchError(type(e).__name__) from e
+    if r.returncode != 0:  # stderr can quote URLs and account state: never printed
+        raise FetchError(f"yt-dlp exit {r.returncode} (www.youtube.com)")
+    return r.stdout
+
+
+def ytdlp_meta(url):
+    """The --dump-json metadata dict; FetchError when unusable."""
+    try:
+        meta = json.loads(run_ytdlp("--dump-json", "--skip-download", "--", url))
+    except ValueError as e:
+        raise FetchError(type(e).__name__) from e
+    if not isinstance(meta, dict) or not str(meta.get("title") or "").strip():
+        raise FetchError("title 없음")
+    return meta
+
+
+def sub_rank(lang, manual):
+    """Sort key: manual before auto, then ko > en > <lang>-orig; None for any other track."""
+    if lang in SUB_LANGS:
+        order = SUB_LANGS.index(lang)
+    elif lang.endswith("-orig"):
+        order = len(SUB_LANGS)
+    else:
+        return None
+    return (0 if manual else 1, order)
+
+
+def ytdlp_subs(url, meta, tmp):
+    """Return (lang, 'manual'|'auto', text) for the best subtitle track, or None."""
+    try:
+        run_ytdlp("--write-sub", "--write-auto-sub", "--sub-langs", "ko,en,.*-orig",
+                  "--sub-format", "vtt", "--skip-download", "-o", os.path.join(tmp, "%(id)s"), "--", url)
+    except FetchError:
+        pass  # a subtitle failure is not a fallback: the files that did land still count
+    manual = meta.get("subtitles") or {}
+    best = None
+    for f in os.listdir(tmp):
+        parts = f.split(".")
+        if len(parts) < 3 or parts[-1] != "vtt":
+            continue
+        lang = parts[-2]
+        key = sub_rank(lang, lang in manual)
+        if key is None:
+            continue
+        with open(os.path.join(tmp, f), encoding="utf-8", errors="replace") as fh:
+            text = vtt_to_text(fh.read())
+        if text and (best is None or key < best[0]):
+            best = (key, lang, "manual" if key[0] == 0 else "auto", text)
+    return best[1:] if best else None
+
+
+def vtt_to_text(vtt):
+    """WebVTT -> plain lines: no header, NOTE/STYLE/REGION blocks, cue ids, timings or tags.
+
+    Auto captions roll: each cue repeats the previous line, so consecutive duplicates collapse.
+    """
+    out = []
+    for block in re.split(r"\n[ \t]*\n", vtt.replace("\r\n", "\n").replace("\r", "\n")):
+        lines = block.strip("\n").split("\n")
+        if not lines or lines[0].lstrip("﻿").startswith(("WEBVTT", "NOTE", "STYLE", "REGION")):
+            continue
+        timing = next((i for i, ln in enumerate(lines) if "-->" in ln), None)
+        if timing is None:
+            continue
+        for ln in lines[timing + 1:]:
+            text = html.unescape(re.sub(r"<[^>]*>", "", ln)).strip()
+            if text and (not out or out[-1] != text):
+                out.append(text)
+    return "\n".join(out)
+
+
+def hms(seconds):
+    try:
+        s = int(float(seconds))
+    except (TypeError, ValueError):
+        return ""
+    h, rem = divmod(s, 3600)
+    return f"{h}:{rem // 60:02d}:{rem % 60:02d}" if h else f"{rem // 60}:{rem % 60:02d}"
+
+
+def upload_day(d):
+    d = str(d or "")
+    return f"{d[:4]}-{d[4:6]}-{d[6:]}" if re.fullmatch(r"\d{8}", d) else ""
+
+
+def ytdlp_body(meta, url, subs):
+    channel = meta.get("uploader") or meta.get("channel") or ""
+    views = meta.get("view_count")
+    rows = [("Channel", channel), ("Uploaded", upload_day(meta.get("upload_date"))),
+            ("Duration", hms(meta.get("duration")) or meta.get("duration_string") or ""),
+            ("Views", f"{views:,}" if isinstance(views, int) else ""), ("URL", url)]
+    parts = [f"# {meta['title'].strip()}", "## Video Metadata",
+             "\n".join(f"- {k}: {v}" for k, v in rows if v),
+             "## Description", (meta.get("description") or "").strip() or "(없음)"]
+    chapters = [c for c in meta.get("chapters") or [] if isinstance(c, dict) and c.get("title")]
+    if chapters:
+        parts += ["## Chapters", "\n".join(f"- {hms(c.get('start_time', 0))} {c['title']}" for c in chapters)]
+    if subs:
+        lang, how, text = subs
+        parts += [f"## Transcript ({lang}, {how})", text]
+    return "\n\n".join(parts) + "\n"
+
+
+def ytdlp(src):
+    """Return (meta, body) via yt-dlp, or None after the fallback [WARN] line."""
+    url = f"https://www.youtube.com/watch?v={youtube_id(src)}"
+    try:
+        info = ytdlp_meta(url)
+    except FetchError as e:
+        print(f"[WARN] yt-dlp 실패 ({e}) -- markitdown 경로로 폴백")
+        return None
+    with tempfile.TemporaryDirectory() as tmp:
+        subs = ytdlp_subs(url, info, tmp)
+    if not subs:
+        print("[WARN] 자막 없음 -- Transcript 섹션 생략")
+    print("[OK] yt-dlp 경로 (agent-reach)")
+    author = info.get("uploader") or info.get("channel") or ""
+    meta = {"title": info["title"].strip(), "author": [author],
+            "published": upload_day(info.get("upload_date"))}
+    return meta, ytdlp_body(info, url, subs)
+
+
+# agent-reach routing: kind -> (the CLI it needs, converter). Other platforms land here.
+ROUTES = {"youtube": ("yt-dlp", ytdlp)}
 
 
 # --- note --------------------------------------------------------------------
@@ -402,7 +554,7 @@ def write_new(path, text):
 
 # --- main --------------------------------------------------------------------
 
-def clip(src, vault):
+def clip(src, vault=VAULT):
     if shutil.which("markitdown") is None:
         # PATH only, before anything else; never auto-install. dotfiles'
         # `markitdown-help` is an interactive-shell alias a script cannot see,
@@ -412,8 +564,12 @@ def clip(src, vault):
         print("      TLS 인증서 오류가 나면: uv tool install --native-tls 'markitdown[all]'")
         return 1
     if not os.path.isdir(vault):
-        print(f"[FAIL] vault 없음: {vault} -- --vault <path> 또는 OBSIDIAN_VAULT_DIR 로 지정")
+        print(f"[FAIL] vault 없음: {vault} -- 저장 위치는 고정이다 ({VAULT_SHOWN}); 만들지 않는다")
         return 1
+    agent_reach = shutil.which("agent-reach") is not None  # PATH only: `agent-reach doctor` costs seconds
+    if not agent_reach:
+        print(TIP)
+        print(TIP_NEXT)
     if not is_url(src):
         src = os.path.expanduser(src)  # "$INPUT" is quoted, so the shell never expanded ~
     kind = classify(src)
@@ -429,8 +585,18 @@ def clip(src, vault):
 
     meta = {"title": "", "author": [], "published": ""}
     probed = False
+    found = None
+    route = ROUTES.get(kind) if agent_reach else None
+    if route:
+        tool, convert = route
+        if shutil.which(tool) is None:
+            print(f"[WARN] agent-reach 는 있으나 {tool} 미설치 -- markitdown 경로")
+            print("Next: agent-reach doctor")
+        else:
+            found = convert(src)
     try:
-        found = discourse(src) if kind == "article" else None
+        if kind == "article":
+            found = discourse(src)
         probed = kind == "article" and not found and os.environ.get("OBSIDIAN_CLIP_NO_PROBE") != "1"
         if probed:
             probe_login_wall(src)
@@ -452,7 +618,7 @@ def clip(src, vault):
     if not body.strip():
         print(f"[WARN] {src}: 변환 결과가 비었다 (스캔 PDF? 자막·설명 없는 영상?) -- 파일을 만들지 않았다")
         return 1
-    if kind == "youtube" and description_truncated(body):
+    if kind == "youtube" and not found and description_truncated(body):
         print("[WARN] YouTube Description 이 '...' 로 잘렸다 -- 원문 확인 권장")
 
     today = datetime.date.today().isoformat()
@@ -534,6 +700,26 @@ def self_test():
     assert login_wall("https://gitlab.kr/users/sign_in", "")
     assert login_wall("https://d.kr/t/1.json",
                       '<meta name="generator" content="Discourse 3.2"><body class="login-required">')
+    vtt = ("WEBVTT\nKind: captions\nLanguage: en\n\nNOTE a note\nspanning lines\n\n"
+           "1\n00:00:00.000 --> 00:00:02.000 align:start position:0%\n"
+           "hello<00:00:00.500><c> world</c>\n\n"
+           "00:00:02.000 --> 00:00:02.010\nhello world\n \n\n"
+           "00:00:02.010 --> 00:00:04.000\nhello world\nthis is <b>next</b> &amp; more\n\n"
+           "00:00:04.000 --> 00:00:05.000\nthis is next &amp; more\nlast\n")
+    assert vtt_to_text(vtt) == "hello world\nthis is next & more\nlast", vtt_to_text(vtt)
+    assert vtt_to_text("WEBVTT\n\n") == ""
+    assert sub_rank("ko", True) < sub_rank("en", True) < sub_rank("ja-orig", True) < sub_rank("ko", False)
+    assert sub_rank("ja", True) is None
+    assert upload_day("20260102") == "2026-01-02" and upload_day("2026") == "" and upload_day(None) == ""
+    assert hms(3725) == "1:02:05" and hms(65.4) == "1:05" and hms(None) == ""
+    body = ytdlp_body({"title": " T ", "uploader": "ch", "upload_date": "20260102", "duration": 65,
+                       "view_count": 1234, "description": "full\ndesc",
+                       "chapters": [{"start_time": 0, "title": "Intro"}]}, "https://y/w", ("ko", "manual", "t"))
+    assert body.startswith("# T\n\n## Video Metadata\n\n- Channel: ch\n- Uploaded: 2026-01-02\n"), body
+    assert "- Views: 1,234\n" in body and "## Chapters\n\n- 0:00 Intro" in body
+    assert body.endswith("## Transcript (ko, manual)\n\nt\n")
+    assert "## Transcript" not in ytdlp_body({"title": "T"}, "u", None)
+    assert VAULT == os.path.abspath(os.path.expanduser("~/para/project/obsidian-para"))
     print("[OK] self-test")
     return 0
 
@@ -545,10 +731,14 @@ def main(argv):
         return 0
     if argv == ["--self-test"]:
         return self_test()
-    if len(argv) != 2:
-        print("[FAIL] usage: clip.py <input> <vault> -- Run /pkm:obsidian-clip -h for usage.")
+    if any(a == "--vault" or a.startswith("--vault=") for a in argv):
+        # refused, not ignored: a silently dropped --vault reads as "saved over there"
+        print(f"[FAIL] --vault 는 지원하지 않는다 (저장 위치 고정: {VAULT_SHOWN})")
         return 2
-    return clip(argv[0], argv[1])
+    if len(argv) != 1:
+        print("[FAIL] usage: clip.py <input> -- Run /pkm:obsidian-clip -h for usage.")
+        return 2
+    return clip(argv[0])
 
 
 if __name__ == "__main__":

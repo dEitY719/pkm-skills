@@ -116,10 +116,10 @@ apply here on the next run, which is the whole point.
   `skills/karakeep-add/lib/` do the same for the two Karakeep skills. That
   directory is the SSOT; `karakeep-classify` runs byte-identical copies of
   `list-tree.sh` and `karakeep-env.sh` from its own `lib/vendor/` so a
-  single-skill install works. `obsidian-clip` likewise runs a byte-identical
-  copy of `obsidian-clip-session/lib/resolve-vault.sh` from its `lib/vendor/`,
-  plus its own `lib/clip.py`, the only place in the repo that calls
-  `markitdown`. Edit the originals, then re-copy them.
+  single-skill install works. Edit the originals, then re-copy them.
+  `obsidian-clip` runs only its own `lib/clip.py`, the only place in the repo
+  that calls `markitdown` or `yt-dlp`; its vault is a fixed
+  `~/para/project/obsidian-para` constant there, with no resolver.
   `obsidian-canvas`, `obsidian-bases`, and `obsidian-markdown` validate
   through `lib/validate-canvas.py`, `lib/validate-base.py`, and
   `lib/check-note.py` (stdlib only; PyYAML optional).
@@ -128,8 +128,8 @@ apply here on the next run, which is the whole point.
   code clean. CI shellchecks them at `--severity=warning`, and
   `bash tests/karakeep-lib-check.sh` asserts the Karakeep guards offline —
   run it after touching that `lib/`; `bash tests/obsidian-clip-check.sh`
-  does the same for `obsidian-clip` (its stub-markitdown `lib/clip.selfcheck.sh`)
-  and its vendored copy, and
+  does the same for `obsidian-clip` (its stub-markitdown / stub-yt-dlp
+  `lib/clip.selfcheck.sh`) and its fixed vault, and
   `bash tests/obsidian-validators-check.sh` for those three validators.
 
 ## Safety contracts
@@ -144,8 +144,9 @@ These are acceptance criteria carried over from dotfiles, not advice:
 - **`obsidian-clip` never commits.** It writes one new file under
   `99-Inbox/` and stops; obsidian-git owns commits and sync. It never
   overwrites a note — an already-clipped (normalized) `source` is a stop. It
-  never installs `markitdown`, never copies the original document into the
-  vault, and never disables certificate verification.
+  never installs `markitdown`, `agent-reach` or `yt-dlp`, never passes yt-dlp
+  cookies, never copies the original document into the vault, and never
+  disables certificate verification.
 - **`obsidian-resolve-conflict` is destructive and merge-only.** Never rewrite
   vault history, never force-push, never reset the worktree destructively, never
   delete a directory tree, never delete `.git/index.lock` (back off and retry),
