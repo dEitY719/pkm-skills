@@ -51,6 +51,7 @@ TIP = ("\U0001F4A1 [TIP] agent-reach 미설치 — 설치하면 YouTube 를 yt-d
 TIP_NEXT = ("Next: 설치 안내 https://github.com/Panniantong/Agent-Reach (docs/install.md) "
             "— 설치 후 agent-reach doctor 로 youtube: ok 확인")
 SUB_LANGS = ("ko", "en")  # then <lang>-orig; manual before auto
+BOM = chr(0xFEFF)  # not a literal: an invisible character in source is one editor away from deletion
 TRACKING = re.compile(r"^(si|feature|utm_.*)$", re.I)
 
 
@@ -368,21 +369,28 @@ def ytdlp_meta(url):
 
 
 def sub_rank(lang, manual):
-    """Sort key: manual before auto, then ko > en > <lang>-orig; None for any other track."""
-    if lang in SUB_LANGS:
-        order = SUB_LANGS.index(lang)
-    elif lang.endswith("-orig"):
+    """Sort key: manual before auto, then ko > en > <lang>-orig; None for any other track.
+
+    A regional track (en-US) ranks as its base language, just after the bare code.
+    """
+    base = lang.split("-")[0]
+    if lang.endswith("-orig"):
         order = len(SUB_LANGS)
+    elif base in SUB_LANGS:
+        order = SUB_LANGS.index(base)
     else:
         return None
-    return (0 if manual else 1, order)
+    return (0 if manual else 1, order, lang != base)
 
 
 def ytdlp_subs(url, meta, tmp):
     """Return (lang, 'manual'|'auto', text) for the best subtitle track, or None."""
     try:
-        run_ytdlp("--write-sub", "--write-auto-sub", "--sub-langs", "ko,en,.*-orig",
-                  "--sub-format", "vtt", "--skip-download", "-o", os.path.join(tmp, "%(id)s"), "--", url)
+        # --ignore-errors: one failed track (an HTTP 429 on an auto track is common) must not
+        # abort the remaining ones; ko.* / en.* also catch regional manual tracks (en-US).
+        run_ytdlp("--ignore-errors", "--write-sub", "--write-auto-sub",
+                  "--sub-langs", "ko.*,en.*,.*-orig", "--sub-format", "vtt", "--skip-download",
+                  "-o", os.path.join(tmp, "%(id)s"), "--", url)
     except FetchError:
         pass  # a subtitle failure is not a fallback: the files that did land still count
     manual = meta.get("subtitles") or {}
@@ -410,7 +418,7 @@ def vtt_to_text(vtt):
     out = []
     for block in re.split(r"\n[ \t]*\n", vtt.replace("\r\n", "\n").replace("\r", "\n")):
         lines = block.strip("\n").split("\n")
-        if not lines or lines[0].lstrip("﻿").startswith(("WEBVTT", "NOTE", "STYLE", "REGION")):
+        if not lines or lines[0].lstrip(BOM).startswith(("WEBVTT", "NOTE", "STYLE", "REGION")):
             continue
         timing = next((i for i, ln in enumerate(lines) if "-->" in ln), None)
         if timing is None:
@@ -710,6 +718,8 @@ def self_test():
     assert vtt_to_text("WEBVTT\n\n") == ""
     assert sub_rank("ko", True) < sub_rank("en", True) < sub_rank("ja-orig", True) < sub_rank("ko", False)
     assert sub_rank("ja", True) is None
+    assert sub_rank("en", True) < sub_rank("en-US", True) < sub_rank("ja-orig", True)
+    assert sub_rank("en-orig", False) == sub_rank("ja-orig", False)
     assert upload_day("20260102") == "2026-01-02" and upload_day("2026") == "" and upload_day(None) == ""
     assert hms(3725) == "1:02:05" and hms(65.4) == "1:05" and hms(None) == ""
     body = ytdlp_body({"title": " T ", "uploader": "ch", "upload_date": "20260102", "duration": 65,
