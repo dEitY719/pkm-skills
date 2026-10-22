@@ -344,9 +344,10 @@ def run_ytdlp(*args):
     """Run the yt-dlp CLI; return stdout, or raise FetchError with a stderr-free reason.
 
     Never cookies, never --no-check-certificate: a bot check is a fallback, not a retry.
+    --ignore-config keeps a user's yt-dlp config (which may hold either) out of the run.
     """
     try:
-        r = subprocess.run(["yt-dlp", "--no-warnings", *args], capture_output=True, text=True,
+        r = subprocess.run(["yt-dlp", "--ignore-config", "--no-warnings", *args], capture_output=True, text=True,
                            check=False, timeout=TIMEOUT)
     except subprocess.TimeoutExpired as e:
         raise FetchError(f"timeout {TIMEOUT}s") from e
@@ -369,13 +370,15 @@ def ytdlp_meta(url):
 
 
 def sub_rank(lang, manual):
-    """Sort key: manual before auto, then ko > en > <lang>-orig; None for any other track.
+    """Sort key: manual (ko > en > <lang>-orig) before auto; None for any other track.
 
+    Among auto tracks <lang>-orig (the original-language ASR) comes first: YouTube offers
+    an auto `ko` / `en` for nearly every video, which is a machine translation of that ASR.
     A regional track (en-US) ranks as its base language, just after the bare code.
     """
     base = lang.split("-")[0]
     if lang.endswith("-orig"):
-        order = len(SUB_LANGS)
+        order = len(SUB_LANGS) if manual else -1
     elif base in SUB_LANGS:
         order = SUB_LANGS.index(base)
     else:
@@ -601,7 +604,10 @@ def clip(src, vault=VAULT):
             print(f"[WARN] agent-reach 는 있으나 {tool} 미설치 -- markitdown 경로")
             print("Next: agent-reach doctor")
         else:
-            found = convert(src)
+            try:
+                found = convert(src)
+            except FetchError as e:  # a converter's own failure is a fallback, never a stop
+                print(f"[WARN] {tool} 실패 ({e}) -- markitdown 경로로 폴백")
     try:
         if kind == "article":
             found = discourse(src)
@@ -720,6 +726,7 @@ def self_test():
     assert sub_rank("ja", True) is None
     assert sub_rank("en", True) < sub_rank("en-US", True) < sub_rank("ja-orig", True)
     assert sub_rank("en-orig", False) == sub_rank("ja-orig", False)
+    assert sub_rank("en", True) < sub_rank("en-orig", False) < sub_rank("ko", False) < sub_rank("en", False)
     assert upload_day("20260102") == "2026-01-02" and upload_day("2026") == "" and upload_day(None) == ""
     assert hms(3725) == "1:02:05" and hms(65.4) == "1:05" and hms(None) == ""
     body = ytdlp_body({"title": " T ", "uploader": "ch", "upload_date": "20260102", "duration": 65,
