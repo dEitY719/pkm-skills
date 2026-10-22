@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# resolve-vault.sh -- SSOT: skills/obsidian-clip-session/lib/resolve-vault.sh; byte-identical
-# copy in skills/obsidian-clip/lib/vendor/ (edit the SSOT, then re-copy).
+# resolve-vault.sh -- skills/obsidian-clip-session/lib/resolve-vault.sh; no vendored copies
+# (pkm:obsidian-clip uses a fixed vault constant in its own lib/clip.py instead).
 #
-# Vault default resolution for pkm:obsidian-clip-session and pkm:obsidian-clip.
+# Vault default resolution for pkm:obsidian-clip-session.
 #
 # The hardcoded single default ($HOME/para/project/obsidian-para) ignores
 # the PC-mode SSOT (dEitY719/dotfiles docs/.ssot/pc-environment.md): internal
@@ -19,7 +19,7 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-resolve-vault.sh — PC-mode-aware vault default for pkm:obsidian-clip-session / pkm:obsidian-clip
+resolve-vault.sh — PC-mode-aware vault default for pkm:obsidian-clip-session
 
 Usage:
   resolve-vault.sh [explicit-vault-path]
